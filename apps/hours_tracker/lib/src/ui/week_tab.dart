@@ -62,6 +62,7 @@ class WeekTab extends ConsumerWidget {
           children: [
             IconButton(
               key: const Key('week-prev'),
+              tooltip: 'Previous week',
               icon: const Icon(Icons.chevron_left_rounded),
               onPressed: () => ref.read(weekOffsetProvider.notifier).move(-1),
             ),
@@ -75,6 +76,7 @@ class WeekTab extends ConsumerWidget {
             ),
             IconButton(
               key: const Key('week-next'),
+              tooltip: 'Next week',
               icon: const Icon(Icons.chevron_right_rounded),
               onPressed: () => ref.read(weekOffsetProvider.notifier).move(1),
             ),

@@ -117,7 +117,12 @@ class _ShiftEditScreenState extends ConsumerState<ShiftEditScreen> {
         actions: [
           TextButton(key: const Key('save-shift'), onPressed: _saving ? null : _save, child: const Text('Save')),
           if (widget.shift != null)
-            IconButton(key: const Key('delete-shift'), icon: const Icon(Icons.delete_outline), onPressed: _delete),
+            IconButton(
+              key: const Key('delete-shift'),
+              tooltip: 'Delete shift',
+              icon: const Icon(Icons.delete_outline),
+              onPressed: _delete,
+            ),
         ],
       ),
       body: Form(

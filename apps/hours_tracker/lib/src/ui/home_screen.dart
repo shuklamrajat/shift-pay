@@ -50,17 +50,23 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     return Scaffold(
       appBar: AppBar(
         title: jobs.length > 1
-            ? DropdownButton<int>(
-                key: const Key('job-switcher'),
-                value: job!.id,
-                underline: const SizedBox.shrink(),
-                items: [for (final j in jobs) DropdownMenuItem(value: j.id, child: Text(j.name))],
-                onChanged: (id) => id == null ? null : ref.read(selectedJobIdProvider.notifier).select(id),
+            ? Semantics(
+                // An AppBar title is announced as a heading; say it is a switcher.
+                button: true,
+                label: 'Switch job',
+                child: DropdownButton<int>(
+                  key: const Key('job-switcher'),
+                  value: job!.id,
+                  underline: const SizedBox.shrink(),
+                  items: [for (final j in jobs) DropdownMenuItem(value: j.id, child: Text(j.name))],
+                  onChanged: (id) => id == null ? null : ref.read(selectedJobIdProvider.notifier).select(id),
+                ),
               )
             : Text(job!.name),
         actions: [
           IconButton(
             key: const Key('open-settings'),
+            tooltip: 'Settings',
             icon: const Icon(Icons.settings_outlined),
             onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CoreSettingsScreen())),
           ),

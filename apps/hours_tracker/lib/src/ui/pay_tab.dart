@@ -167,7 +167,10 @@ class _PayTabState extends ConsumerState<PayTab> {
                     children: [
                       Icon(Icons.schedule_rounded, size: 18, color: Theme.of(context).colorScheme.onSurfaceVariant),
                       const SizedBox(width: 8),
-                      Text('${hm(s.workedMin)} over ${s.shifts.length} shifts', key: const Key('pay-hours')),
+                      Text(
+                        '${hm(s.workedMin)} over ${s.shifts.length} ${s.shifts.length == 1 ? 'shift' : 'shifts'}',
+                        key: const Key('pay-hours'),
+                      ),
                     ],
                   ),
                 ],

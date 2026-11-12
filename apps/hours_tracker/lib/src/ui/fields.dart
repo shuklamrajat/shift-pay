@@ -19,6 +19,7 @@ class DateField extends StatelessWidget {
         labelText: label,
         hintText: 'YYYY-MM-DD',
         suffixIcon: IconButton(
+          tooltip: 'Pick a date',
           icon: const Icon(Icons.calendar_today),
           onPressed: () async {
             final initial = parseIsoDate(controller.text) ?? DateTime.now();
@@ -55,6 +56,7 @@ class TimeField extends StatelessWidget {
         labelText: label,
         hintText: optional ? 'Still working' : '09:00',
         suffixIcon: IconButton(
+          tooltip: 'Pick a time',
           icon: const Icon(Icons.access_time),
           onPressed: () async {
             final m = parseTimeOfDay(controller.text) ?? 9 * 60;
