@@ -38,17 +38,16 @@ void _loadPersisted() {
 void _put(String path, Uint8List bytes) {
   _files[path] = bytes;
   _dirs.add(p.dirname(path));
-  if (_persisted(path))
-    web.window.localStorage.setItem(
-      '$_persistPrefix$path',
-      base64Encode(bytes),
-    );
+  if (_persisted(path)) {
+    web.window.localStorage.setItem('$_persistPrefix$path', base64Encode(bytes));
+  }
 }
 
 void _remove(String path) {
   _files.remove(path);
-  if (_persisted(path))
+  if (_persisted(path)) {
     web.window.localStorage.removeItem('$_persistPrefix$path');
+  }
 }
 
 /// Number of attachment files currently stored (used by the browser tests to
@@ -119,8 +118,9 @@ class _MemFile implements File {
 
   @override
   Future<FileSystemEntity> delete({bool recursive = false}) async {
-    if (!_files.containsKey(path))
+    if (!_files.containsKey(path)) {
       throw PathNotFoundException(path, const OSError('No such file', 2));
+    }
     _remove(path);
     return this;
   }
@@ -130,8 +130,9 @@ class _MemFile implements File {
 
   Uint8List _need() {
     final b = _files[path];
-    if (b == null)
+    if (b == null) {
       throw PathNotFoundException(path, const OSError('No such file', 2));
+    }
     return b;
   }
 
