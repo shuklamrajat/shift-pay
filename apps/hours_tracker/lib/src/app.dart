@@ -10,6 +10,7 @@ const featureExport = 'export';
 const hoursConfig = AppConfig(
   appName: 'Wagebird',
   tagline: 'Hours and overtime, worked out for you',
+  privacyPolicyUrl: 'https://shuklamrajat.github.io/widdle-privacy/wagebird/',
   seedColor: Color(0xFF00897B),
   accentColor: Color(0xFFFFB300),
   gradientEndColor: Color(0xFF01579B),

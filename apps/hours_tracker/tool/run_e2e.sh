@@ -15,4 +15,9 @@ xvfb-run -a flutter test integration_test/app_e2e_test.dart -d linux \
 pdftotext -layout "$ART/timesheet.pdf" "$ART/timesheet.txt"
 grep -q '1,425.00' "$ART/timesheet.txt" || { echo "PDF is missing the total pay"; exit 1; }
 (cd "$ART" && sha256sum timesheet.csv > checksums.txt)
+# The build as it ships today (Pro free until billing is live, privacy link).
+mkdir -p "$ART/free_build"
+xvfb-run -a flutter test integration_test/free_build_e2e_test.dart -d linux \
+  --dart-define=ARTIFACT_DIR="$ART/free_build" 2>&1 | tee "$ART/free_build/run.log"
+python3 -c "import json,sys;d=json.load(open('$ART/free_build/result.json'));print('free build checks passed:',sum(c['pass'] for c in d['checks']),'/',len(d['checks']));sys.exit(0 if d['passed'] else 1)"
 python3 -c "import json,sys;d=json.load(open('$ART/result.json'));print('checks passed:',sum(c['pass'] for c in d['checks']),'/',len(d['checks']));sys.exit(0 if d['passed'] else 1)"

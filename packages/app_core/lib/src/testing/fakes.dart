@@ -2,6 +2,7 @@ import 'dart:io';
 
 import '../export/export_service.dart';
 import '../ratings/rating_prompter.dart';
+import '../settings/links.dart';
 
 /// Test double: remembers shared files instead of opening the share sheet.
 class RecordingFileSharer implements FileSharer {
@@ -22,4 +23,17 @@ class TestClock {
   TestClock(this.now);
   DateTime now;
   DateTime call() => now;
+}
+
+/// Test double: remembers the pages the app tried to open. [works] false acts
+/// like a phone with no browser.
+class RecordingLinkOpener implements LinkOpener {
+  RecordingLinkOpener({this.works = true});
+  bool works;
+  final opened = <Uri>[];
+  @override
+  Future<bool> open(Uri uri) async {
+    opened.add(uri);
+    return works;
+  }
 }

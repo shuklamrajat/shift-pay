@@ -26,6 +26,11 @@ abstract class EntitlementService {
   Future<List<ProOffer>> offers();
   Future<PurchaseOutcome> purchase(ProOffer offer);
   Future<bool> restore();
+
+  /// True while every Pro feature is given away because store billing is not
+  /// set up yet. Screens use it to say "free for now" instead of thanking the
+  /// person for a purchase they never made.
+  bool get proIsFreeForNow => false;
 }
 
 /// Stand-in until RevenueCat is connected. Purchases are unavailable in
@@ -64,13 +69,41 @@ class LocalEntitlementService implements EntitlementService {
   @override
   Future<bool> restore() async => isPro;
 
+  @override
+  bool get proIsFreeForNow => false;
+
   Future<void> setPro(bool value) async {
     await _prefs.setBool(_key, value);
     _controller.add(value);
   }
 }
 
+/// Every Pro feature is unlocked for everyone until store billing is wired up.
+/// Play's reviewers need full access to paid features, and a paywall that
+/// cannot take a purchase would be a dead end. Set to false in the build that
+/// connects RevenueCat.
+const proFreeUntilBillingIsLive = true;
+
+/// Release stand-in while [proFreeUntilBillingIsLive]: Pro is on, there is
+/// nothing to buy, and nothing is stored.
+class FreeForNowEntitlementService implements EntitlementService {
+  const FreeForNowEntitlementService();
+  @override
+  bool get isPro => true;
+  @override
+  Stream<bool> watchIsPro() => Stream.value(true);
+  @override
+  Future<List<ProOffer>> offers() async => const [];
+  @override
+  Future<PurchaseOutcome> purchase(ProOffer offer) async => PurchaseOutcome.unavailable;
+  @override
+  Future<bool> restore() async => true;
+  @override
+  bool get proIsFreeForNow => true;
+}
+
 final entitlementServiceProvider = Provider<EntitlementService>((ref) {
+  if (proFreeUntilBillingIsLive) return const FreeForNowEntitlementService();
   var debug = false;
   assert(() {
     debug = true;

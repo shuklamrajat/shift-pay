@@ -11,6 +11,7 @@ export 'src/export/pdf_report.dart';
 export 'src/format/money.dart';
 export 'src/onboarding/onboarding.dart';
 export 'src/ratings/rating_prompter.dart';
+export 'src/settings/links.dart';
 export 'src/settings/settings.dart';
 export 'src/settings/settings_screen.dart';
 export 'src/storage/db_open.dart';

@@ -29,6 +29,7 @@ class AppConfig {
     required this.seedColor,
     required this.onboarding,
     required this.proFeatures,
+    required this.privacyPolicyUrl,
     this.accentColor,
     this.gradientEndColor,
     this.paywallScene,
@@ -53,6 +54,9 @@ class AppConfig {
   /// Illustration at the top of the paywall. Null uses the shared one.
   final ScenePaint? paywallScene;
   final String privacyNote;
+
+  /// The public privacy policy. Play requires a link to it inside the app.
+  final String privacyPolicyUrl;
 
   ProFeature feature(String id) => proFeatures.firstWhere((f) => f.id == id);
 }

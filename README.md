@@ -41,6 +41,12 @@ apps/hours_tracker/tool/run_e2e.sh
 #    the exported CSV and PDF, the PDF as text, checksums.txt
 ```
 
+The script then runs `integration_test/free_build_e2e_test.dart` against the
+entitlement service a release build ships with (no test override) and writes
+`test-artifacts/e2e/free_build/result.json`: every Pro feature opens with no
+paywall, Settings says Pro is free for now, the privacy link opens the
+policy page, and nothing about Pro is stored.
+
 It runs on the Linux desktop target (needs clang, cmake, ninja, GTK 3,
 xvfb, poppler-utils), with a fixed clock and TZ=America/New_York, so the
 CSV checksum is the same on every run. The isolated logic scenarios run with
@@ -182,4 +188,11 @@ artifact.
 ## Before the stores
 
 See store/README.md. In short: the app id is `com.shuklamrajat.wagebird`; signed builds (see Android builds above; keep the upload key out of this repo),
-RevenueCat in place of LocalEntitlementService, then Play internal testing.
+then Play internal testing.
+
+Every Pro feature is free for now: `proFreeUntilBillingIsLive` in
+`packages/app_core/lib/src/entitlements/entitlements.dart` makes release builds use
+`FreeForNowEntitlementService`, and Play's sign-in details say nothing is restricted.
+When billing is ready, add a RevenueCat `EntitlementService`, set the flag to false,
+and update that Play answer. Settings has a Privacy policy row that opens the app's
+policy page (Play requires an in-app link).
