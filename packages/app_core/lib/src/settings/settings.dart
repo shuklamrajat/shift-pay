@@ -31,13 +31,12 @@ class CoreSettings {
   final String currency;
   final DateTime firstOpenedAt;
 
-  CoreSettings copyWith({ThemeMode? themeMode, bool? onboardingDone, String? currency}) =>
-      CoreSettings(
-        themeMode: themeMode ?? this.themeMode,
-        onboardingDone: onboardingDone ?? this.onboardingDone,
-        currency: currency ?? this.currency,
-        firstOpenedAt: firstOpenedAt,
-      );
+  CoreSettings copyWith({ThemeMode? themeMode, bool? onboardingDone, String? currency}) => CoreSettings(
+    themeMode: themeMode ?? this.themeMode,
+    onboardingDone: onboardingDone ?? this.onboardingDone,
+    currency: currency ?? this.currency,
+    firstOpenedAt: firstOpenedAt,
+  );
 }
 
 class CoreSettingsNotifier extends Notifier<CoreSettings> {
@@ -80,8 +79,7 @@ class CoreSettingsNotifier extends Notifier<CoreSettings> {
   }
 }
 
-final coreSettingsProvider =
-    NotifierProvider<CoreSettingsNotifier, CoreSettings>(CoreSettingsNotifier.new);
+final coreSettingsProvider = NotifierProvider<CoreSettingsNotifier, CoreSettings>(CoreSettingsNotifier.new);
 
 /// Small typed key/value helper apps use for their own preferences
 /// (units, workday start hour, etc.).

@@ -6,7 +6,7 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 export TZ=America/New_York
-for app in ${@:-hours_tracker}; do
+for app in ${@:-$(ls apps)}; do
   out="$PWD/store/$app/screenshots"
   rm -rf "$out" && mkdir -p "$out"
   (cd "apps/$app" && xvfb-run -a flutter test integration_test/app_e2e_test.dart -d linux \

@@ -6,6 +6,6 @@ import 'package:path_provider/path_provider.dart';
 /// directory, which the OS excludes from shared storage. Nothing leaves the
 /// device.
 QueryExecutor openAppDatabase(String name) => driftDatabase(
-      name: name,
-      native: const DriftNativeOptions(databaseDirectory: getApplicationSupportDirectory),
-    );
+  name: name,
+  native: const DriftNativeOptions(databaseDirectory: getApplicationSupportDirectory),
+);

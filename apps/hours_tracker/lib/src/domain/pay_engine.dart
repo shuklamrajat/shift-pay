@@ -187,16 +187,18 @@ PayResult computePay(List<ShiftInput> input, PayRules rules) {
 
     final r = sh.rateCents;
     final exact = regular * r * 100 + overtime * r * rules.otMultiplierPct + dbl * r * rules.doubleMultiplierPct;
-    out.add(ShiftPay(
-      input: sh,
-      workday: workday,
-      weekStart: week,
-      workedMin: worked,
-      regularMin: regular,
-      overtimeMin: overtime,
-      doubleMin: dbl,
-      exactPay: exact,
-    ));
+    out.add(
+      ShiftPay(
+        input: sh,
+        workday: workday,
+        weekStart: week,
+        workedMin: worked,
+        regularMin: regular,
+        overtimeMin: overtime,
+        doubleMin: dbl,
+        exactPay: exact,
+      ),
+    );
   }
   return PayResult(out, rules);
 }

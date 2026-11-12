@@ -73,7 +73,9 @@ class _ShiftEditScreenState extends ConsumerState<ShiftEditScreen> {
     }
     setState(() => _saving = true);
     final wasClosed = widget.shift?.end != null;
-    final r = await ref.read(repositoryProvider).saveShift(
+    final r = await ref
+        .read(repositoryProvider)
+        .saveShift(
           id: widget.shift?.id,
           jobId: widget.job.id,
           start: t.$1,
@@ -120,55 +122,68 @@ class _ShiftEditScreenState extends ConsumerState<ShiftEditScreen> {
       ),
       body: Form(
         key: _form,
-        child: ListView(padding: const EdgeInsets.all(16), children: [
-          Text(widget.job.name, style: Theme.of(context).textTheme.titleMedium),
-          const SizedBox(height: 12),
-          DateField(controller: _date, label: 'Date the shift starts', fieldKey: const Key('shift-date')),
-          const SizedBox(height: 12),
-          Row(children: [
-            Expanded(child: TimeField(controller: _start, label: 'Start', fieldKey: const Key('shift-start'))),
-            const SizedBox(width: 12),
-            Expanded(
-                child: TimeField(controller: _end, label: 'End', fieldKey: const Key('shift-end'), optional: _isOpen)),
-          ]),
-          if (hint != null)
-            Padding(
-                padding: const EdgeInsets.only(top: 6), child: Text(hint, key: const Key('shift-hint'))),
-          const SizedBox(height: 12),
-          TextFormField(
-            key: const Key('shift-break'),
-            controller: _break,
-            keyboardType: TextInputType.number,
-            decoration: const InputDecoration(labelText: 'Unpaid break (minutes)'),
-            validator: (v) => int.tryParse(v?.trim() ?? '') == null ? 'Whole minutes, e.g. 30' : null,
-          ),
-          const SizedBox(height: 12),
-          TextFormField(
-            key: const Key('shift-rate'),
-            controller: _rate,
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            decoration: const InputDecoration(labelText: 'Hourly rate for this shift'),
-            validator: (v) => Money.parse(v ?? '') == null ? 'An amount like 18.50' : null,
-          ),
-          const SizedBox(height: 12),
-          TextFormField(
-            key: const Key('shift-note'),
-            controller: _note,
-            decoration: const InputDecoration(labelText: 'Note (optional)'),
-          ),
-          if (_error != null)
-            Padding(
-              padding: const EdgeInsets.only(top: 12),
-              child: Text(_error!,
-                  key: const Key('shift-error'), style: TextStyle(color: Theme.of(context).colorScheme.error)),
+        child: ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            Text(widget.job.name, style: Theme.of(context).textTheme.titleMedium),
+            const SizedBox(height: 12),
+            DateField(controller: _date, label: 'Date the shift starts', fieldKey: const Key('shift-date')),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: TimeField(controller: _start, label: 'Start', fieldKey: const Key('shift-start')),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: TimeField(controller: _end, label: 'End', fieldKey: const Key('shift-end'), optional: _isOpen),
+                ),
+              ],
             ),
-          const SizedBox(height: 20),
-          FilledButton(
-            key: const Key('save-shift-bottom'),
-            onPressed: _saving ? null : _save,
-            child: const Text('Save shift'),
-          ),
-        ]),
+            if (hint != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 6),
+                child: Text(hint, key: const Key('shift-hint')),
+              ),
+            const SizedBox(height: 12),
+            TextFormField(
+              key: const Key('shift-break'),
+              controller: _break,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(labelText: 'Unpaid break (minutes)'),
+              validator: (v) => int.tryParse(v?.trim() ?? '') == null ? 'Whole minutes, e.g. 30' : null,
+            ),
+            const SizedBox(height: 12),
+            TextFormField(
+              key: const Key('shift-rate'),
+              controller: _rate,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              decoration: const InputDecoration(labelText: 'Hourly rate for this shift'),
+              validator: (v) => Money.parse(v ?? '') == null ? 'An amount like 18.50' : null,
+            ),
+            const SizedBox(height: 12),
+            TextFormField(
+              key: const Key('shift-note'),
+              controller: _note,
+              decoration: const InputDecoration(labelText: 'Note (optional)'),
+            ),
+            if (_error != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 12),
+                child: Text(
+                  _error!,
+                  key: const Key('shift-error'),
+                  style: TextStyle(color: Theme.of(context).colorScheme.error),
+                ),
+              ),
+            const SizedBox(height: 20),
+            FilledButton(
+              key: const Key('save-shift-bottom'),
+              onPressed: _saving ? null : _save,
+              child: const Text('Save shift'),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -1,6 +1,6 @@
 # Privacy policy
 
-_Applies to Shift Pay, Fuel & Service Log and Home Inventory (working names).
+_Applies to Wagebird, Wrenchnote and Housetally.
 Last updated: [date of publishing]._
 
 **Short version: your data stays on your phone. We don't collect it, see it
@@ -17,7 +17,7 @@ Nothing. The apps contain no analytics, advertising or tracking code, and
 they don't send your entries anywhere.
 
 ## Camera and photos
-Home Inventory asks for the camera or photo library only when you add a
+Housetally asks for the camera or photo library only when you add a
 picture to an item. The picture is copied into the app's storage on your
 device and is not uploaded.
 

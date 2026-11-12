@@ -17,9 +17,7 @@ class $JobsTable extends Jobs with TableInfo<$JobsTable, Job> {
     hasAutoIncrement: true,
     type: DriftSqlType.int,
     requiredDuringInsert: false,
-    defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'PRIMARY KEY AUTOINCREMENT',
-    ),
+    defaultConstraints: GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'),
   );
   static const VerificationMeta _nameMeta = const VerificationMeta('name');
   @override
@@ -27,16 +25,11 @@ class $JobsTable extends Jobs with TableInfo<$JobsTable, Job> {
     'name',
     aliasedName,
     false,
-    additionalChecks: GeneratedColumn.checkTextLength(
-      minTextLength: 1,
-      maxTextLength: 60,
-    ),
+    additionalChecks: GeneratedColumn.checkTextLength(minTextLength: 1, maxTextLength: 60),
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
-  static const VerificationMeta _rateCentsMeta = const VerificationMeta(
-    'rateCents',
-  );
+  static const VerificationMeta _rateCentsMeta = const VerificationMeta('rateCents');
   @override
   late final GeneratedColumn<int> rateCents = GeneratedColumn<int>(
     'rate_cents',
@@ -45,9 +38,7 @@ class $JobsTable extends Jobs with TableInfo<$JobsTable, Job> {
     type: DriftSqlType.int,
     requiredDuringInsert: true,
   );
-  static const VerificationMeta _dailyLimitMinMeta = const VerificationMeta(
-    'dailyLimitMin',
-  );
+  static const VerificationMeta _dailyLimitMinMeta = const VerificationMeta('dailyLimitMin');
   @override
   late final GeneratedColumn<int> dailyLimitMin = GeneratedColumn<int>(
     'daily_limit_min',
@@ -56,9 +47,7 @@ class $JobsTable extends Jobs with TableInfo<$JobsTable, Job> {
     type: DriftSqlType.int,
     requiredDuringInsert: false,
   );
-  static const VerificationMeta _dailyDoubleMinMeta = const VerificationMeta(
-    'dailyDoubleMin',
-  );
+  static const VerificationMeta _dailyDoubleMinMeta = const VerificationMeta('dailyDoubleMin');
   @override
   late final GeneratedColumn<int> dailyDoubleMin = GeneratedColumn<int>(
     'daily_double_min',
@@ -67,9 +56,7 @@ class $JobsTable extends Jobs with TableInfo<$JobsTable, Job> {
     type: DriftSqlType.int,
     requiredDuringInsert: false,
   );
-  static const VerificationMeta _weeklyLimitMinMeta = const VerificationMeta(
-    'weeklyLimitMin',
-  );
+  static const VerificationMeta _weeklyLimitMinMeta = const VerificationMeta('weeklyLimitMin');
   @override
   late final GeneratedColumn<int> weeklyLimitMin = GeneratedColumn<int>(
     'weekly_limit_min',
@@ -88,9 +75,7 @@ class $JobsTable extends Jobs with TableInfo<$JobsTable, Job> {
     requiredDuringInsert: false,
     defaultValue: const Constant(150),
   );
-  static const VerificationMeta _doublePctMeta = const VerificationMeta(
-    'doublePct',
-  );
+  static const VerificationMeta _doublePctMeta = const VerificationMeta('doublePct');
   @override
   late final GeneratedColumn<int> doublePct = GeneratedColumn<int>(
     'double_pct',
@@ -100,9 +85,7 @@ class $JobsTable extends Jobs with TableInfo<$JobsTable, Job> {
     requiredDuringInsert: false,
     defaultValue: const Constant(200),
   );
-  static const VerificationMeta _weekStartsOnMeta = const VerificationMeta(
-    'weekStartsOn',
-  );
+  static const VerificationMeta _weekStartsOnMeta = const VerificationMeta('weekStartsOn');
   @override
   late final GeneratedColumn<int> weekStartsOn = GeneratedColumn<int>(
     'week_starts_on',
@@ -112,8 +95,7 @@ class $JobsTable extends Jobs with TableInfo<$JobsTable, Job> {
     requiredDuringInsert: false,
     defaultValue: const Constant(DateTime.monday),
   );
-  static const VerificationMeta _workdayStartMinuteMeta =
-      const VerificationMeta('workdayStartMinute');
+  static const VerificationMeta _workdayStartMinuteMeta = const VerificationMeta('workdayStartMinute');
   @override
   late final GeneratedColumn<int> workdayStartMinute = GeneratedColumn<int>(
     'workday_start_minute',
@@ -123,9 +105,7 @@ class $JobsTable extends Jobs with TableInfo<$JobsTable, Job> {
     requiredDuringInsert: false,
     defaultValue: const Constant(0),
   );
-  static const VerificationMeta _archivedMeta = const VerificationMeta(
-    'archived',
-  );
+  static const VerificationMeta _archivedMeta = const VerificationMeta('archived');
   @override
   late final GeneratedColumn<bool> archived = GeneratedColumn<bool>(
     'archived',
@@ -133,14 +113,10 @@ class $JobsTable extends Jobs with TableInfo<$JobsTable, Job> {
     false,
     type: DriftSqlType.bool,
     requiredDuringInsert: false,
-    defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'CHECK ("archived" IN (0, 1))',
-    ),
+    defaultConstraints: GeneratedColumn.constraintIsAlways('CHECK ("archived" IN (0, 1))'),
     defaultValue: const Constant(false),
   );
-  static const VerificationMeta _createdAtMeta = const VerificationMeta(
-    'createdAt',
-  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta('createdAt');
   @override
   late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
     'created_at',
@@ -170,99 +146,60 @@ class $JobsTable extends Jobs with TableInfo<$JobsTable, Job> {
   String get actualTableName => $name;
   static const String $name = 'jobs';
   @override
-  VerificationContext validateIntegrity(
-    Insertable<Job> instance, {
-    bool isInserting = false,
-  }) {
+  VerificationContext validateIntegrity(Insertable<Job> instance, {bool isInserting = false}) {
     final context = VerificationContext();
     final data = instance.toColumns(true);
     if (data.containsKey('id')) {
       context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
     }
     if (data.containsKey('name')) {
-      context.handle(
-        _nameMeta,
-        name.isAcceptableOrUnknown(data['name']!, _nameMeta),
-      );
+      context.handle(_nameMeta, name.isAcceptableOrUnknown(data['name']!, _nameMeta));
     } else if (isInserting) {
       context.missing(_nameMeta);
     }
     if (data.containsKey('rate_cents')) {
-      context.handle(
-        _rateCentsMeta,
-        rateCents.isAcceptableOrUnknown(data['rate_cents']!, _rateCentsMeta),
-      );
+      context.handle(_rateCentsMeta, rateCents.isAcceptableOrUnknown(data['rate_cents']!, _rateCentsMeta));
     } else if (isInserting) {
       context.missing(_rateCentsMeta);
     }
     if (data.containsKey('daily_limit_min')) {
       context.handle(
         _dailyLimitMinMeta,
-        dailyLimitMin.isAcceptableOrUnknown(
-          data['daily_limit_min']!,
-          _dailyLimitMinMeta,
-        ),
+        dailyLimitMin.isAcceptableOrUnknown(data['daily_limit_min']!, _dailyLimitMinMeta),
       );
     }
     if (data.containsKey('daily_double_min')) {
       context.handle(
         _dailyDoubleMinMeta,
-        dailyDoubleMin.isAcceptableOrUnknown(
-          data['daily_double_min']!,
-          _dailyDoubleMinMeta,
-        ),
+        dailyDoubleMin.isAcceptableOrUnknown(data['daily_double_min']!, _dailyDoubleMinMeta),
       );
     }
     if (data.containsKey('weekly_limit_min')) {
       context.handle(
         _weeklyLimitMinMeta,
-        weeklyLimitMin.isAcceptableOrUnknown(
-          data['weekly_limit_min']!,
-          _weeklyLimitMinMeta,
-        ),
+        weeklyLimitMin.isAcceptableOrUnknown(data['weekly_limit_min']!, _weeklyLimitMinMeta),
       );
     }
     if (data.containsKey('ot_pct')) {
-      context.handle(
-        _otPctMeta,
-        otPct.isAcceptableOrUnknown(data['ot_pct']!, _otPctMeta),
-      );
+      context.handle(_otPctMeta, otPct.isAcceptableOrUnknown(data['ot_pct']!, _otPctMeta));
     }
     if (data.containsKey('double_pct')) {
-      context.handle(
-        _doublePctMeta,
-        doublePct.isAcceptableOrUnknown(data['double_pct']!, _doublePctMeta),
-      );
+      context.handle(_doublePctMeta, doublePct.isAcceptableOrUnknown(data['double_pct']!, _doublePctMeta));
     }
     if (data.containsKey('week_starts_on')) {
-      context.handle(
-        _weekStartsOnMeta,
-        weekStartsOn.isAcceptableOrUnknown(
-          data['week_starts_on']!,
-          _weekStartsOnMeta,
-        ),
-      );
+      context.handle(_weekStartsOnMeta, weekStartsOn.isAcceptableOrUnknown(data['week_starts_on']!, _weekStartsOnMeta));
     }
     if (data.containsKey('workday_start_minute')) {
       context.handle(
         _workdayStartMinuteMeta,
-        workdayStartMinute.isAcceptableOrUnknown(
-          data['workday_start_minute']!,
-          _workdayStartMinuteMeta,
-        ),
+        workdayStartMinute.isAcceptableOrUnknown(data['workday_start_minute']!, _workdayStartMinuteMeta),
       );
     }
     if (data.containsKey('archived')) {
-      context.handle(
-        _archivedMeta,
-        archived.isAcceptableOrUnknown(data['archived']!, _archivedMeta),
-      );
+      context.handle(_archivedMeta, archived.isAcceptableOrUnknown(data['archived']!, _archivedMeta));
     }
     if (data.containsKey('created_at')) {
-      context.handle(
-        _createdAtMeta,
-        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
-      );
+      context.handle(_createdAtMeta, createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
     } else if (isInserting) {
       context.missing(_createdAtMeta);
     }
@@ -275,54 +212,21 @@ class $JobsTable extends Jobs with TableInfo<$JobsTable, Job> {
   Job map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
     return Job(
-      id: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
-        data['${effectivePrefix}id'],
-      )!,
-      name: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}name'],
-      )!,
-      rateCents: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
-        data['${effectivePrefix}rate_cents'],
-      )!,
-      dailyLimitMin: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
-        data['${effectivePrefix}daily_limit_min'],
-      ),
-      dailyDoubleMin: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
-        data['${effectivePrefix}daily_double_min'],
-      ),
-      weeklyLimitMin: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
-        data['${effectivePrefix}weekly_limit_min'],
-      ),
-      otPct: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
-        data['${effectivePrefix}ot_pct'],
-      )!,
-      doublePct: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
-        data['${effectivePrefix}double_pct'],
-      )!,
-      weekStartsOn: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
-        data['${effectivePrefix}week_starts_on'],
-      )!,
+      id: attachedDatabase.typeMapping.read(DriftSqlType.int, data['${effectivePrefix}id'])!,
+      name: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}name'])!,
+      rateCents: attachedDatabase.typeMapping.read(DriftSqlType.int, data['${effectivePrefix}rate_cents'])!,
+      dailyLimitMin: attachedDatabase.typeMapping.read(DriftSqlType.int, data['${effectivePrefix}daily_limit_min']),
+      dailyDoubleMin: attachedDatabase.typeMapping.read(DriftSqlType.int, data['${effectivePrefix}daily_double_min']),
+      weeklyLimitMin: attachedDatabase.typeMapping.read(DriftSqlType.int, data['${effectivePrefix}weekly_limit_min']),
+      otPct: attachedDatabase.typeMapping.read(DriftSqlType.int, data['${effectivePrefix}ot_pct'])!,
+      doublePct: attachedDatabase.typeMapping.read(DriftSqlType.int, data['${effectivePrefix}double_pct'])!,
+      weekStartsOn: attachedDatabase.typeMapping.read(DriftSqlType.int, data['${effectivePrefix}week_starts_on'])!,
       workdayStartMinute: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}workday_start_minute'],
       )!,
-      archived: attachedDatabase.typeMapping.read(
-        DriftSqlType.bool,
-        data['${effectivePrefix}archived'],
-      )!,
-      createdAt: attachedDatabase.typeMapping.read(
-        DriftSqlType.dateTime,
-        data['${effectivePrefix}created_at'],
-      )!,
+      archived: attachedDatabase.typeMapping.read(DriftSqlType.bool, data['${effectivePrefix}archived'])!,
+      createdAt: attachedDatabase.typeMapping.read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
     );
   }
 
@@ -388,15 +292,9 @@ class Job extends DataClass implements Insertable<Job> {
       id: Value(id),
       name: Value(name),
       rateCents: Value(rateCents),
-      dailyLimitMin: dailyLimitMin == null && nullToAbsent
-          ? const Value.absent()
-          : Value(dailyLimitMin),
-      dailyDoubleMin: dailyDoubleMin == null && nullToAbsent
-          ? const Value.absent()
-          : Value(dailyDoubleMin),
-      weeklyLimitMin: weeklyLimitMin == null && nullToAbsent
-          ? const Value.absent()
-          : Value(weeklyLimitMin),
+      dailyLimitMin: dailyLimitMin == null && nullToAbsent ? const Value.absent() : Value(dailyLimitMin),
+      dailyDoubleMin: dailyDoubleMin == null && nullToAbsent ? const Value.absent() : Value(dailyDoubleMin),
+      weeklyLimitMin: weeklyLimitMin == null && nullToAbsent ? const Value.absent() : Value(weeklyLimitMin),
       otPct: Value(otPct),
       doublePct: Value(doublePct),
       weekStartsOn: Value(weekStartsOn),
@@ -406,10 +304,7 @@ class Job extends DataClass implements Insertable<Job> {
     );
   }
 
-  factory Job.fromJson(
-    Map<String, dynamic> json, {
-    ValueSerializer? serializer,
-  }) {
+  factory Job.fromJson(Map<String, dynamic> json, {ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return Job(
       id: serializer.fromJson<int>(json['id']),
@@ -462,15 +357,9 @@ class Job extends DataClass implements Insertable<Job> {
     id: id ?? this.id,
     name: name ?? this.name,
     rateCents: rateCents ?? this.rateCents,
-    dailyLimitMin: dailyLimitMin.present
-        ? dailyLimitMin.value
-        : this.dailyLimitMin,
-    dailyDoubleMin: dailyDoubleMin.present
-        ? dailyDoubleMin.value
-        : this.dailyDoubleMin,
-    weeklyLimitMin: weeklyLimitMin.present
-        ? weeklyLimitMin.value
-        : this.weeklyLimitMin,
+    dailyLimitMin: dailyLimitMin.present ? dailyLimitMin.value : this.dailyLimitMin,
+    dailyDoubleMin: dailyDoubleMin.present ? dailyDoubleMin.value : this.dailyDoubleMin,
+    weeklyLimitMin: weeklyLimitMin.present ? weeklyLimitMin.value : this.weeklyLimitMin,
     otPct: otPct ?? this.otPct,
     doublePct: doublePct ?? this.doublePct,
     weekStartsOn: weekStartsOn ?? this.weekStartsOn,
@@ -483,23 +372,13 @@ class Job extends DataClass implements Insertable<Job> {
       id: data.id.present ? data.id.value : this.id,
       name: data.name.present ? data.name.value : this.name,
       rateCents: data.rateCents.present ? data.rateCents.value : this.rateCents,
-      dailyLimitMin: data.dailyLimitMin.present
-          ? data.dailyLimitMin.value
-          : this.dailyLimitMin,
-      dailyDoubleMin: data.dailyDoubleMin.present
-          ? data.dailyDoubleMin.value
-          : this.dailyDoubleMin,
-      weeklyLimitMin: data.weeklyLimitMin.present
-          ? data.weeklyLimitMin.value
-          : this.weeklyLimitMin,
+      dailyLimitMin: data.dailyLimitMin.present ? data.dailyLimitMin.value : this.dailyLimitMin,
+      dailyDoubleMin: data.dailyDoubleMin.present ? data.dailyDoubleMin.value : this.dailyDoubleMin,
+      weeklyLimitMin: data.weeklyLimitMin.present ? data.weeklyLimitMin.value : this.weeklyLimitMin,
       otPct: data.otPct.present ? data.otPct.value : this.otPct,
       doublePct: data.doublePct.present ? data.doublePct.value : this.doublePct,
-      weekStartsOn: data.weekStartsOn.present
-          ? data.weekStartsOn.value
-          : this.weekStartsOn,
-      workdayStartMinute: data.workdayStartMinute.present
-          ? data.workdayStartMinute.value
-          : this.workdayStartMinute,
+      weekStartsOn: data.weekStartsOn.present ? data.weekStartsOn.value : this.weekStartsOn,
+      workdayStartMinute: data.workdayStartMinute.present ? data.workdayStartMinute.value : this.workdayStartMinute,
       archived: data.archived.present ? data.archived.value : this.archived,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
     );
@@ -624,8 +503,7 @@ class JobsCompanion extends UpdateCompanion<Job> {
       if (otPct != null) 'ot_pct': otPct,
       if (doublePct != null) 'double_pct': doublePct,
       if (weekStartsOn != null) 'week_starts_on': weekStartsOn,
-      if (workdayStartMinute != null)
-        'workday_start_minute': workdayStartMinute,
+      if (workdayStartMinute != null) 'workday_start_minute': workdayStartMinute,
       if (archived != null) 'archived': archived,
       if (createdAt != null) 'created_at': createdAt,
     });
@@ -737,9 +615,7 @@ class $ShiftsTable extends Shifts with TableInfo<$ShiftsTable, Shift> {
     hasAutoIncrement: true,
     type: DriftSqlType.int,
     requiredDuringInsert: false,
-    defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'PRIMARY KEY AUTOINCREMENT',
-    ),
+    defaultConstraints: GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'),
   );
   static const VerificationMeta _jobIdMeta = const VerificationMeta('jobId');
   @override
@@ -749,9 +625,7 @@ class $ShiftsTable extends Shifts with TableInfo<$ShiftsTable, Shift> {
     false,
     type: DriftSqlType.int,
     requiredDuringInsert: true,
-    defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'REFERENCES jobs (id)',
-    ),
+    defaultConstraints: GeneratedColumn.constraintIsAlways('REFERENCES jobs (id)'),
   );
   static const VerificationMeta _startMeta = const VerificationMeta('start');
   @override
@@ -771,9 +645,7 @@ class $ShiftsTable extends Shifts with TableInfo<$ShiftsTable, Shift> {
     type: DriftSqlType.dateTime,
     requiredDuringInsert: false,
   );
-  static const VerificationMeta _unpaidBreakMinMeta = const VerificationMeta(
-    'unpaidBreakMin',
-  );
+  static const VerificationMeta _unpaidBreakMinMeta = const VerificationMeta('unpaidBreakMin');
   @override
   late final GeneratedColumn<int> unpaidBreakMin = GeneratedColumn<int>(
     'unpaid_break_min',
@@ -783,9 +655,7 @@ class $ShiftsTable extends Shifts with TableInfo<$ShiftsTable, Shift> {
     requiredDuringInsert: false,
     defaultValue: const Constant(0),
   );
-  static const VerificationMeta _rateCentsMeta = const VerificationMeta(
-    'rateCents',
-  );
+  static const VerificationMeta _rateCentsMeta = const VerificationMeta('rateCents');
   @override
   late final GeneratedColumn<int> rateCents = GeneratedColumn<int>(
     'rate_cents',
@@ -804,9 +674,7 @@ class $ShiftsTable extends Shifts with TableInfo<$ShiftsTable, Shift> {
     requiredDuringInsert: false,
     defaultValue: const Constant(''),
   );
-  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
-    'updatedAt',
-  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta('updatedAt');
   @override
   late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
     'updated_at',
@@ -816,81 +684,48 @@ class $ShiftsTable extends Shifts with TableInfo<$ShiftsTable, Shift> {
     requiredDuringInsert: true,
   );
   @override
-  List<GeneratedColumn> get $columns => [
-    id,
-    jobId,
-    start,
-    end,
-    unpaidBreakMin,
-    rateCents,
-    note,
-    updatedAt,
-  ];
+  List<GeneratedColumn> get $columns => [id, jobId, start, end, unpaidBreakMin, rateCents, note, updatedAt];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
   String get actualTableName => $name;
   static const String $name = 'shifts';
   @override
-  VerificationContext validateIntegrity(
-    Insertable<Shift> instance, {
-    bool isInserting = false,
-  }) {
+  VerificationContext validateIntegrity(Insertable<Shift> instance, {bool isInserting = false}) {
     final context = VerificationContext();
     final data = instance.toColumns(true);
     if (data.containsKey('id')) {
       context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
     }
     if (data.containsKey('job_id')) {
-      context.handle(
-        _jobIdMeta,
-        jobId.isAcceptableOrUnknown(data['job_id']!, _jobIdMeta),
-      );
+      context.handle(_jobIdMeta, jobId.isAcceptableOrUnknown(data['job_id']!, _jobIdMeta));
     } else if (isInserting) {
       context.missing(_jobIdMeta);
     }
     if (data.containsKey('start')) {
-      context.handle(
-        _startMeta,
-        start.isAcceptableOrUnknown(data['start']!, _startMeta),
-      );
+      context.handle(_startMeta, start.isAcceptableOrUnknown(data['start']!, _startMeta));
     } else if (isInserting) {
       context.missing(_startMeta);
     }
     if (data.containsKey('end')) {
-      context.handle(
-        _endMeta,
-        end.isAcceptableOrUnknown(data['end']!, _endMeta),
-      );
+      context.handle(_endMeta, end.isAcceptableOrUnknown(data['end']!, _endMeta));
     }
     if (data.containsKey('unpaid_break_min')) {
       context.handle(
         _unpaidBreakMinMeta,
-        unpaidBreakMin.isAcceptableOrUnknown(
-          data['unpaid_break_min']!,
-          _unpaidBreakMinMeta,
-        ),
+        unpaidBreakMin.isAcceptableOrUnknown(data['unpaid_break_min']!, _unpaidBreakMinMeta),
       );
     }
     if (data.containsKey('rate_cents')) {
-      context.handle(
-        _rateCentsMeta,
-        rateCents.isAcceptableOrUnknown(data['rate_cents']!, _rateCentsMeta),
-      );
+      context.handle(_rateCentsMeta, rateCents.isAcceptableOrUnknown(data['rate_cents']!, _rateCentsMeta));
     } else if (isInserting) {
       context.missing(_rateCentsMeta);
     }
     if (data.containsKey('note')) {
-      context.handle(
-        _noteMeta,
-        note.isAcceptableOrUnknown(data['note']!, _noteMeta),
-      );
+      context.handle(_noteMeta, note.isAcceptableOrUnknown(data['note']!, _noteMeta));
     }
     if (data.containsKey('updated_at')) {
-      context.handle(
-        _updatedAtMeta,
-        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
-      );
+      context.handle(_updatedAtMeta, updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta));
     } else if (isInserting) {
       context.missing(_updatedAtMeta);
     }
@@ -903,38 +738,14 @@ class $ShiftsTable extends Shifts with TableInfo<$ShiftsTable, Shift> {
   Shift map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
     return Shift(
-      id: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
-        data['${effectivePrefix}id'],
-      )!,
-      jobId: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
-        data['${effectivePrefix}job_id'],
-      )!,
-      start: attachedDatabase.typeMapping.read(
-        DriftSqlType.dateTime,
-        data['${effectivePrefix}start'],
-      )!,
-      end: attachedDatabase.typeMapping.read(
-        DriftSqlType.dateTime,
-        data['${effectivePrefix}end'],
-      ),
-      unpaidBreakMin: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
-        data['${effectivePrefix}unpaid_break_min'],
-      )!,
-      rateCents: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
-        data['${effectivePrefix}rate_cents'],
-      )!,
-      note: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}note'],
-      )!,
-      updatedAt: attachedDatabase.typeMapping.read(
-        DriftSqlType.dateTime,
-        data['${effectivePrefix}updated_at'],
-      )!,
+      id: attachedDatabase.typeMapping.read(DriftSqlType.int, data['${effectivePrefix}id'])!,
+      jobId: attachedDatabase.typeMapping.read(DriftSqlType.int, data['${effectivePrefix}job_id'])!,
+      start: attachedDatabase.typeMapping.read(DriftSqlType.dateTime, data['${effectivePrefix}start'])!,
+      end: attachedDatabase.typeMapping.read(DriftSqlType.dateTime, data['${effectivePrefix}end']),
+      unpaidBreakMin: attachedDatabase.typeMapping.read(DriftSqlType.int, data['${effectivePrefix}unpaid_break_min'])!,
+      rateCents: attachedDatabase.typeMapping.read(DriftSqlType.int, data['${effectivePrefix}rate_cents'])!,
+      note: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}note'])!,
+      updatedAt: attachedDatabase.typeMapping.read(DriftSqlType.dateTime, data['${effectivePrefix}updated_at'])!,
     );
   }
 
@@ -996,10 +807,7 @@ class Shift extends DataClass implements Insertable<Shift> {
     );
   }
 
-  factory Shift.fromJson(
-    Map<String, dynamic> json, {
-    ValueSerializer? serializer,
-  }) {
+  factory Shift.fromJson(Map<String, dynamic> json, {ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return Shift(
       id: serializer.fromJson<int>(json['id']),
@@ -1052,9 +860,7 @@ class Shift extends DataClass implements Insertable<Shift> {
       jobId: data.jobId.present ? data.jobId.value : this.jobId,
       start: data.start.present ? data.start.value : this.start,
       end: data.end.present ? data.end.value : this.end,
-      unpaidBreakMin: data.unpaidBreakMin.present
-          ? data.unpaidBreakMin.value
-          : this.unpaidBreakMin,
+      unpaidBreakMin: data.unpaidBreakMin.present ? data.unpaidBreakMin.value : this.unpaidBreakMin,
       rateCents: data.rateCents.present ? data.rateCents.value : this.rateCents,
       note: data.note.present ? data.note.value : this.note,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
@@ -1077,16 +883,7 @@ class Shift extends DataClass implements Insertable<Shift> {
   }
 
   @override
-  int get hashCode => Object.hash(
-    id,
-    jobId,
-    start,
-    end,
-    unpaidBreakMin,
-    rateCents,
-    note,
-    updatedAt,
-  );
+  int get hashCode => Object.hash(id, jobId, start, end, unpaidBreakMin, rateCents, note, updatedAt);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -1229,8 +1026,7 @@ abstract class _$HoursDb extends GeneratedDatabase {
   late final $JobsTable jobs = $JobsTable(this);
   late final $ShiftsTable shifts = $ShiftsTable(this);
   @override
-  Iterable<TableInfo<Table, Object?>> get allTables =>
-      allSchemaEntities.whereType<TableInfo<Table, Object?>>();
+  Iterable<TableInfo<Table, Object?>> get allTables => allSchemaEntities.whereType<TableInfo<Table, Object?>>();
   @override
   List<DatabaseSchemaEntity> get allSchemaEntities => [jobs, shifts];
 }
@@ -1264,16 +1060,11 @@ typedef $$JobsTableUpdateCompanionBuilder = JobsCompanion Function({
   Value<DateTime> createdAt,
 });
 
-final class $$JobsTableReferences
-    extends BaseReferences<_$HoursDb, $JobsTable, Job> {
+final class $$JobsTableReferences extends BaseReferences<_$HoursDb, $JobsTable, Job> {
   $$JobsTableReferences(super.$_db, super.$_table, super.$_typedResult);
 
-  static MultiTypedResultKey<$ShiftsTable, List<Shift>> _shiftsRefsTable(
-    _$HoursDb db,
-  ) => MultiTypedResultKey.fromTable(
-    db.shifts,
-    aliasName: 'jobs__id__shifts__job_id',
-  );
+  static MultiTypedResultKey<$ShiftsTable, List<Shift>> _shiftsRefsTable(_$HoursDb db) =>
+      MultiTypedResultKey.fromTable(db.shifts, aliasName: 'jobs__id__shifts__job_id');
 
   $$ShiftsTableProcessedTableManager get shiftsRefs {
     final manager = $$ShiftsTableTableManager(
@@ -1282,9 +1073,7 @@ final class $$JobsTableReferences
     ).filter((f) => f.jobId.id.sqlEquals($_itemColumn<int>('id')!));
 
     final cache = $_typedResult.readTableOrNull(_shiftsRefsTable($_db));
-    return ProcessedTableManager(
-      manager.$state.copyWith(prefetchedData: cache),
-    );
+    return ProcessedTableManager(manager.$state.copyWith(prefetchedData: cache));
   }
 }
 
@@ -1296,86 +1085,52 @@ class $$JobsTableFilterComposer extends Composer<_$HoursDb, $JobsTable> {
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  ColumnFilters<int> get id => $composableBuilder(
-    column: $table.id,
-    builder: (column) => ColumnFilters(column),
-  );
+  ColumnFilters<int> get id => $composableBuilder(column: $table.id, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<String> get name => $composableBuilder(
-    column: $table.name,
-    builder: (column) => ColumnFilters(column),
-  );
+  ColumnFilters<String> get name => $composableBuilder(column: $table.name, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<int> get rateCents => $composableBuilder(
-    column: $table.rateCents,
-    builder: (column) => ColumnFilters(column),
-  );
+  ColumnFilters<int> get rateCents =>
+      $composableBuilder(column: $table.rateCents, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<int> get dailyLimitMin => $composableBuilder(
-    column: $table.dailyLimitMin,
-    builder: (column) => ColumnFilters(column),
-  );
+  ColumnFilters<int> get dailyLimitMin =>
+      $composableBuilder(column: $table.dailyLimitMin, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<int> get dailyDoubleMin => $composableBuilder(
-    column: $table.dailyDoubleMin,
-    builder: (column) => ColumnFilters(column),
-  );
+  ColumnFilters<int> get dailyDoubleMin =>
+      $composableBuilder(column: $table.dailyDoubleMin, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<int> get weeklyLimitMin => $composableBuilder(
-    column: $table.weeklyLimitMin,
-    builder: (column) => ColumnFilters(column),
-  );
+  ColumnFilters<int> get weeklyLimitMin =>
+      $composableBuilder(column: $table.weeklyLimitMin, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<int> get otPct => $composableBuilder(
-    column: $table.otPct,
-    builder: (column) => ColumnFilters(column),
-  );
+  ColumnFilters<int> get otPct => $composableBuilder(column: $table.otPct, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<int> get doublePct => $composableBuilder(
-    column: $table.doublePct,
-    builder: (column) => ColumnFilters(column),
-  );
+  ColumnFilters<int> get doublePct =>
+      $composableBuilder(column: $table.doublePct, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<int> get weekStartsOn => $composableBuilder(
-    column: $table.weekStartsOn,
-    builder: (column) => ColumnFilters(column),
-  );
+  ColumnFilters<int> get weekStartsOn =>
+      $composableBuilder(column: $table.weekStartsOn, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<int> get workdayStartMinute => $composableBuilder(
-    column: $table.workdayStartMinute,
-    builder: (column) => ColumnFilters(column),
-  );
+  ColumnFilters<int> get workdayStartMinute =>
+      $composableBuilder(column: $table.workdayStartMinute, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<bool> get archived => $composableBuilder(
-    column: $table.archived,
-    builder: (column) => ColumnFilters(column),
-  );
+  ColumnFilters<bool> get archived =>
+      $composableBuilder(column: $table.archived, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<DateTime> get createdAt => $composableBuilder(
-    column: $table.createdAt,
-    builder: (column) => ColumnFilters(column),
-  );
+  ColumnFilters<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => ColumnFilters(column));
 
-  Expression<bool> shiftsRefs(
-    Expression<bool> Function($$ShiftsTableFilterComposer f) f,
-  ) {
+  Expression<bool> shiftsRefs(Expression<bool> Function($$ShiftsTableFilterComposer f) f) {
     final $$ShiftsTableFilterComposer composer = $composerBuilder(
       composer: this,
       getCurrentColumn: (t) => t.id,
       referencedTable: $db.shifts,
       getReferencedColumn: (t) => t.jobId,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$ShiftsTableFilterComposer(
+      builder: (joinBuilder, {$addJoinBuilderToRootComposer, $removeJoinBuilderFromRootComposer}) =>
+          $$ShiftsTableFilterComposer(
             $db: $db,
             $table: $db.shifts,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
+            $removeJoinBuilderFromRootComposer: $removeJoinBuilderFromRootComposer,
           ),
     );
     return f(composer);
@@ -1390,65 +1145,40 @@ class $$JobsTableOrderingComposer extends Composer<_$HoursDb, $JobsTable> {
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  ColumnOrderings<int> get id => $composableBuilder(
-    column: $table.id,
-    builder: (column) => ColumnOrderings(column),
-  );
+  ColumnOrderings<int> get id => $composableBuilder(column: $table.id, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<String> get name => $composableBuilder(
-    column: $table.name,
-    builder: (column) => ColumnOrderings(column),
-  );
+  ColumnOrderings<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<int> get rateCents => $composableBuilder(
-    column: $table.rateCents,
-    builder: (column) => ColumnOrderings(column),
-  );
+  ColumnOrderings<int> get rateCents =>
+      $composableBuilder(column: $table.rateCents, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<int> get dailyLimitMin => $composableBuilder(
-    column: $table.dailyLimitMin,
-    builder: (column) => ColumnOrderings(column),
-  );
+  ColumnOrderings<int> get dailyLimitMin =>
+      $composableBuilder(column: $table.dailyLimitMin, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<int> get dailyDoubleMin => $composableBuilder(
-    column: $table.dailyDoubleMin,
-    builder: (column) => ColumnOrderings(column),
-  );
+  ColumnOrderings<int> get dailyDoubleMin =>
+      $composableBuilder(column: $table.dailyDoubleMin, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<int> get weeklyLimitMin => $composableBuilder(
-    column: $table.weeklyLimitMin,
-    builder: (column) => ColumnOrderings(column),
-  );
+  ColumnOrderings<int> get weeklyLimitMin =>
+      $composableBuilder(column: $table.weeklyLimitMin, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<int> get otPct => $composableBuilder(
-    column: $table.otPct,
-    builder: (column) => ColumnOrderings(column),
-  );
+  ColumnOrderings<int> get otPct =>
+      $composableBuilder(column: $table.otPct, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<int> get doublePct => $composableBuilder(
-    column: $table.doublePct,
-    builder: (column) => ColumnOrderings(column),
-  );
+  ColumnOrderings<int> get doublePct =>
+      $composableBuilder(column: $table.doublePct, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<int> get weekStartsOn => $composableBuilder(
-    column: $table.weekStartsOn,
-    builder: (column) => ColumnOrderings(column),
-  );
+  ColumnOrderings<int> get weekStartsOn =>
+      $composableBuilder(column: $table.weekStartsOn, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<int> get workdayStartMinute => $composableBuilder(
-    column: $table.workdayStartMinute,
-    builder: (column) => ColumnOrderings(column),
-  );
+  ColumnOrderings<int> get workdayStartMinute =>
+      $composableBuilder(column: $table.workdayStartMinute, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<bool> get archived => $composableBuilder(
-    column: $table.archived,
-    builder: (column) => ColumnOrderings(column),
-  );
+  ColumnOrderings<bool> get archived =>
+      $composableBuilder(column: $table.archived, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
-    column: $table.createdAt,
-    builder: (column) => ColumnOrderings(column),
-  );
+  ColumnOrderings<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => ColumnOrderings(column));
 }
 
 class $$JobsTableAnnotationComposer extends Composer<_$HoursDb, $JobsTable> {
@@ -1459,72 +1189,47 @@ class $$JobsTableAnnotationComposer extends Composer<_$HoursDb, $JobsTable> {
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  GeneratedColumn<int> get id =>
-      $composableBuilder(column: $table.id, builder: (column) => column);
+  GeneratedColumn<int> get id => $composableBuilder(column: $table.id, builder: (column) => column);
 
-  GeneratedColumn<String> get name =>
-      $composableBuilder(column: $table.name, builder: (column) => column);
+  GeneratedColumn<String> get name => $composableBuilder(column: $table.name, builder: (column) => column);
 
-  GeneratedColumn<int> get rateCents =>
-      $composableBuilder(column: $table.rateCents, builder: (column) => column);
+  GeneratedColumn<int> get rateCents => $composableBuilder(column: $table.rateCents, builder: (column) => column);
 
-  GeneratedColumn<int> get dailyLimitMin => $composableBuilder(
-    column: $table.dailyLimitMin,
-    builder: (column) => column,
-  );
+  GeneratedColumn<int> get dailyLimitMin =>
+      $composableBuilder(column: $table.dailyLimitMin, builder: (column) => column);
 
-  GeneratedColumn<int> get dailyDoubleMin => $composableBuilder(
-    column: $table.dailyDoubleMin,
-    builder: (column) => column,
-  );
+  GeneratedColumn<int> get dailyDoubleMin =>
+      $composableBuilder(column: $table.dailyDoubleMin, builder: (column) => column);
 
-  GeneratedColumn<int> get weeklyLimitMin => $composableBuilder(
-    column: $table.weeklyLimitMin,
-    builder: (column) => column,
-  );
+  GeneratedColumn<int> get weeklyLimitMin =>
+      $composableBuilder(column: $table.weeklyLimitMin, builder: (column) => column);
 
-  GeneratedColumn<int> get otPct =>
-      $composableBuilder(column: $table.otPct, builder: (column) => column);
+  GeneratedColumn<int> get otPct => $composableBuilder(column: $table.otPct, builder: (column) => column);
 
-  GeneratedColumn<int> get doublePct =>
-      $composableBuilder(column: $table.doublePct, builder: (column) => column);
+  GeneratedColumn<int> get doublePct => $composableBuilder(column: $table.doublePct, builder: (column) => column);
 
-  GeneratedColumn<int> get weekStartsOn => $composableBuilder(
-    column: $table.weekStartsOn,
-    builder: (column) => column,
-  );
+  GeneratedColumn<int> get weekStartsOn => $composableBuilder(column: $table.weekStartsOn, builder: (column) => column);
 
-  GeneratedColumn<int> get workdayStartMinute => $composableBuilder(
-    column: $table.workdayStartMinute,
-    builder: (column) => column,
-  );
+  GeneratedColumn<int> get workdayStartMinute =>
+      $composableBuilder(column: $table.workdayStartMinute, builder: (column) => column);
 
-  GeneratedColumn<bool> get archived =>
-      $composableBuilder(column: $table.archived, builder: (column) => column);
+  GeneratedColumn<bool> get archived => $composableBuilder(column: $table.archived, builder: (column) => column);
 
-  GeneratedColumn<DateTime> get createdAt =>
-      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+  GeneratedColumn<DateTime> get createdAt => $composableBuilder(column: $table.createdAt, builder: (column) => column);
 
-  Expression<T> shiftsRefs<T extends Object>(
-    Expression<T> Function($$ShiftsTableAnnotationComposer a) f,
-  ) {
+  Expression<T> shiftsRefs<T extends Object>(Expression<T> Function($$ShiftsTableAnnotationComposer a) f) {
     final $$ShiftsTableAnnotationComposer composer = $composerBuilder(
       composer: this,
       getCurrentColumn: (t) => t.id,
       referencedTable: $db.shifts,
       getReferencedColumn: (t) => t.jobId,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$ShiftsTableAnnotationComposer(
+      builder: (joinBuilder, {$addJoinBuilderToRootComposer, $removeJoinBuilderFromRootComposer}) =>
+          $$ShiftsTableAnnotationComposer(
             $db: $db,
             $table: $db.shifts,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
+            $removeJoinBuilderFromRootComposer: $removeJoinBuilderFromRootComposer,
           ),
     );
     return f(composer);
@@ -1551,12 +1256,9 @@ class $$JobsTableTableManager
         TableManagerState(
           db: db,
           table: table,
-          createFilteringComposer: () =>
-              $$JobsTableFilterComposer($db: db, $table: table),
-          createOrderingComposer: () =>
-              $$JobsTableOrderingComposer($db: db, $table: table),
-          createComputedFieldComposer: () =>
-              $$JobsTableAnnotationComposer($db: db, $table: table),
+          createFilteringComposer: () => $$JobsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () => $$JobsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () => $$JobsTableAnnotationComposer($db: db, $table: table),
           updateCompanionCallback:
               ({
                 Value<int> id = const Value.absent(),
@@ -1613,14 +1315,8 @@ class $$JobsTableTableManager
                 archived: archived,
                 createdAt: createdAt,
               ),
-          withReferenceMapper: (p0) => p0
-              .map(
-                (e) => (
-                  e.readTable<$JobsTable, Job>(table),
-                  $$JobsTableReferences(db, table, e),
-                ),
-              )
-              .toList(),
+          withReferenceMapper: (p0) =>
+              p0.map((e) => (e.readTable<$JobsTable, Job>(table), $$JobsTableReferences(db, table, e))).toList(),
           prefetchHooksCallback: ({shiftsRefs = false}) {
             return PrefetchHooks(
               db: db,
@@ -1629,18 +1325,10 @@ class $$JobsTableTableManager
               getPrefetchedDataCallback: (items) async {
                 return [
                   if (shiftsRefs)
-                    await $_getPrefetchedDataByColumns<
-                      Job,
-                      $JobsTable,
-                      Shift,
-                      $ShiftsTable
-                    >(
+                    await $_getPrefetchedDataByColumns<Job, $JobsTable, Shift, $ShiftsTable>(
                       currentTable: table,
-                      referencedTable: $$JobsTableReferences._shiftsRefsTable(
-                        db,
-                      ),
-                      managerFromTypedResult: (p0) =>
-                          $$JobsTableReferences(db, table, p0).shiftsRefs,
+                      referencedTable: $$JobsTableReferences._shiftsRefsTable(db),
+                      managerFromTypedResult: (p0) => $$JobsTableReferences(db, table, p0).shiftsRefs,
                       currentColumn: 'id',
                       referencedColumn: 'job_id',
                       typedResults: items,
@@ -1688,25 +1376,18 @@ typedef $$ShiftsTableUpdateCompanionBuilder = ShiftsCompanion Function({
   Value<DateTime> updatedAt,
 });
 
-final class $$ShiftsTableReferences
-    extends BaseReferences<_$HoursDb, $ShiftsTable, Shift> {
+final class $$ShiftsTableReferences extends BaseReferences<_$HoursDb, $ShiftsTable, Shift> {
   $$ShiftsTableReferences(super.$_db, super.$_table, super.$_typedResult);
 
-  static $JobsTable _jobIdTable(_$HoursDb db) =>
-      db.jobs.createAlias('shifts__job_id__jobs__id');
+  static $JobsTable _jobIdTable(_$HoursDb db) => db.jobs.createAlias('shifts__job_id__jobs__id');
 
   $$JobsTableProcessedTableManager get jobId {
     final $_column = $_itemColumn<int>('job_id')!;
 
-    final manager = $$JobsTableTableManager(
-      $_db,
-      $_db.jobs,
-    ).filter((f) => f.id.sqlEquals($_column));
+    final manager = $$JobsTableTableManager($_db, $_db.jobs).filter((f) => f.id.sqlEquals($_column));
     final item = $_typedResult.readTableOrNull(_jobIdTable($_db));
     if (item == null) return manager;
-    return ProcessedTableManager(
-      manager.$state.copyWith(prefetchedData: [item]),
-    );
+    return ProcessedTableManager(manager.$state.copyWith(prefetchedData: [item]));
   }
 }
 
@@ -1718,40 +1399,23 @@ class $$ShiftsTableFilterComposer extends Composer<_$HoursDb, $ShiftsTable> {
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  ColumnFilters<int> get id => $composableBuilder(
-    column: $table.id,
-    builder: (column) => ColumnFilters(column),
-  );
+  ColumnFilters<int> get id => $composableBuilder(column: $table.id, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<DateTime> get start => $composableBuilder(
-    column: $table.start,
-    builder: (column) => ColumnFilters(column),
-  );
+  ColumnFilters<DateTime> get start =>
+      $composableBuilder(column: $table.start, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<DateTime> get end => $composableBuilder(
-    column: $table.end,
-    builder: (column) => ColumnFilters(column),
-  );
+  ColumnFilters<DateTime> get end => $composableBuilder(column: $table.end, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<int> get unpaidBreakMin => $composableBuilder(
-    column: $table.unpaidBreakMin,
-    builder: (column) => ColumnFilters(column),
-  );
+  ColumnFilters<int> get unpaidBreakMin =>
+      $composableBuilder(column: $table.unpaidBreakMin, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<int> get rateCents => $composableBuilder(
-    column: $table.rateCents,
-    builder: (column) => ColumnFilters(column),
-  );
+  ColumnFilters<int> get rateCents =>
+      $composableBuilder(column: $table.rateCents, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<String> get note => $composableBuilder(
-    column: $table.note,
-    builder: (column) => ColumnFilters(column),
-  );
+  ColumnFilters<String> get note => $composableBuilder(column: $table.note, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
-    column: $table.updatedAt,
-    builder: (column) => ColumnFilters(column),
-  );
+  ColumnFilters<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => ColumnFilters(column));
 
   $$JobsTableFilterComposer get jobId {
     final $$JobsTableFilterComposer composer = $composerBuilder(
@@ -1759,18 +1423,13 @@ class $$ShiftsTableFilterComposer extends Composer<_$HoursDb, $ShiftsTable> {
       getCurrentColumn: (t) => t.jobId,
       referencedTable: $db.jobs,
       getReferencedColumn: (t) => t.id,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$JobsTableFilterComposer(
+      builder: (joinBuilder, {$addJoinBuilderToRootComposer, $removeJoinBuilderFromRootComposer}) =>
+          $$JobsTableFilterComposer(
             $db: $db,
             $table: $db.jobs,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
+            $removeJoinBuilderFromRootComposer: $removeJoinBuilderFromRootComposer,
           ),
     );
     return composer;
@@ -1785,40 +1444,25 @@ class $$ShiftsTableOrderingComposer extends Composer<_$HoursDb, $ShiftsTable> {
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  ColumnOrderings<int> get id => $composableBuilder(
-    column: $table.id,
-    builder: (column) => ColumnOrderings(column),
-  );
+  ColumnOrderings<int> get id => $composableBuilder(column: $table.id, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<DateTime> get start => $composableBuilder(
-    column: $table.start,
-    builder: (column) => ColumnOrderings(column),
-  );
+  ColumnOrderings<DateTime> get start =>
+      $composableBuilder(column: $table.start, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<DateTime> get end => $composableBuilder(
-    column: $table.end,
-    builder: (column) => ColumnOrderings(column),
-  );
+  ColumnOrderings<DateTime> get end =>
+      $composableBuilder(column: $table.end, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<int> get unpaidBreakMin => $composableBuilder(
-    column: $table.unpaidBreakMin,
-    builder: (column) => ColumnOrderings(column),
-  );
+  ColumnOrderings<int> get unpaidBreakMin =>
+      $composableBuilder(column: $table.unpaidBreakMin, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<int> get rateCents => $composableBuilder(
-    column: $table.rateCents,
-    builder: (column) => ColumnOrderings(column),
-  );
+  ColumnOrderings<int> get rateCents =>
+      $composableBuilder(column: $table.rateCents, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<String> get note => $composableBuilder(
-    column: $table.note,
-    builder: (column) => ColumnOrderings(column),
-  );
+  ColumnOrderings<String> get note =>
+      $composableBuilder(column: $table.note, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
-    column: $table.updatedAt,
-    builder: (column) => ColumnOrderings(column),
-  );
+  ColumnOrderings<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => ColumnOrderings(column));
 
   $$JobsTableOrderingComposer get jobId {
     final $$JobsTableOrderingComposer composer = $composerBuilder(
@@ -1826,26 +1470,20 @@ class $$ShiftsTableOrderingComposer extends Composer<_$HoursDb, $ShiftsTable> {
       getCurrentColumn: (t) => t.jobId,
       referencedTable: $db.jobs,
       getReferencedColumn: (t) => t.id,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$JobsTableOrderingComposer(
+      builder: (joinBuilder, {$addJoinBuilderToRootComposer, $removeJoinBuilderFromRootComposer}) =>
+          $$JobsTableOrderingComposer(
             $db: $db,
             $table: $db.jobs,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
+            $removeJoinBuilderFromRootComposer: $removeJoinBuilderFromRootComposer,
           ),
     );
     return composer;
   }
 }
 
-class $$ShiftsTableAnnotationComposer
-    extends Composer<_$HoursDb, $ShiftsTable> {
+class $$ShiftsTableAnnotationComposer extends Composer<_$HoursDb, $ShiftsTable> {
   $$ShiftsTableAnnotationComposer({
     required super.$db,
     required super.$table,
@@ -1853,28 +1491,20 @@ class $$ShiftsTableAnnotationComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  GeneratedColumn<int> get id =>
-      $composableBuilder(column: $table.id, builder: (column) => column);
+  GeneratedColumn<int> get id => $composableBuilder(column: $table.id, builder: (column) => column);
 
-  GeneratedColumn<DateTime> get start =>
-      $composableBuilder(column: $table.start, builder: (column) => column);
+  GeneratedColumn<DateTime> get start => $composableBuilder(column: $table.start, builder: (column) => column);
 
-  GeneratedColumn<DateTime> get end =>
-      $composableBuilder(column: $table.end, builder: (column) => column);
+  GeneratedColumn<DateTime> get end => $composableBuilder(column: $table.end, builder: (column) => column);
 
-  GeneratedColumn<int> get unpaidBreakMin => $composableBuilder(
-    column: $table.unpaidBreakMin,
-    builder: (column) => column,
-  );
+  GeneratedColumn<int> get unpaidBreakMin =>
+      $composableBuilder(column: $table.unpaidBreakMin, builder: (column) => column);
 
-  GeneratedColumn<int> get rateCents =>
-      $composableBuilder(column: $table.rateCents, builder: (column) => column);
+  GeneratedColumn<int> get rateCents => $composableBuilder(column: $table.rateCents, builder: (column) => column);
 
-  GeneratedColumn<String> get note =>
-      $composableBuilder(column: $table.note, builder: (column) => column);
+  GeneratedColumn<String> get note => $composableBuilder(column: $table.note, builder: (column) => column);
 
-  GeneratedColumn<DateTime> get updatedAt =>
-      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+  GeneratedColumn<DateTime> get updatedAt => $composableBuilder(column: $table.updatedAt, builder: (column) => column);
 
   $$JobsTableAnnotationComposer get jobId {
     final $$JobsTableAnnotationComposer composer = $composerBuilder(
@@ -1882,18 +1512,13 @@ class $$ShiftsTableAnnotationComposer
       getCurrentColumn: (t) => t.jobId,
       referencedTable: $db.jobs,
       getReferencedColumn: (t) => t.id,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$JobsTableAnnotationComposer(
+      builder: (joinBuilder, {$addJoinBuilderToRootComposer, $removeJoinBuilderFromRootComposer}) =>
+          $$JobsTableAnnotationComposer(
             $db: $db,
             $table: $db.jobs,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
+            $removeJoinBuilderFromRootComposer: $removeJoinBuilderFromRootComposer,
           ),
     );
     return composer;
@@ -1920,12 +1545,9 @@ class $$ShiftsTableTableManager
         TableManagerState(
           db: db,
           table: table,
-          createFilteringComposer: () =>
-              $$ShiftsTableFilterComposer($db: db, $table: table),
-          createOrderingComposer: () =>
-              $$ShiftsTableOrderingComposer($db: db, $table: table),
-          createComputedFieldComposer: () =>
-              $$ShiftsTableAnnotationComposer($db: db, $table: table),
+          createFilteringComposer: () => $$ShiftsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () => $$ShiftsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () => $$ShiftsTableAnnotationComposer($db: db, $table: table),
           updateCompanionCallback:
               ({
                 Value<int> id = const Value.absent(),
@@ -1966,14 +1588,8 @@ class $$ShiftsTableTableManager
                 note: note,
                 updatedAt: updatedAt,
               ),
-          withReferenceMapper: (p0) => p0
-              .map(
-                (e) => (
-                  e.readTable<$ShiftsTable, Shift>(table),
-                  $$ShiftsTableReferences(db, table, e),
-                ),
-              )
-              .toList(),
+          withReferenceMapper: (p0) =>
+              p0.map((e) => (e.readTable<$ShiftsTable, Shift>(table), $$ShiftsTableReferences(db, table, e))).toList(),
           prefetchHooksCallback: ({jobId = false}) {
             return PrefetchHooks(
               db: db,
@@ -1998,12 +1614,8 @@ class $$ShiftsTableTableManager
                       state = state.withJoin(
                         currentTable: table,
                         currentColumn: table.jobId,
-                        referencedTable: $$ShiftsTableReferences._jobIdTable(
-                          db,
-                        ),
-                        referencedColumn: $$ShiftsTableReferences
-                            ._jobIdTable(db)
-                            .id,
+                        referencedTable: $$ShiftsTableReferences._jobIdTable(db),
+                        referencedColumn: $$ShiftsTableReferences._jobIdTable(db).id,
                       ) as T;
                     }
 
@@ -2037,6 +1649,5 @@ class $HoursDbManager {
   final _$HoursDb _db;
   $HoursDbManager(this._db);
   $$JobsTableTableManager get jobs => $$JobsTableTableManager(_db, _db.jobs);
-  $$ShiftsTableTableManager get shifts =>
-      $$ShiftsTableTableManager(_db, _db.shifts);
+  $$ShiftsTableTableManager get shifts => $$ShiftsTableTableManager(_db, _db.shifts);
 }

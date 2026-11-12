@@ -38,7 +38,9 @@ class _JobEditScreenState extends ConsumerState<JobEditScreen> {
     _ot = TextEditingController(text: ((j?.otPct ?? 150) / 100).toString());
     _dt = TextEditingController(text: ((j?.doublePct ?? 200) / 100).toString());
     final ws = j?.workdayStartMinute ?? 0;
-    _workdayStart = TextEditingController(text: '${(ws ~/ 60).toString().padLeft(2, '0')}:${(ws % 60).toString().padLeft(2, '0')}');
+    _workdayStart = TextEditingController(
+      text: '${(ws ~/ 60).toString().padLeft(2, '0')}:${(ws % 60).toString().padLeft(2, '0')}',
+    );
     _weekStart = j?.weekStartsOn ?? DateTime.monday;
   }
 
@@ -85,120 +87,125 @@ class _JobEditScreenState extends ConsumerState<JobEditScreen> {
       ),
       body: Form(
         key: _form,
-        child: ListView(padding: const EdgeInsets.all(16), children: [
-          TextFormField(
-            key: const Key('job-name'),
-            controller: _name,
-            decoration: const InputDecoration(labelText: 'Job name'),
-            validator: (v) => (v ?? '').trim().isEmpty ? 'Give the job a name' : null,
-          ),
-          const SizedBox(height: 12),
-          TextFormField(
-            key: const Key('job-rate'),
-            controller: _rate,
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            decoration: const InputDecoration(labelText: 'Hourly rate'),
-            validator: (v) => Money.parse(v ?? '') == null ? 'An amount like 18.50' : null,
-          ),
-          const SizedBox(height: 16),
-          Text('Overtime rules', style: Theme.of(context).textTheme.titleMedium),
-          SwitchListTile(
-            key: const Key('job-use-daily'),
-            title: const Text('Daily overtime'),
-            value: _useDaily,
-            onChanged: (v) => setState(() => _useDaily = v),
-          ),
-          if (_useDaily)
+        child: ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
             TextFormField(
-              key: const Key('job-daily'),
-              controller: _daily,
-              decoration: const InputDecoration(labelText: 'Overtime after this many hours in a day'),
-              validator: hoursValidator,
+              key: const Key('job-name'),
+              controller: _name,
+              decoration: const InputDecoration(labelText: 'Job name'),
+              validator: (v) => (v ?? '').trim().isEmpty ? 'Give the job a name' : null,
             ),
-          SwitchListTile(
-            key: const Key('job-use-double'),
-            title: const Text('Daily double time'),
-            value: _useDouble,
-            onChanged: (v) => setState(() => _useDouble = v),
-          ),
-          if (_useDouble)
+            const SizedBox(height: 12),
             TextFormField(
-              key: const Key('job-double'),
-              controller: _double,
-              decoration: const InputDecoration(labelText: 'Double time after this many hours in a day'),
-              validator: (v) {
-                final e = hoursValidator(v);
-                if (e != null) return e;
-                if (_useDaily && (_hoursToMin(v!) ?? 0) <= (_hoursToMin(_daily.text) ?? 0)) {
-                  return 'Has to be more than the overtime hours';
-                }
-                return null;
-              },
+              key: const Key('job-rate'),
+              controller: _rate,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              decoration: const InputDecoration(labelText: 'Hourly rate'),
+              validator: (v) => Money.parse(v ?? '') == null ? 'An amount like 18.50' : null,
             ),
-          SwitchListTile(
-            key: const Key('job-use-weekly'),
-            title: const Text('Weekly overtime'),
-            value: _useWeekly,
-            onChanged: (v) => setState(() => _useWeekly = v),
-          ),
-          if (_useWeekly)
-            TextFormField(
-              key: const Key('job-weekly'),
-              controller: _weekly,
-              decoration: const InputDecoration(labelText: 'Overtime after this many regular hours in a week'),
-              validator: hoursValidator,
+            const SizedBox(height: 16),
+            Text('Overtime rules', style: Theme.of(context).textTheme.titleMedium),
+            SwitchListTile(
+              key: const Key('job-use-daily'),
+              title: const Text('Daily overtime'),
+              value: _useDaily,
+              onChanged: (v) => setState(() => _useDaily = v),
             ),
-          const SizedBox(height: 12),
-          Row(children: [
-            Expanded(
-              child: TextFormField(
-                key: const Key('job-ot-mult'),
-                controller: _ot,
-                decoration: const InputDecoration(labelText: 'Overtime multiplier'),
-                validator: (v) => _pct(v ?? '') == null ? 'e.g. 1.5' : null,
+            if (_useDaily)
+              TextFormField(
+                key: const Key('job-daily'),
+                controller: _daily,
+                decoration: const InputDecoration(labelText: 'Overtime after this many hours in a day'),
+                validator: hoursValidator,
               ),
+            SwitchListTile(
+              key: const Key('job-use-double'),
+              title: const Text('Daily double time'),
+              value: _useDouble,
+              onChanged: (v) => setState(() => _useDouble = v),
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: TextFormField(
-                key: const Key('job-dt-mult'),
-                controller: _dt,
-                decoration: const InputDecoration(labelText: 'Double time multiplier'),
-                validator: (v) => _pct(v ?? '') == null ? 'e.g. 2' : null,
+            if (_useDouble)
+              TextFormField(
+                key: const Key('job-double'),
+                controller: _double,
+                decoration: const InputDecoration(labelText: 'Double time after this many hours in a day'),
+                validator: (v) {
+                  final e = hoursValidator(v);
+                  if (e != null) return e;
+                  if (_useDaily && (_hoursToMin(v!) ?? 0) <= (_hoursToMin(_daily.text) ?? 0)) {
+                    return 'Has to be more than the overtime hours';
+                  }
+                  return null;
+                },
               ),
+            SwitchListTile(
+              key: const Key('job-use-weekly'),
+              title: const Text('Weekly overtime'),
+              value: _useWeekly,
+              onChanged: (v) => setState(() => _useWeekly = v),
             ),
-          ]),
-          const SizedBox(height: 12),
-          DropdownButtonFormField<int>(
-            key: const Key('job-week-start'),
-            initialValue: _weekStart,
-            decoration: const InputDecoration(labelText: 'Work week starts on'),
-            items: const [
-              DropdownMenuItem(value: DateTime.monday, child: Text('Monday')),
-              DropdownMenuItem(value: DateTime.sunday, child: Text('Sunday')),
-              DropdownMenuItem(value: DateTime.saturday, child: Text('Saturday')),
-            ],
-            onChanged: (v) => setState(() => _weekStart = v ?? DateTime.monday),
-          ),
-          const SizedBox(height: 12),
-          TextFormField(
-            key: const Key('job-workday-start'),
-            controller: _workdayStart,
-            decoration: const InputDecoration(
-              labelText: 'Workday starts at',
-              helperText: 'Night shift? Set 04:00 so a 2 am start counts toward the day before.',
+            if (_useWeekly)
+              TextFormField(
+                key: const Key('job-weekly'),
+                controller: _weekly,
+                decoration: const InputDecoration(labelText: 'Overtime after this many regular hours in a week'),
+                validator: hoursValidator,
+              ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: TextFormField(
+                    key: const Key('job-ot-mult'),
+                    controller: _ot,
+                    decoration: const InputDecoration(labelText: 'Overtime multiplier'),
+                    validator: (v) => _pct(v ?? '') == null ? 'e.g. 1.5' : null,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: TextFormField(
+                    key: const Key('job-dt-mult'),
+                    controller: _dt,
+                    decoration: const InputDecoration(labelText: 'Double time multiplier'),
+                    validator: (v) => _pct(v ?? '') == null ? 'e.g. 2' : null,
+                  ),
+                ),
+              ],
             ),
-            validator: (v) => parseTimeOfDay(v ?? '') == null ? 'A time like 04:00' : null,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'A shift counts toward the workday it starts in. Hours already paid as daily overtime '
-            'do not count again toward the weekly limit. Seventh-day rules are not supported yet.',
-            style: Theme.of(context).textTheme.bodySmall,
-          ),
-          const SizedBox(height: 20),
-          FilledButton(key: const Key('save-job-bottom'), onPressed: _save, child: const Text('Save job')),
-        ]),
+            const SizedBox(height: 12),
+            DropdownButtonFormField<int>(
+              key: const Key('job-week-start'),
+              initialValue: _weekStart,
+              decoration: const InputDecoration(labelText: 'Work week starts on'),
+              items: const [
+                DropdownMenuItem(value: DateTime.monday, child: Text('Monday')),
+                DropdownMenuItem(value: DateTime.sunday, child: Text('Sunday')),
+                DropdownMenuItem(value: DateTime.saturday, child: Text('Saturday')),
+              ],
+              onChanged: (v) => setState(() => _weekStart = v ?? DateTime.monday),
+            ),
+            const SizedBox(height: 12),
+            TextFormField(
+              key: const Key('job-workday-start'),
+              controller: _workdayStart,
+              decoration: const InputDecoration(
+                labelText: 'Workday starts at',
+                helperText: 'Night shift? Set 04:00 so a 2 am start counts toward the day before.',
+              ),
+              validator: (v) => parseTimeOfDay(v ?? '') == null ? 'A time like 04:00' : null,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'A shift counts toward the workday it starts in. Hours already paid as daily overtime '
+              'do not count again toward the weekly limit. Seventh-day rules are not supported yet.',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+            const SizedBox(height: 20),
+            FilledButton(key: const Key('save-job-bottom'), onPressed: _save, child: const Text('Save job')),
+          ],
+        ),
       ),
     );
   }

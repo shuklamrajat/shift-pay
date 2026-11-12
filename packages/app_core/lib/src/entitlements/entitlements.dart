@@ -50,9 +50,9 @@ class LocalEntitlementService implements EntitlementService {
 
   @override
   Future<List<ProOffer>> offers() async => const [
-        ProOffer(id: 'pro_annual', title: 'Pro yearly', priceLabel: '\$19.99 / year', note: '7-day free trial'),
-        ProOffer(id: 'pro_lifetime', title: 'Pro lifetime', priceLabel: '\$39.99 once'),
-      ];
+    ProOffer(id: 'pro_annual', title: 'Pro yearly', priceLabel: '\$19.99 / year', note: '7-day free trial'),
+    ProOffer(id: 'pro_lifetime', title: 'Pro lifetime', priceLabel: '\$39.99 once'),
+  ];
 
   @override
   Future<PurchaseOutcome> purchase(ProOffer offer) async {
@@ -83,5 +83,4 @@ final isProProvider = StreamProvider<bool>((ref) => ref.watch(entitlementService
 
 /// Synchronous read for gating decisions; falls back to the service value
 /// while the stream warms up.
-bool isProNow(WidgetRef ref) =>
-    ref.read(isProProvider).value ?? ref.read(entitlementServiceProvider).isPro;
+bool isProNow(WidgetRef ref) => ref.read(isProProvider).value ?? ref.read(entitlementServiceProvider).isPro;

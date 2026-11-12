@@ -23,7 +23,11 @@ class DateField extends StatelessWidget {
           onPressed: () async {
             final initial = parseIsoDate(controller.text) ?? DateTime.now();
             final d = await showDatePicker(
-                context: context, initialDate: initial, firstDate: DateTime(2000), lastDate: DateTime(2100));
+              context: context,
+              initialDate: initial,
+              firstDate: DateTime(2000),
+              lastDate: DateTime(2100),
+            );
             if (d != null) controller.text = isoDate(d);
           },
         ),
@@ -54,7 +58,10 @@ class TimeField extends StatelessWidget {
           icon: const Icon(Icons.access_time),
           onPressed: () async {
             final m = parseTimeOfDay(controller.text) ?? 9 * 60;
-            final t = await showTimePicker(context: context, initialTime: TimeOfDay(hour: m ~/ 60, minute: m % 60));
+            final t = await showTimePicker(
+              context: context,
+              initialTime: TimeOfDay(hour: m ~/ 60, minute: m % 60),
+            );
             if (t != null) {
               controller.text = '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
             }

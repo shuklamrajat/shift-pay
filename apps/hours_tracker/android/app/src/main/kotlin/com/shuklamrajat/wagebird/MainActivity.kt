@@ -1,4 +1,4 @@
-package com.placeholder.hours_tracker
+package com.shuklamrajat.wagebird
 
 import io.flutter.embedding.android.FlutterActivity
 

@@ -16,14 +16,14 @@ final hoursDbProvider = Provider<HoursDb>((ref) {
 final repositoryProvider = Provider<HoursRepository>((ref) => HoursRepository(ref.watch(hoursDbProvider)));
 
 PayRules rulesFor(Job j) => PayRules(
-      dailyRegularLimitMin: j.dailyLimitMin,
-      dailyDoubleLimitMin: j.dailyDoubleMin,
-      weeklyRegularLimitMin: j.weeklyLimitMin,
-      otMultiplierPct: j.otPct,
-      doubleMultiplierPct: j.doublePct,
-      weekStartsOn: j.weekStartsOn,
-      workdayStartMinute: j.workdayStartMinute,
-    );
+  dailyRegularLimitMin: j.dailyLimitMin,
+  dailyDoubleLimitMin: j.dailyDoubleMin,
+  weeklyRegularLimitMin: j.weeklyLimitMin,
+  otMultiplierPct: j.otPct,
+  doubleMultiplierPct: j.doublePct,
+  weekStartsOn: j.weekStartsOn,
+  workdayStartMinute: j.workdayStartMinute,
+);
 
 DateTime truncateToMinute(DateTime d) => DateTime(d.year, d.month, d.day, d.hour, d.minute);
 
@@ -40,7 +40,9 @@ class HoursRepository {
   final HoursDb db;
 
   Stream<List<Job>> watchJobs() =>
-      (db.select(db.jobs)..where((j) => j.archived.equals(false))..orderBy([(j) => OrderingTerm(expression: j.id)]))
+      (db.select(db.jobs)
+            ..where((j) => j.archived.equals(false))
+            ..orderBy([(j) => OrderingTerm(expression: j.id)]))
           .watch();
 
   Future<Job> job(int id) => (db.select(db.jobs)..where((j) => j.id.equals(id))).getSingle();
@@ -57,14 +59,20 @@ class HoursRepository {
       (db.update(db.jobs)..where((j) => j.id.equals(id))).write(const JobsCompanion(archived: Value(true)));
 
   Stream<Shift?> watchOpenShift() =>
-      (db.select(db.shifts)..where((s) => s.end.isNull())..limit(1)).watchSingleOrNull();
+      (db.select(db.shifts)
+            ..where((s) => s.end.isNull())
+            ..limit(1))
+          .watchSingleOrNull();
 
   /// Shifts of a job whose start falls in [from, toExclusive), open ones included.
-  Stream<List<Shift>> watchShifts(int jobId, DateTime from, DateTime toExclusive) => (db.select(db.shifts)
-        ..where((s) =>
-            s.jobId.equals(jobId) & s.start.isBiggerOrEqualValue(from) & s.start.isSmallerThanValue(toExclusive))
-        ..orderBy([(s) => OrderingTerm(expression: s.start)]))
-      .watch();
+  Stream<List<Shift>> watchShifts(int jobId, DateTime from, DateTime toExclusive) =>
+      (db.select(db.shifts)
+            ..where(
+              (s) =>
+                  s.jobId.equals(jobId) & s.start.isBiggerOrEqualValue(from) & s.start.isSmallerThanValue(toExclusive),
+            )
+            ..orderBy([(s) => OrderingTerm(expression: s.start)]))
+          .watch();
 
   /// Pay for the workdays in [from, toExclusive), computed on whole weeks.
   Stream<(PayResult, PaySummary)> watchPay(Job job, DateTime from, DateTime toExclusive) {
@@ -78,7 +86,12 @@ class HoursRepository {
         for (final s in rows)
           if (s.end != null)
             ShiftInput(
-                id: '${s.id}', start: s.start, end: s.end!, unpaidBreakMin: s.unpaidBreakMin, rateCents: s.rateCents),
+              id: '${s.id}',
+              start: s.start,
+              end: s.end!,
+              unpaidBreakMin: s.unpaidBreakMin,
+              rateCents: s.rateCents,
+            ),
       ];
       final result = computePay(closed, rules);
       return (result, summarize(result, from: from, toExclusive: toExclusive));
@@ -107,12 +120,14 @@ class HoursRepository {
     }
     // Overlap check against neighbours within a day either side.
     final effectiveEnd = end ?? start.add(const Duration(minutes: 1));
-    final near = await (db.select(db.shifts)
-          ..where((s) =>
-              s.jobId.equals(jobId) &
-              s.start.isBiggerOrEqualValue(start.subtract(const Duration(hours: 25))) &
-              s.start.isSmallerThanValue(effectiveEnd)))
-        .get();
+    final near =
+        await (db.select(db.shifts)..where(
+              (s) =>
+                  s.jobId.equals(jobId) &
+                  s.start.isBiggerOrEqualValue(start.subtract(const Duration(hours: 25))) &
+                  s.start.isSmallerThanValue(effectiveEnd),
+            ))
+            .get();
     final clash = findOverlap(
       [for (final s in near) (id: '${s.id}', start: s.start, end: s.end ?? DateTime(9999))],
       start,
@@ -202,4 +217,5 @@ final payProvider = StreamProvider.family<(PayResult, PaySummary), PayKey>((ref,
 });
 
 final weekShiftsProvider = StreamProvider.family<List<Shift>, PayKey>(
-    (ref, key) => ref.watch(repositoryProvider).watchShifts(key.jobId, key.from, key.toExclusive));
+  (ref, key) => ref.watch(repositoryProvider).watchShifts(key.jobId, key.from, key.toExclusive),
+);

@@ -69,9 +69,8 @@ class RatingPrompter {
 
   int get completedTasks => _prefs.getInt(_kTasks) ?? 0;
 
-  List<DateTime> get asks => (_prefs.getStringList(_kAsks) ?? const [])
-      .map((s) => DateTime.fromMillisecondsSinceEpoch(int.parse(s)))
-      .toList();
+  List<DateTime> get asks =>
+      (_prefs.getStringList(_kAsks) ?? const []).map((s) => DateTime.fromMillisecondsSinceEpoch(int.parse(s))).toList();
 
   /// Call once each time the person completes a meaningful task.
   /// Returns true when the review sheet was requested.
@@ -80,21 +79,24 @@ class RatingPrompter {
     await _prefs.setInt(_kTasks, tasks);
     final now = _clock();
     final previous = asks;
-    if (!_policy.shouldAsk(
-        now: now, installedAt: _installedAt, completedTasks: tasks, previousAsks: previous)) {
+    if (!_policy.shouldAsk(now: now, installedAt: _installedAt, completedTasks: tasks, previousAsks: previous)) {
       return false;
     }
-    await _prefs.setStringList(
-        _kAsks, [...previous.map((d) => '${d.millisecondsSinceEpoch}'), '${now.millisecondsSinceEpoch}']);
+    await _prefs.setStringList(_kAsks, [
+      ...previous.map((d) => '${d.millisecondsSinceEpoch}'),
+      '${now.millisecondsSinceEpoch}',
+    ]);
     await _requester.request();
     return true;
   }
 }
 
-final ratingPrompterProvider = Provider<RatingPrompter>((ref) => RatingPrompter(
-      ref.watch(sharedPrefsProvider),
-      ref.watch(reviewRequesterProvider),
-      ref.watch(ratingPolicyProvider),
-      ref.watch(clockProvider),
-      ref.read(coreSettingsProvider).firstOpenedAt,
-    ));
+final ratingPrompterProvider = Provider<RatingPrompter>(
+  (ref) => RatingPrompter(
+    ref.watch(sharedPrefsProvider),
+    ref.watch(reviewRequesterProvider),
+    ref.watch(ratingPolicyProvider),
+    ref.watch(clockProvider),
+    ref.read(coreSettingsProvider).firstOpenedAt,
+  ),
+);

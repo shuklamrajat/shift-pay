@@ -27,6 +27,7 @@
 //   Bar job ($15, same rules) Mon 2 Nov 20:00-23:30 = 3.5 h = $52.50; it must
 //   not push the warehouse Monday into overtime.
 import 'dart:io';
+import 'dart:ui' as ui;
 
 import 'package:app_core/app_core.dart';
 import 'package:app_core/testing.dart';
@@ -34,6 +35,7 @@ import 'package:drift/drift.dart' show Variable;
 import 'package:drift/native.dart';
 import 'package:e2e_driver/e2e_driver.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hours_tracker/src/app.dart';
@@ -54,6 +56,12 @@ void main() {
     );
 
     WidgetController.hitTestWarningShouldBeFatal = true;
+    // Endless decorative loops would keep pumpAndSettle from ever settling;
+    // one-shot entrance animations, charts and count-ups still run.
+    Motion.ambient = false;
+    addTearDown(() => Motion.ambient = true);
+    addTearDown(tester.platformDispatcher.clearAccessibilityFeaturesTestValue);
+    final semantics = tester.ensureSemantics();
     final log = E2eLog('hours_tracker: two weeks, split/overnight/DST shifts, two jobs', artifactRoot);
     final tmp = await Directory.systemTemp.createTemp('hours_e2e');
     final prefs = await SharedPreferences.getInstance();
@@ -64,21 +72,20 @@ void main() {
     final reviews = RecordingReviewRequester();
     final shots = StoreShots(tester)..usePhoneSize();
 
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          sharedPrefsProvider.overrideWithValue(prefs),
-          appConfigProvider.overrideWithValue(hoursConfig),
-          hoursDbProvider.overrideWithValue(db),
-          clockProvider.overrideWithValue(clock.call),
-          fileSharerProvider.overrideWithValue(sharer),
-          exportDirProvider.overrideWithValue(() async => tmp),
-          reviewRequesterProvider.overrideWithValue(reviews),
-          entitlementServiceProvider.overrideWithValue(LocalEntitlementService(prefs, allowDebugPurchase: true)),
-        ],
-        child: const HoursApp(),
-      ),
+    Widget app() => ProviderScope(
+      overrides: [
+        sharedPrefsProvider.overrideWithValue(prefs),
+        appConfigProvider.overrideWithValue(hoursConfig),
+        hoursDbProvider.overrideWithValue(db),
+        clockProvider.overrideWithValue(clock.call),
+        fileSharerProvider.overrideWithValue(sharer),
+        exportDirProvider.overrideWithValue(() async => tmp),
+        reviewRequesterProvider.overrideWithValue(reviews),
+        entitlementServiceProvider.overrideWithValue(LocalEntitlementService(prefs, allowDebugPurchase: true)),
+      ],
+      child: const HoursApp(),
     );
+    await tester.pumpWidget(app());
     await tester.pumpAndSettle();
 
     // Saving goes through real file I/O, which pumpAndSettle does not wait
@@ -136,9 +143,52 @@ void main() {
       return tester.widget<Text>(f).data!;
     }
 
+    String spoken(String k) => tester.getSemantics(find.byKey(Key(k))).label;
+
+    // Raw pixels of one widget as it is on screen now.
+    Future<List<int>> pixelsOf(Finder f) async {
+      final box = tester.renderObject<RenderBox>(f);
+      final r = box.localToGlobal(Offset.zero) & box.size;
+      final dpr = tester.view.devicePixelRatio;
+      final layer = tester.binding.renderViews.first.debugLayer! as OffsetLayer;
+      final img = await layer.toImage(
+        Rect.fromLTWH(r.left * dpr, r.top * dpr, r.width * dpr, r.height * dpr),
+        pixelRatio: 1,
+      );
+      final bytes = await img.toByteData(format: ui.ImageByteFormat.rawRgba);
+      return bytes!.buffer.asUint8List();
+    }
+
+    // Steps to the previous week and stops on the very first frame that
+    // shows its hours. Returns whether the chart on that frame already
+    // looks the way it does once everything has come to rest.
+    Future<({bool chartAtRest, bool rollingNumber})> previousWeekFirstFrame(String hours) async {
+      await tester.tap(find.byKey(const Key('week-prev')));
+      final end = DateTime.now().add(const Duration(seconds: 15));
+      final f = find.byKey(const Key('week-hours'));
+      while (f.evaluate().isEmpty || tester.widget<Text>(f).data != hours) {
+        if (DateTime.now().isAfter(end)) throw StateError('week with $hours did not show');
+        await Future<void>.delayed(const Duration(milliseconds: 10));
+        await tester.pump();
+      }
+      final first = await pixelsOf(find.byKey(const Key('week-chart')));
+      final rolling = find
+          .descendant(of: find.byType(CountUpText), matching: find.byType(ExcludeSemantics))
+          .evaluate()
+          .isNotEmpty;
+      await tester.pumpAndSettle();
+      final rest = await pixelsOf(find.byKey(const Key('week-chart')));
+      var same = first.length == rest.length;
+      for (var i = 0; same && i < first.length; i++) {
+        same = first[i] == rest[i];
+      }
+      return (chartAtRest: same, rollingNumber: rolling);
+    }
+
     try {
       // Onboarding: three pages.
       expect(find.byKey(const Key('onboarding')), findsOneWidget);
+      await shots.take('0_welcome');
       await tapKey('onboarding-next');
       await tapKey('onboarding-next');
       await tapKey('onboarding-next');
@@ -201,6 +251,14 @@ void main() {
       log.check('Friday end edited to 17:00', DateTime(2026, 11, 6, 17), friAfter.end);
       log.check('week of 2 Nov pay on Week tab', r'$1,235.00', await textOf('week-pay'));
       log.check('week of 2 Nov double time on Week tab', '1h 30m', await textOf('week-dt'));
+      // The day chart, as a screen reader hears it, against the hand-worked
+      // split at the top of this file.
+      log.check(
+        'week of 2 Nov day chart (screen reader)',
+        'Hours by day. Mon 9h, 1h overtime. Tue 8h 30m, 30m overtime. Wed 5h. '
+            'Thu 13h 30m, 4h overtime, 1h 30m double time. Fri 8h. Sat 6h, 3h overtime. Sun 4h, 4h overtime.',
+        spoken('week-chart'),
+      );
       await shots.take('1_week');
       await tapKey('week-next');
 
@@ -218,6 +276,11 @@ void main() {
       await waitFor(find.byKey(const Key('clock-in')));
       log.check('this week hours after clock out', '8h 15m', await textOf('week-hours'));
       log.check('this week pay after clock out', r'$165.00', await textOf('week-pay'));
+      log.check(
+        'this week day chart after clock out',
+        'Hours by day. Mon 4h. Tue 4h 15m. Wed no shifts. Thu no shifts. Fri no shifts. Sat no shifts. Sun no shifts.',
+        spoken('week-chart'),
+      );
 
       log.check('no review prompt in the first two days', 0, reviews.requests);
 
@@ -227,8 +290,39 @@ void main() {
       await waitFor(find.byKey(const Key('offer-pro_lifetime')));
       log.check('paywall shown for a second job', 1, find.byKey(const Key('paywall')).evaluate().length);
       await shots.take('3_pro');
-      await tapKey('offer-pro_lifetime');
-      await waitFor(find.byKey(const Key('job-name')));
+      // Buying Pro sets off confetti. It falls over the next screen and must
+      // not get in the way of using it.
+      await reveal(find.byKey(const Key('offer-pro_lifetime')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('offer-pro_lifetime')));
+      var sawConfetti = false;
+      final confettiEnd = DateTime.now().add(const Duration(seconds: 15));
+      final jobName = find.byKey(const Key('job-name'));
+      bool formSettled() =>
+          jobName.evaluate().isNotEmpty &&
+          ModalRoute.of(tester.element(jobName))!.animation!.status == AnimationStatus.completed;
+      while (!formSettled()) {
+        if (DateTime.now().isAfter(confettiEnd)) throw StateError('job form did not open after purchase');
+        await Future<void>.delayed(const Duration(milliseconds: 10));
+        await tester.pump();
+        sawConfetti |= find.byKey(const Key('celebration')).evaluate().isNotEmpty;
+      }
+      final confettiOverForm = find.byKey(const Key('celebration')).evaluate().isNotEmpty;
+      log.inputs['confetti_over_job_form_when_tapped'] = confettiOverForm;
+      log.check('confetti plays after buying Pro', true, sawConfetti);
+      // A swallowed tap would fail the run (hit-test warnings are fatal).
+      await tester.tap(jobName);
+      await tester.pump();
+      log.check(
+        'job name field takes a tap while confetti falls',
+        true,
+        tester
+            .widget<EditableText>(find.descendant(of: jobName, matching: find.byType(EditableText)))
+            .focusNode
+            .hasFocus,
+      );
+      await tester.pumpAndSettle();
+      log.check('confetti cleared once landed', 0, find.byKey(const Key('celebration')).evaluate().length);
       await type('job-name', 'Bar');
       await type('job-rate', '15.00');
       await tapKey('job-use-double');
@@ -258,6 +352,11 @@ void main() {
       log.check('Warehouse overtime hours', '13.50 h', await textOf('pay-ot-hours'));
       log.check('Warehouse double time hours', '1.50 h', await textOf('pay-dt-hours'));
       log.check('Warehouse hours and shift count', '63h over 9 shifts', await textOf('pay-hours'));
+      log.check(
+        'Warehouse pay split bar (screen reader)',
+        r'Pay split. Regular $960.00, overtime $405.00, double time $60.00.',
+        spoken('pay-split'),
+      );
       await shots.take('2_pay');
 
       // Exports, three days later so the rating prompt is allowed once.
@@ -284,6 +383,53 @@ void main() {
       );
       log.check('CSV Bar shift not in Warehouse file', false, csv.contains('20:00'));
 
+      // Motion: changing week animates the chart and rolls the numbers;
+      // with the system's reduce-motion setting on, both arrive at rest.
+      await tapKey('tab-week');
+      final moving = await previousWeekFirstFrame('54h');
+      log.check('motion on: week chart still growing on first frame', false, moving.chartAtRest);
+      log.check('motion on: hours roll up on first frame', true, moving.rollingNumber);
+      tester.platformDispatcher.accessibilityFeaturesTestValue = const FakeAccessibilityFeatures(
+        disableAnimations: true,
+      );
+      await tester.pumpAndSettle();
+      final still = await previousWeekFirstFrame('9h');
+      log.check('reduce motion: week chart already at rest on first frame', true, still.chartAtRest);
+      log.check('reduce motion: hours shown without rolling', false, still.rollingNumber);
+      tester.platformDispatcher.clearAccessibilityFeaturesTestValue();
+      await tester.pumpAndSettle();
+
+      // Dark theme from Settings, then the app is closed and opened again:
+      // the theme, the data and Pro must all still be there.
+      await tapKey('open-settings');
+      await tapKey('settings-theme');
+      await tap(find.text('Dark').last);
+      log.check(
+        'Settings switches the app to dark',
+        Brightness.dark,
+        Theme.of(tester.element(find.byKey(const Key('settings-theme')))).brightness,
+      );
+      await tester.pageBack();
+      await tester.pumpAndSettle();
+      await tapKey('week-next');
+      await waitUntil(() => find.text('54h').evaluate().isNotEmpty, 'week of 2 Nov');
+      await shots.take('4_dark_week');
+      await tapKey('tab-pay');
+      await shots.take('5_dark_pay');
+
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pumpAndSettle();
+      await tester.pumpWidget(app());
+      await waitFor(find.byKey(const Key('week-hours')));
+      log.check('reopened: no onboarding again', 0, find.byKey(const Key('onboarding')).evaluate().length);
+      log.check(
+        'reopened: still dark',
+        Brightness.dark,
+        Theme.of(tester.element(find.byKey(const Key('week-hours')))).brightness,
+      );
+      log.check('reopened: this week hours kept', '8h 15m', await textOf('week-hours'));
+      log.check('reopened: two jobs kept (switcher shown)', 1, find.byKey(const Key('job-switcher')).evaluate().length);
+
       // Sanity: stored clock-out is truncated to the minute.
       final clocked = await db
           .customSelect(
@@ -294,6 +440,7 @@ void main() {
       log.inputs['last_clock_out_epoch_s'] = clocked.data['end'];
     } finally {
       log.write();
+      semantics.dispose();
     }
     expect(log.failures, isEmpty, reason: 'see $artifactRoot/result.json');
     // Unmount the app so its live queries end, then close the database.

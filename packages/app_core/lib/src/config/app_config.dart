@@ -1,11 +1,16 @@
 import 'package:flutter/material.dart';
 
+import '../ui/scene.dart';
+
 /// One onboarding page.
 class OnboardingPage {
-  const OnboardingPage({required this.icon, required this.title, required this.body});
+  const OnboardingPage({required this.icon, required this.title, required this.body, this.scene});
   final IconData icon;
   final String title;
   final String body;
+
+  /// Animated illustration for the page. Falls back to [icon] when null.
+  final ScenePaint? scene;
 }
 
 /// A feature that needs the paid tier. [id] is what code checks against.
@@ -24,6 +29,9 @@ class AppConfig {
     required this.seedColor,
     required this.onboarding,
     required this.proFeatures,
+    this.accentColor,
+    this.gradientEndColor,
+    this.paywallScene,
     this.privacyNote =
         'Everything you enter stays on this device. Nothing is uploaded, '
         'and there is no account to create.',
@@ -34,6 +42,16 @@ class AppConfig {
   final Color seedColor;
   final List<OnboardingPage> onboarding;
   final List<ProFeature> proFeatures;
+
+  /// Second brand colour, mixed into hero gradients and highlights.
+  final Color? accentColor;
+
+  /// Where hero gradients end (they start at [seedColor]). Null mixes in
+  /// the accent.
+  final Color? gradientEndColor;
+
+  /// Illustration at the top of the paywall. Null uses the shared one.
+  final ScenePaint? paywallScene;
   final String privacyNote;
 
   ProFeature feature(String id) => proFeatures.firstWhere((f) => f.id == id);

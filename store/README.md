@@ -1,25 +1,35 @@
 # Store listings
 
-Drafts for Google Play first (internal testing track), App Store later.
-App names are working names until Rajat picks the final ones; each listing
-marks the name in one place so it is a one-line change.
+Google Play first (closed testing track), App Store later. Final names
+chosen by Rajat on 12 Nov 2026. App and bundle ids use one scheme on Android,
+iOS and Linux: `com.shuklamrajat.<brand>`.
 
-| App | Working name | Free | Pro ($19.99/year with 7-day trial, or $39.99 once) |
+| App | Name and id | Free | Pro ($19.99/year with 7-day trial, or $39.99 once) |
 |-----|--------------|------|------|
-| hours_tracker | Shift Pay | one job, all overtime rules, pay summaries | more jobs, CSV and PDF timesheets |
+| hours_tracker | Wagebird: Hours & Pay Tracker, `com.shuklamrajat.wagebird` | one job, all overtime rules, pay summaries | more jobs, CSV and PDF timesheets |
+| fuel_log | Wrenchnote: Car & Fuel Log, `com.shuklamrajat.wrenchnote` | one vehicle, fill-ups, economy, reminders, costs | more vehicles, CSV and PDF history |
+| home_inventory | Housetally: Home Inventory, `com.shuklamrajat.housetally` | 25 items with photos, receipts, warranties | unlimited items, insurance PDF and CSV |
 
-Files per app: `listing.md` (title, short and full description, category,
-tags, what's new), `data-safety.md` (answers for Play's Data safety form and
-Apple's privacy labels), `screenshots/` (1080x1920, made by `tool/store_shots.sh`, which runs the full
-end-to-end test at phone size and fails if any check fails), `icon-512.png`,
-`feature-graphic.png`.
+Files per app:
+- `listing.md`: title, short and full description (checked against Play's
+  limits by `tool/check_listings.py`), category, search terms, what's new,
+  screenshot order and captions.
+- `listing-screenshots/`: the framed 1080x1920 pictures to upload, in order.
+- `screenshots/`: raw app captures from `tool/store_shots.sh`, which runs the
+  full end-to-end test at phone size and fails if any check fails.
+- `icon-512.png`, `feature-graphic.png`: from `tool/make_store_art.py`, which
+  renders each app's own mascot with Flutter and frames the screenshots.
+- `data-safety.md`: answers for Play's Data safety form and Apple's labels.
+
 Shared: `privacy-policy.md` (needs a public URL before submission; GitHub
-Pages from the repo works).
+Pages from the repo works), `naming.md` (name research), `testers.md`.
+
+To rebuild all store art: `tool/store_shots.sh && tool/make_store_art.py && tool/check_listings.py`.
 
 ## Before the first upload (needs Rajat or his machine)
 
-1. Final app names, then bundle ids (replace `com.placeholder.*` in
-   android/app/build.gradle.kts and the iOS project).
+1. Search each name once more in the Play Store and App Store boxes and on
+   USPTO/WIPO (see naming.md).
 2. Google Play: create the three apps in Play Console, fill the listing from
    these files, Data safety, content rating questionnaire, target audience
    (18+ not required; general audience, not aimed at children).
@@ -33,9 +43,9 @@ Pages from the repo works).
    the opt-in link. Google asks new personal developer accounts to run a closed
    test with testers for a period before production access; check the current
    requirement in Play Console when the account is set up.
-6. Icons and feature graphics are placeholders made by `tool/make_store_art.py`
-   (app colour plus a Material icon). It also writes the Android launcher and
-   iOS app icons. Rerun after renaming; swap for designed art when there is budget.
-7. Home Inventory's screenshots show test pictures (coloured squares) as item
-   photos. Retake its third screenshot with real photos on a phone before
+6. Icons are drawn from each app's mascot by `tool/make_store_art.py`, which
+   also writes the Android launcher and iOS app icons. Android adaptive
+   (foreground/background) icons are not made yet; the legacy icons work.
+7. Housetally's screenshots show test pictures (coloured squares) as item
+   photos. Retake the item screenshot (listing slide 2) with real photos on a phone before
    production.

@@ -40,7 +40,6 @@ class HoursDb extends _$HoursDb {
   int get schemaVersion => 1;
 
   @override
-  MigrationStrategy get migration => MigrationStrategy(
-        beforeOpen: (details) async => customStatement('PRAGMA foreign_keys = ON'),
-      );
+  MigrationStrategy get migration =>
+      MigrationStrategy(beforeOpen: (details) async => customStatement('PRAGMA foreign_keys = ON'));
 }

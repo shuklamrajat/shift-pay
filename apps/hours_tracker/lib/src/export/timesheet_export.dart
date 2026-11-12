@@ -27,8 +27,17 @@ String buildTimesheetCsv(Job job, PaySummary s, DateTime from, DateTime toExclus
     ..row(['Period', periodText(from, toExclusive)])
     ..blank()
     ..row([
-      'Workday', 'Start', 'End', 'Unpaid break (min)', 'Worked (h)', 'Regular (h)', 'Overtime (h)',
-      'Double time (h)', 'Rate', 'Pay', 'Note'
+      'Workday',
+      'Start',
+      'End',
+      'Unpaid break (min)',
+      'Worked (h)',
+      'Regular (h)',
+      'Overtime (h)',
+      'Double time (h)',
+      'Rate',
+      'Pay',
+      'Note',
     ]);
   for (final x in s.shifts) {
     w.row([
@@ -59,7 +68,13 @@ String buildTimesheetCsv(Job job, PaySummary s, DateTime from, DateTime toExclus
 }
 
 Future<Uint8List> buildTimesheetPdf(
-    Job job, PaySummary s, DateTime from, DateTime toExclusive, String currency, DateTime generatedAt) {
+  Job job,
+  PaySummary s,
+  DateTime from,
+  DateTime toExclusive,
+  String currency,
+  DateTime generatedAt,
+) {
   String m(int c) => Money.format(c, currency: currency);
   return buildPdfReport(
     title: 'Timesheet: ${job.name}',
@@ -97,6 +112,6 @@ Future<Uint8List> buildTimesheetPdf(
         footer: ['Total pay ${m(s.payCents)}'],
       ),
     ],
-    footerNote: 'Made with Shift Pay',
+    footerNote: 'Made with Wagebird',
   );
 }

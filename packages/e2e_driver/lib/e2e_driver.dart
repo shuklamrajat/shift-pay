@@ -98,6 +98,10 @@ class StoreShots {
   /// Scrolls every visible list back to its top, then saves the screen.
   Future<void> take(String name) async {
     if (!enabled) return;
+    // A passing snack bar from an earlier step would end up in the picture.
+    for (final e in find.byType(ScaffoldMessenger).evaluate()) {
+      ((e as StatefulElement).state as ScaffoldMessengerState).removeCurrentSnackBar();
+    }
     for (final e in find.byType(Scrollable).evaluate()) {
       final pos = (e as StatefulElement).state as ScrollableState;
       if (pos.position.hasPixels) pos.position.jumpTo(pos.position.minScrollExtent);

@@ -1,26 +1,48 @@
 import 'package:flutter/material.dart';
 
+import '../ui/core_scenes.dart';
+import '../ui/motion.dart';
+import '../ui/scene.dart';
+
 class EmptyState extends StatelessWidget {
-  const EmptyState({super.key, required this.icon, required this.title, required this.body, this.action});
+  const EmptyState({super.key, required this.icon, required this.title, required this.body, this.action, this.scene});
   final IconData icon;
   final String title;
   final String body;
   final Widget? action;
 
+  /// Animated illustration shown above the title. Falls back to [icon].
+  final ScenePaint? scene;
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Center(
-      child: Padding(
+      child: SingleChildScrollView(
         padding: const EdgeInsets.all(32),
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
-          Icon(icon, size: 64, color: theme.colorScheme.outline),
-          const SizedBox(height: 16),
-          Text(title, style: theme.textTheme.titleLarge, textAlign: TextAlign.center),
-          const SizedBox(height: 8),
-          Text(body, textAlign: TextAlign.center),
-          if (action != null) ...[const SizedBox(height: 16), action!],
-        ]),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SizedBox.square(
+              dimension: 220,
+              child: scene == null ? Center(child: IconBlob(icon: icon)) : AnimatedScene(paint: scene!),
+            ),
+            const SizedBox(height: 16),
+            Appear(
+              child: Text(title, style: theme.textTheme.headlineSmall, textAlign: TextAlign.center),
+            ),
+            const SizedBox(height: 8),
+            Appear(
+              index: 1,
+              child: Text(
+                body,
+                textAlign: TextAlign.center,
+                style: theme.textTheme.bodyLarge?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+              ),
+            ),
+            if (action != null) ...[const SizedBox(height: 20), Appear(index: 2, child: action!)],
+          ],
+        ),
       ),
     );
   }
@@ -36,10 +58,13 @@ class StatTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Text(label, style: theme.textTheme.labelMedium),
-      Text(value, key: valueKey, style: theme.textTheme.titleLarge),
-    ]);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: theme.textTheme.labelMedium),
+        Text(value, key: valueKey, style: theme.textTheme.titleLarge),
+      ],
+    );
   }
 }
 

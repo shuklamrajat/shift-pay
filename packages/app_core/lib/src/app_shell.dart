@@ -18,8 +18,18 @@ class CoreApp extends ConsumerWidget {
     return MaterialApp(
       title: config.appName,
       debugShowCheckedModeBanner: false,
-      theme: buildAppTheme(config.seedColor, Brightness.light),
-      darkTheme: buildAppTheme(config.seedColor, Brightness.dark),
+      theme: buildAppTheme(
+        config.seedColor,
+        Brightness.light,
+        accent: config.accentColor,
+        gradientEnd: config.gradientEndColor,
+      ),
+      darkTheme: buildAppTheme(
+        config.seedColor,
+        Brightness.dark,
+        accent: config.accentColor,
+        gradientEnd: config.gradientEndColor,
+      ),
       themeMode: settings.themeMode,
       home: settings.onboardingDone ? home : const OnboardingScreen(),
     );
