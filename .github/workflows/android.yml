@@ -98,6 +98,21 @@ jobs:
             exit 1
           fi
 
+      - name: Check the bundle asks for no advertising ID
+        # Play's Advertising ID declaration says these apps don't use one. A
+        # dependency could merge the permission in, so check the final manifest.
+        if: env.HAS_UPLOAD_KEY == 'true'
+        working-directory: ${{ env.APP_DIR }}
+        run: |
+          unzip -p build/app/outputs/bundle/release/app-release.aab base/manifest/AndroidManifest.xml > "$RUNNER_TEMP/manifest.pb"
+          echo "Permissions in the merged manifest:"
+          grep -aoE '[A-Za-z0-9_.]+[.]permission[.][A-Z0-9_]+' "$RUNNER_TEMP/manifest.pb" | sort -u || echo "(none)"
+          if grep -aq 'permission.AD_ID' "$RUNNER_TEMP/manifest.pb"; then
+            echo "::error::The bundle requests the advertising ID permission, which contradicts the Play declaration."
+            exit 1
+          fi
+          echo "No advertising ID permission."
+
       - name: Upload release bundle
         if: env.HAS_UPLOAD_KEY == 'true'
         uses: actions/upload-artifact@v4
