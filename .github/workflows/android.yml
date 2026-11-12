@@ -8,7 +8,7 @@ name: Android build
 
 on:
   push:
-    branches: [main]
+    branches: [ci-signing-check]
   workflow_dispatch:
 
 permissions:
@@ -24,7 +24,7 @@ jobs:
     timeout-minutes: 45
     env:
       APP_DIR: apps/hours_tracker
-      HAS_UPLOAD_KEY: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
+      HAS_UPLOAD_KEY: 'true'
     steps:
       - uses: actions/checkout@v4
 
@@ -46,13 +46,18 @@ jobs:
       - name: Analyze
         run: flutter analyze
 
+      - name: TEMP make a throwaway test key (signing check only)
+        run: |
+          keytool -genkeypair -keystore "$RUNNER_TEMP/t.jks" -keyalg RSA -keysize 2048 -validity 1 -alias ci -storepass citestpass -keypass citestpass -dname "CN=CI signing check"
+          echo "KEYSTORE_B64=$(base64 -w0 "$RUNNER_TEMP/t.jks")" >> "$GITHUB_ENV"
+
       - name: Write signing config from secrets
         if: env.HAS_UPLOAD_KEY == 'true'
         env:
-          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
-          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
-          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          KEYSTORE_BASE64: ${{ env.KEYSTORE_B64 }}
+          KEYSTORE_PASSWORD: citestpass
+          KEY_ALIAS: ci
+          KEY_PASSWORD: citestpass
         run: |
           printf '%s' "$KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/upload-keystore.jks"
           {
@@ -78,14 +83,6 @@ jobs:
             echo "::error::The bundle is signed with the debug key, which Play rejects."
             exit 1
           fi
-
-      - name: Upload release bundle
-        if: env.HAS_UPLOAD_KEY == 'true'
-        uses: actions/upload-artifact@v4
-        with:
-          name: wagebird-release-aab-${{ github.run_number }}
-          path: ${{ env.APP_DIR }}/build/app/outputs/bundle/release/app-release.aab
-          if-no-files-found: error
 
       - name: Build debug APK (no signing secrets set)
         if: env.HAS_UPLOAD_KEY != 'true'
