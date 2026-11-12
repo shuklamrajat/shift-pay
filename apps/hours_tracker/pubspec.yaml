@@ -25,5 +25,8 @@ dev_dependencies:
   drift_dev: ^2.35.3
   build_runner: ^2.17.1
   flutter_lints: ^6.0.0
+  # Used by integration_test/android_device_e2e_test.dart (real plugins on Android).
+  google_mobile_ads: ^9.2.0
+  path_provider: ^2.1.6
 flutter:
   uses-material-design: true
