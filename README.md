@@ -15,6 +15,7 @@ no server. The free version covers the core; Pro is sold through the stores
 | packages/e2e_driver | Helpers for the end-to-end test and store screenshots |
 | store/ | Store listing, data safety answers, privacy policy, screenshots, icon, feature graphic |
 | tool/ | Store screenshots, art and listing checks |
+| .github/workflows | Android build on every push (see Android builds) |
 
 `packages/` is a copy of the core shared with the other apps of the
 portfolio. A fix there should be copied to the other app repos too.
@@ -64,7 +65,73 @@ jump to the end when the phone asks for reduced motion; the end-to-end test chec
 graphic, and `tool/check_listings.py` checks Play's character limits. The
 listing text is in `store/hours_tracker/listing.md`.
 
+## Android builds
+
+Every push to `main` runs `.github/workflows/android.yml` on GitHub Actions.
+
+- **Without signing secrets:** it builds a debug APK. That proves the app
+  compiles for Android, but it is not for Play.
+- **With the four secrets below:** it builds a signed release bundle (`.aab`)
+  ready to upload to Play Console. The run number becomes the version code, so
+  each new bundle is newer than the last. The run fails if the bundle is signed
+  with the debug key.
+
+Download the file from the run's page (Actions tab, the run, then Artifacts).
+
+### 1. Make an upload key, once, on your computer
+
+`keytool` comes with Java; Android Studio includes it.
+
+```
+keytool -genkeypair -v -keystore upload-keystore.jks -keyalg RSA -keysize 2048 -validity 10000 -alias upload
+```
+
+It asks for a password and a name. Keep `upload-keystore.jks` and the password
+somewhere safe, outside this repo. Every update to the app on Play has to be
+signed with the same upload key. Google keeps the real app signing key (Play App
+Signing), so if the upload key is ever lost, Play support can reset it. The same
+upload key can be used for all three apps.
+
+Use a password without backslashes (`\`), because the build reads it from a
+properties file.
+
+### 2. Add four repository secrets
+
+On GitHub: this repo, **Settings**, **Secrets and variables**, **Actions**,
+**New repository secret**.
+
+| Name | Value |
+|------|-------|
+| `ANDROID_KEYSTORE_BASE64` | The keystore file as base64 (commands below) |
+| `ANDROID_KEYSTORE_PASSWORD` | The password you gave keytool |
+| `ANDROID_KEY_ALIAS` | `upload` |
+| `ANDROID_KEY_PASSWORD` | The same password (keytool uses one password for both unless you set two) |
+
+To get the base64 text:
+
+```
+base64 -i upload-keystore.jks | pbcopy                 # macOS: copies it
+base64 -w0 upload-keystore.jks                         # Linux
+[Convert]::ToBase64String([IO.File]::ReadAllBytes("upload-keystore.jks")) | Set-Clipboard   # Windows PowerShell
+```
+
+### 3. Run it
+
+Push to `main`, or open **Actions**, **Android build**, **Run workflow**.
+
+To build signed on your own computer instead, create `apps/hours_tracker/android/key.properties`
+(it is gitignored):
+
+```
+storeFile=/full/path/to/upload-keystore.jks
+storePassword=...
+keyAlias=upload
+keyPassword=...
+```
+
+then run `flutter build appbundle --release` in `apps/hours_tracker`.
+
 ## Before the stores
 
-See store/README.md. In short: the app id is `com.shuklamrajat.wagebird`; signed builds (keep the upload key out of this repo),
+See store/README.md. In short: the app id is `com.shuklamrajat.wagebird`; signed builds (see Android builds above; keep the upload key out of this repo),
 RevenueCat in place of LocalEntitlementService, then Play internal testing.

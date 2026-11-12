@@ -26,15 +26,16 @@ Pages from the repo works), `naming.md` (name research), `testers.md`.
 
 To rebuild all store art: `tool/store_shots.sh && tool/make_store_art.py && tool/check_listings.py`.
 
-## Before the first upload (needs Rajat or his machine)
+## Before the first upload (needs Rajat)
 
 1. Search each name once more in the Play Store and App Store boxes and on
    USPTO/WIPO (see naming.md).
 2. Google Play: create the three apps in Play Console, fill the listing from
    these files, Data safety, content rating questionnaire, target audience
    (18+ not required; general audience, not aimed at children).
-3. Build signed app bundles (.aab). This container can't download the Android
-   SDK, so build on his computer or a build service such as Codemagic. Keep the
+3. Build signed app bundles (.aab). Each app repo has a GitHub Actions
+   workflow that builds one on every push to main once the upload key is added
+   as repository secrets (see that repo's README, "Android builds"). Keep the
    upload key out of the repo.
 4. RevenueCat: replace LocalEntitlementService with a RevenueCat-backed
    EntitlementService, create the products (pro_annual, pro_lifetime) in Play

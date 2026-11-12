@@ -63,8 +63,8 @@ come from directory sites and developer write-ups. Read each sub's pinned rules 
 
 ## 3. How swap places work (read before saying yes)
 
-Swap subs and apps run on "I test yours, you test mine". For three apps that means Rajat (or a phone of
-his) installs and opens 15 or so strangers' apps every day for about two weeks, and keeps them
+Swap subs and apps run on "I test yours, you test mine". For three apps that means Rajat (or a spare
+phone) installs and opens 15 or so strangers' apps every day for about two weeks, and keeps them
 installed until their tests end. Use a spare Android phone or a separate Google account if possible.
 Swap testers are fast but give thin feedback; places 5, 7, 8 and 9 are where real feedback comes from.
 
