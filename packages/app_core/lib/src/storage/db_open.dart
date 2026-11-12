@@ -1,11 +1,4 @@
-import 'package:drift/drift.dart';
-import 'package:drift_flutter/drift_flutter.dart';
-import 'package:path_provider/path_provider.dart';
-
-/// Opens the app's on-device SQLite database. Stored in the app support
-/// directory, which the OS excludes from shared storage. Nothing leaves the
-/// device.
-QueryExecutor openAppDatabase(String name) => driftDatabase(
-  name: name,
-  native: const DriftNativeOptions(databaseDirectory: getApplicationSupportDirectory),
-);
+// Native builds use SQLite through drift_flutter. Web builds (only used to run
+// the browser end-to-end tests) use SQLite compiled to WebAssembly (sql.js),
+// kept in IndexedDB so data survives a page reload.
+export 'db_open_native.dart' if (dart.library.js_interop) 'db_open_web.dart';
