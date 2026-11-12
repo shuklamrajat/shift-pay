@@ -1,0 +1,10 @@
+name: hours_tracker_workspace
+publish_to: none
+environment:
+  sdk: ^3.13.0
+workspace:
+  - packages/app_core
+  - packages/e2e_driver
+  - apps/hours_tracker
+dev_dependencies:
+  build_runner: ^2.17.1

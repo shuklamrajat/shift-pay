@@ -1,0 +1,10 @@
+.dart_tool/
+build/
+**/ephemeral/
+.flutter-plugins-dependencies
+*.iml
+.idea/
+**/test-artifacts/
+pubspec_overrides.yaml
+store/**/screenshots/e2e/
+store/**/screenshots/run.log

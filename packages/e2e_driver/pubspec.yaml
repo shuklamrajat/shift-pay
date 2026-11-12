@@ -1,0 +1,12 @@
+name: e2e_driver
+description: Small helpers for driving the apps in end-to-end tests.
+publish_to: none
+version: 0.1.0
+resolution: workspace
+environment:
+  sdk: ^3.13.0
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_test:
+    sdk: flutter
