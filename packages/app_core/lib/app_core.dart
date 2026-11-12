@@ -1,6 +1,8 @@
 /// Shared core used by every app in the portfolio.
 library;
 
+export 'src/ads/ad_dock.dart';
+export 'src/ads/ads.dart';
 export 'src/app_shell.dart';
 export 'src/config/app_config.dart';
 export 'src/entitlements/entitlements.dart';
@@ -16,6 +18,7 @@ export 'src/settings/settings.dart';
 export 'src/settings/settings_screen.dart';
 export 'src/storage/db_open.dart';
 export 'src/theme/app_theme.dart';
+export 'src/tour/tour.dart';
 export 'src/ui/brand.dart';
 export 'src/ui/celebrate.dart';
 export 'src/ui/charts.dart';

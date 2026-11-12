@@ -74,6 +74,8 @@ void main() {
       await d.type('job-rate', '20.00');
       await d.tapKey('save-job');
       await d.waitFor(find.byKey(const Key('add-shift')));
+      await d.skipTour();
+      log.check('desktop build shows no ad', false, d.exists('ad-banner'));
       await d.tapKey('add-shift');
       await d.type('shift-date', '2026-11-09');
       await d.type('shift-start', '08:00');

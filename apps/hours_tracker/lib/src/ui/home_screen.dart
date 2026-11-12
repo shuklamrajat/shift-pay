@@ -85,14 +85,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ),
             )
           : null,
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _tab,
-        onDestinationSelected: (i) => setState(() => _tab = i),
-        destinations: const [
-          NavigationDestination(key: Key('tab-week'), icon: Icon(Icons.view_week_outlined), label: 'Week'),
-          NavigationDestination(key: Key('tab-pay'), icon: Icon(Icons.payments_outlined), label: 'Pay'),
-          NavigationDestination(key: Key('tab-jobs'), icon: Icon(Icons.work_outline), label: 'Jobs'),
-        ],
+      bottomNavigationBar: AdDock(
+        child: NavigationBar(
+          selectedIndex: _tab,
+          onDestinationSelected: (i) => setState(() => _tab = i),
+          destinations: const [
+            NavigationDestination(key: Key('tab-week'), icon: Icon(Icons.view_week_outlined), label: 'Week'),
+            NavigationDestination(key: Key('tab-pay'), icon: Icon(Icons.payments_outlined), label: 'Pay'),
+            NavigationDestination(key: Key('tab-jobs'), icon: Icon(Icons.work_outline), label: 'Jobs'),
+          ],
+        ),
       ),
     );
   }

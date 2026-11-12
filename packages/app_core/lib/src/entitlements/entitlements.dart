@@ -114,6 +114,10 @@ final entitlementServiceProvider = Provider<EntitlementService>((ref) {
 
 final isProProvider = StreamProvider<bool>((ref) => ref.watch(entitlementServiceProvider).watchIsPro());
 
-/// Synchronous read for gating decisions; falls back to the service value
-/// while the stream warms up.
-bool isProNow(WidgetRef ref) => ref.read(isProProvider).value ?? ref.read(entitlementServiceProvider).isPro;
+/// Synchronous read for gating decisions. The service's own value comes
+/// first: the stream's last value can be stale, because Riverpod pauses a
+/// stream whose only listeners sit on a covered screen (the home screen's ad
+/// dock while a room screen is open), so a purchase made meanwhile would not
+/// have reached it yet.
+bool isProNow(WidgetRef ref) =>
+    ref.read(entitlementServiceProvider).isPro || (ref.read(isProProvider).value ?? false);

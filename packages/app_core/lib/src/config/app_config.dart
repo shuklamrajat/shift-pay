@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../tour/tour.dart';
 import '../ui/scene.dart';
 
 /// One onboarding page.
@@ -33,9 +34,11 @@ class AppConfig {
     this.accentColor,
     this.gradientEndColor,
     this.paywallScene,
+    this.tour = const [],
     this.privacyNote =
-        'Everything you enter stays on this device. Nothing is uploaded, '
-        'and there is no account to create.',
+        'Everything you enter stays on this device, and there is no account. '
+        'Ads come from Google AdMob, which collects device data such as your '
+        'IP address and advertising ID to show ads.',
   });
 
   final String appName;
@@ -54,6 +57,10 @@ class AppConfig {
   /// Illustration at the top of the paywall. Null uses the shared one.
   final ScenePaint? paywallScene;
   final String privacyNote;
+
+  /// Stops of the guided tour over the home screen, in order. Empty means no
+  /// tour.
+  final List<TourStep> tour;
 
   /// The public privacy policy. Play requires a link to it inside the app.
   final String privacyPolicyUrl;

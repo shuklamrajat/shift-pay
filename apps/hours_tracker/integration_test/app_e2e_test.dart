@@ -201,6 +201,7 @@ void main() {
       await type('job-double', '12');
       await tapKey('save-job');
       expect(find.text('Warehouse'), findsWidgets);
+      await E2eDriver(tester).skipTour(); // covered by tour_e2e_test.dart
 
       Future<String?> addShift(String date, String start, String end, {int breakMin = 0}) async {
         await tapKey('add-shift');

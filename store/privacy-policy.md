@@ -3,8 +3,13 @@
 _Applies to Wagebird, Wrenchnote and Housetally.
 Last updated: [date of publishing]._
 
-**Short version: your data stays on your phone. We don't collect it, see it
-or sell it.**
+The published versions, one per app, are at
+https://shuklamrajat.github.io/widdle-privacy/ (source: the widdle-privacy
+repo). They are the ones that count; keep this draft in step.
+
+**Short version: what you enter stays on your phone. We don't collect it,
+see it or sell it. The free versions show Google AdMob banner ads, which
+collect some device data to show and measure ads.**
 
 ## What the apps store
 Everything you enter (shifts and pay rates, vehicles and fill-ups, items,
@@ -13,8 +18,16 @@ storage. There is no account and no cloud sync. Uninstalling the app deletes
 this data.
 
 ## What we collect
-Nothing. The apps contain no analytics, advertising or tracking code, and
-they don't send your entries anywhere.
+Nothing ourselves. The apps contain no analytics or tracking code of ours,
+and they don't send your entries anywhere.
+
+## Ads
+The free versions show a Google AdMob banner. AdMob collects and shares with
+Google the advertising ID and other device IDs, IP address (approximate
+location), ad interactions and diagnostics, encrypted in transit, to show and
+measure ads and prevent fraud. In the EEA, UK and Switzerland the app asks for
+consent first and the answer can be changed in Settings, Ad privacy choices.
+Buying Pro removes the ads.
 
 ## Camera and photos
 Housetally asks for the camera or photo library only when you add a

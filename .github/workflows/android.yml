@@ -29,6 +29,11 @@ jobs:
       APP_DIR: apps/hours_tracker
       HAS_UPLOAD_KEY: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
       HAS_PLAY_KEY: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON != '' }}
+      # AdMob ids (studioswiddle@gmail.com's AdMob) are public: they ship inside
+      # every copy of the app. Repo variables of the same names override them.
+      # Empty ids make a release build fall back to Google's test ads.
+      ADMOB_APP_ID: ${{ vars.ADMOB_APP_ID || 'ca-app-pub-4772684050013957~7009892675' }}
+      ADMOB_BANNER_ID: ${{ vars.ADMOB_BANNER_ID || 'ca-app-pub-4772684050013957/9249043205' }}
       PLAY_PACKAGE: com.shuklamrajat.wagebird
       PLAY_LISTING: store/hours_tracker/listing.md
     steps:
@@ -81,11 +86,19 @@ jobs:
             echo "keyPassword=$KEY_PASSWORD"
           } > "$APP_DIR/android/key.properties"
 
+      - name: Check the AdMob ids are set
+        run: |
+          if [ -z "$ADMOB_APP_ID" ] || [ -z "$ADMOB_BANNER_ID" ]; then
+            echo "::warning::An AdMob id is empty, so this build shows Google's test ads and earns nothing."
+          else
+            echo "AdMob app $ADMOB_APP_ID, banner $ADMOB_BANNER_ID"
+          fi
+
       - name: Build signed release bundle (.aab)
         if: env.HAS_UPLOAD_KEY == 'true'
         working-directory: ${{ env.APP_DIR }}
         # The run number is the version code, so every upload is newer than the last.
-        run: flutter build appbundle --release --build-number=${{ github.run_number }}
+        run: flutter build appbundle --release --build-number=${{ github.run_number }} --dart-define=ADMOB_BANNER_ID="$ADMOB_BANNER_ID"
 
       - name: Check the bundle is signed with the upload key
         if: env.HAS_UPLOAD_KEY == 'true'
@@ -98,20 +111,24 @@ jobs:
             exit 1
           fi
 
-      - name: Check the bundle asks for no advertising ID
-        # Play's Advertising ID declaration says these apps don't use one. A
-        # dependency could merge the permission in, so check the final manifest.
+      - name: Check the bundle is set up for AdMob
+        # Play's Advertising ID declaration says the apps use one (AdMob), so
+        # the permission must be in the final manifest, along with this app's
+        # AdMob app id, and the release code must carry the real banner unit.
         if: env.HAS_UPLOAD_KEY == 'true'
         working-directory: ${{ env.APP_DIR }}
         run: |
-          unzip -p build/app/outputs/bundle/release/app-release.aab base/manifest/AndroidManifest.xml > "$RUNNER_TEMP/manifest.pb"
+          aab=build/app/outputs/bundle/release/app-release.aab
+          unzip -p "$aab" base/manifest/AndroidManifest.xml > "$RUNNER_TEMP/manifest.pb"
           echo "Permissions in the merged manifest:"
           grep -aoE '[A-Za-z0-9_.]+[.]permission[.][A-Z0-9_]+' "$RUNNER_TEMP/manifest.pb" | sort -u || echo "(none)"
-          if grep -aq 'permission.AD_ID' "$RUNNER_TEMP/manifest.pb"; then
-            echo "::error::The bundle requests the advertising ID permission, which contradicts the Play declaration."
-            exit 1
+          grep -aq 'permission.AD_ID' "$RUNNER_TEMP/manifest.pb" || { echo "::error::No advertising ID permission, but Play is told the app uses one."; exit 1; }
+          echo "Advertising ID permission present."
+          if [ -n "$ADMOB_APP_ID" ]; then
+            grep -aqF "$ADMOB_APP_ID" "$RUNNER_TEMP/manifest.pb" || { echo "::error::The manifest doesn't carry AdMob app id $ADMOB_APP_ID."; exit 1; }
+            unzip -p "$aab" base/lib/arm64-v8a/libapp.so | grep -aqF "$ADMOB_BANNER_ID" || { echo "::error::The release code doesn't carry banner unit $ADMOB_BANNER_ID."; exit 1; }
+            echo "Real AdMob app id and banner unit are in the bundle."
           fi
-          echo "No advertising ID permission."
 
       - name: Upload release bundle
         if: env.HAS_UPLOAD_KEY == 'true'

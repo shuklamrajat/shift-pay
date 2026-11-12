@@ -35,6 +35,38 @@ const hoursConfig = AppConfig(
       body: 'Your hours stay on your phone. No account, no cloud.',
     ),
   ],
+  tour: [
+    TourStep(
+      target: 'add-shift',
+      icon: Icons.add_alarm,
+      title: 'Log a shift',
+      body: 'Tap here after each shift. Enter when you started, finished and took a break, and the pay works itself out.',
+    ),
+    TourStep(
+      target: 'tab-week',
+      icon: Icons.view_week_outlined,
+      title: 'Your week',
+      body: 'Hours for this week so far, with overtime counted as it builds up.',
+    ),
+    TourStep(
+      target: 'tab-pay',
+      icon: Icons.payments_outlined,
+      title: 'Pay, before payday',
+      body: 'What you have earned this pay period, and timesheets you can export as a spreadsheet or PDF.',
+    ),
+    TourStep(
+      target: 'tab-jobs',
+      icon: Icons.work_outline,
+      title: 'More than one job?',
+      body: 'Add each job with its own rate and overtime rules, and switch between them at the top.',
+    ),
+    TourStep(
+      target: 'open-settings',
+      icon: Icons.tune,
+      title: 'Settings and Pro',
+      body: 'Currency, theme and Pro features live here. You can take this tour again from Settings any time.',
+    ),
+  ],
   proFeatures: [
     ProFeature(
       id: featureExport,

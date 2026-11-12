@@ -2,8 +2,8 @@
 
 Hours and overtime pay tracker: shifts incl. split and overnight, clock in/out, daily and weekly overtime and double time, pay summaries, CSV/PDF timesheets.
 
-Flutter app for Android and iOS. Everything stays on the device: no account,
-no server. The free version covers the core; Pro is sold through the stores
+Flutter app for Android and iOS. Everything the person enters stays on the
+device: no account, no server. The free version shows one AdMob banner. The free version covers the core; Pro is sold through the stores
 (currently a local stand-in, see "Before the stores").
 
 ## Layout
@@ -45,7 +45,8 @@ The script then runs `integration_test/free_build_e2e_test.dart` against the
 entitlement service a release build ships with (no test override) and writes
 `test-artifacts/e2e/free_build/result.json`: every Pro feature opens with no
 paywall, Settings says Pro is free for now, the privacy link opens the
-policy page, and nothing about Pro is stored.
+policy page, and nothing about Pro is stored. It then runs the ads and tour
+tests (below), each with its own `result.json`.
 
 It runs on the Linux desktop target (needs clang, cmake, ninja, GTK 3,
 xvfb, poppler-utils), with a fixed clock and TZ=America/New_York, so the
@@ -184,6 +185,42 @@ mid-way, a live tester build on the track, Play refusing to commit without
 `changesNotSentForReview`, and over-long release notes. It writes every
 request and result to `tool/test-output/play_upload_e2e.json`, kept as a run
 artifact.
+
+## Ads
+
+One AdMob banner, docked above the bottom navigation on the main screen
+only. Entry forms are separate screens with no banner, and there are no
+full-screen ads. Code: `packages/app_core/lib/src/ads/`.
+
+- **Who sees ads:** everyone while Pro is free (`proFreeUntilBillingIsLive`).
+  Once billing is live, paid Pro removes them (`adsRemovedProvider`).
+- **Consent:** Google's UMP form runs first on every launch; in the EEA, UK
+  and Switzerland it asks, elsewhere it returns at once. No ad is requested
+  before it answers. Settings has "Ad privacy choices" where Google requires it.
+  The form only shows once a GDPR message is published in AdMob, Privacy &
+  messaging.
+- **Content:** capped at PG.
+- **Ids:** debug builds always use Google's test ids. Release builds use
+  Wagebird's AdMob ids from studioswiddle@gmail.com's AdMob: app `ca-app-pub-4772684050013957~7009892675`,
+  banner "Home banner" `ca-app-pub-4772684050013957/9249043205`. They are public (they ship in the app) and
+  are set in `.github/workflows/android.yml`; repository variables
+  `ADMOB_APP_ID` and `ADMOB_BANNER_ID` override them. CI fails if the bundle
+  lacks the AD_ID permission or either id.
+- **Failure modes:** `packages/app_core/docs/ads-failure-modes.md`; checked by
+  `apps/hours_tracker/integration_test/ads_e2e_test.dart` with a fake ad network
+  (Google's SDK has no desktop build).
+
+## First-run tour
+
+A spotlight tour of the real controls, shown once after onboarding and
+Google's consent step, and again from Settings, "Take the tour". Skipping or
+finishing is remembered; closing the app mid-way brings it back. No banner
+shows until it has been seen once, or while it runs. Steps are listed in
+`apps/hours_tracker/lib/src/app.dart` (`tour:`); code in
+`packages/app_core/lib/src/tour/`. Failure modes:
+`packages/app_core/docs/tour-failure-modes.md`; checked by
+`apps/hours_tracker/integration_test/tour_e2e_test.dart` over four launches, with a
+picture of every stop in `test-artifacts/e2e/tour/`.
 
 ## Before the stores
 

@@ -24,6 +24,14 @@ class E2eDriver {
     await tester.pumpAndSettle();
   }
 
+  /// Waits for the first-run tour and skips it.
+  Future<void> skipTour() async {
+    final skip = find.byKey(const Key('tour-skip'));
+    await waitFor(skip);
+    await tester.tap(skip);
+    await tester.pumpAndSettle();
+  }
+
   Future<void> reveal(Finder f) async {
     if (f.evaluate().isEmpty) {
       final list = find.byType(Scrollable).first;
@@ -73,9 +81,54 @@ class E2eDriver {
   bool exists(String k) => find.byKey(Key(k)).evaluate().isNotEmpty;
 }
 
+/// Where the docked banner ad sits relative to the bottom navigation and the
+/// floating button. Works with any ad: it measures, it doesn't know the ad.
+class BannerLayout {
+  BannerLayout(this.tester);
+  final WidgetTester tester;
+
+  Finder get _banner => find.byKey(const Key('ad-banner'));
+  Finder get _nav => find.byType(NavigationBar);
+  Finder get _fab => find.byType(FloatingActionButton);
+
+  bool get bannerShown => _banner.evaluate().isNotEmpty;
+
+  /// Space the dock takes above the navigation bar (0 when no ad shows).
+  double get spaceAboveNav {
+    final dock = find.byWidgetPredicate((w) => w.runtimeType.toString() == 'AdDock');
+    return tester.getSize(dock).height - tester.getSize(_nav).height;
+  }
+
+  /// Top of the navigation bar, in logical pixels from the top of the screen.
+  double get navTop => tester.getTopLeft(_nav).dy;
+
+  /// The whole banner is above the navigation bar, touching it.
+  bool get bannerSitsOnNav {
+    if (!bannerShown) return false;
+    return (tester.getRect(_banner).bottom - navTop).abs() < 0.5;
+  }
+
+  /// The banner and the floating add button share no pixels.
+  bool get bannerClearOfFab {
+    if (!bannerShown || _fab.evaluate().isEmpty) return true;
+    return !tester.getRect(_banner).overlaps(tester.getRect(_fab.first));
+  }
+}
+
 /// Folder for store screenshots, set with --dart-define=SHOTS=<dir>. Empty
 /// means a normal test run: no phone-size surface and no pictures.
 const shotsDir = String.fromEnvironment('SHOTS');
+
+/// Saves what is on screen now as a PNG at [path] (an E2E artifact).
+Future<void> saveScreen(WidgetTester tester, String path) async {
+  await tester.pumpAndSettle();
+  final layer = tester.binding.renderViews.first.debugLayer! as OffsetLayer;
+  final image = await layer.toImage(Offset.zero & tester.view.physicalSize, pixelRatio: 1);
+  final png = await image.toByteData(format: ui.ImageByteFormat.png);
+  File(path)
+    ..createSync(recursive: true)
+    ..writeAsBytesSync(png!.buffer.asUint8List());
+}
 
 /// Phone-size store screenshots taken at chosen moments of an E2E run.
 /// 1080 x 1920 pixels (411 x 731 logical at 2.625x), a size both stores take

@@ -66,7 +66,7 @@ APPS = {
             ('4_dark_week', '5_dark_pay', 'Built for night shifts.',
              'A calm dark mode, and overnight shifts that just work.', True, False),
             ('5_dark_pay', '4_dark_week', 'Private by default.',
-             'No account. No ads. Your hours stay on your phone.', True, True),
+             'No account. Your hours stay on your phone.', True, True),
         ],
     ),
     'fuel_log': dict(
@@ -87,8 +87,8 @@ APPS = {
              "Your car's logbook, with a wrench and a smile.", False, False),
             ('4_dark_fuel', '5_dark_costs', 'Your units, your way.',
              'MPG or L/100 km, miles or kilometres, light or dark.', True, False),
-            ('5_dark_costs', '4_dark_fuel', 'No account. No ads.',
-             "Your car's history stays on your phone.", True, True),
+            ('5_dark_costs', '4_dark_fuel', 'Private by default.',
+             "No account. Your car's history stays on your phone.", True, True),
         ],
     ),
     'home_inventory': dict(
