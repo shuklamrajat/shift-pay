@@ -5,6 +5,9 @@ name: Android build
 # it builds a signed release bundle (.aab) ready for Play Console.
 # Without them it builds a debug APK, which proves the app compiles but is not
 # for Play.
+# With the PLAY_SERVICE_ACCOUNT_JSON secret also set (see README, "Play upload"),
+# the signed bundle is uploaded to Play's closed testing track as a DRAFT
+# release. Nothing reaches testers until someone rolls it out in Play Console.
 
 on:
   push:
@@ -25,6 +28,9 @@ jobs:
     env:
       APP_DIR: apps/hours_tracker
       HAS_UPLOAD_KEY: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
+      HAS_PLAY_KEY: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON != '' }}
+      PLAY_PACKAGE: com.shuklamrajat.wagebird
+      PLAY_LISTING: store/hours_tracker/listing.md
     steps:
       - uses: actions/checkout@v4
 
@@ -45,6 +51,19 @@ jobs:
 
       - name: Analyze
         run: flutter analyze
+
+      - name: Check the Play upload script against a fake Play server
+        run: |
+          python3 -m pip install --quiet google-auth requests cryptography
+          python3 tool/play_upload_e2e.py --listing "$PLAY_LISTING" --package "$PLAY_PACKAGE"
+
+      - name: Keep the Play upload check record
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: play-upload-check-${{ github.run_number }}
+          path: tool/test-output/play_upload_e2e.json
+          if-no-files-found: ignore
 
       - name: Write signing config from secrets
         if: env.HAS_UPLOAD_KEY == 'true'
@@ -86,6 +105,18 @@ jobs:
           name: wagebird-release-aab-${{ github.run_number }}
           path: ${{ env.APP_DIR }}/build/app/outputs/bundle/release/app-release.aab
           if-no-files-found: error
+
+      - name: Upload to Play closed testing as a draft
+        if: env.HAS_UPLOAD_KEY == 'true' && env.HAS_PLAY_KEY == 'true'
+        env:
+          PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+        run: |
+          python3 tool/play_upload.py --package "$PLAY_PACKAGE" --listing "$PLAY_LISTING" \
+            --aab "$APP_DIR/build/app/outputs/bundle/release/app-release.aab" --track alpha
+
+      - name: Play upload skipped (no PLAY_SERVICE_ACCOUNT_JSON secret)
+        if: env.HAS_UPLOAD_KEY == 'true' && env.HAS_PLAY_KEY != 'true'
+        run: echo "::notice::No PLAY_SERVICE_ACCOUNT_JSON secret, so the bundle was not sent to Play. See README, Play upload."
 
       - name: Build debug APK (no signing secrets set)
         if: env.HAS_UPLOAD_KEY != 'true'

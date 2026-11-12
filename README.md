@@ -15,7 +15,7 @@ no server. The free version covers the core; Pro is sold through the stores
 | packages/e2e_driver | Helpers for the end-to-end test and store screenshots |
 | store/ | Store listing, data safety answers, privacy policy, screenshots, icon, feature graphic |
 | tool/ | Store screenshots, art and listing checks |
-| .github/workflows | Android build on every push (see Android builds) |
+| .github/workflows | Android build on every push (see Android builds, Play upload) |
 
 `packages/` is a copy of the core shared with the other apps of the
 portfolio. A fix there should be copied to the other app repos too.
@@ -130,6 +130,54 @@ keyPassword=...
 ```
 
 then run `flutter build appbundle --release` in `apps/hours_tracker`.
+
+## Play upload
+
+With one more secret, every signed build also goes to Play by itself:
+`tool/play_upload.py` uploads the bundle to the **Closed testing - Alpha**
+track as a **draft** release, with the "What's new" text from
+`store/hours_tracker/listing.md`. A draft reaches nobody. You open it in Play Console
+and roll it out yourself when you want testers to get it. Live releases on
+the track are left alone; an older draft is replaced by the newer one.
+
+Without the secret the step is skipped and the run says so.
+
+**Play needs the first bundle of a new app uploaded by hand** in Play Console
+(Test and release, Closed testing, Alpha, Create new release). Until then the
+API answers "Package not found" and the run fails with that explanation.
+
+### Set it up, once
+
+1. In Google Cloud Console (console.cloud.google.com), signed in as the Play
+   developer account, create a project (no billing needed).
+2. APIs and services, Library: find **Google Play Android Developer API** and
+   press Enable.
+3. IAM and admin, Service accounts, Create service account. Any name, such as
+   `play-uploader`. Skip the optional role and access steps.
+4. Open the new service account, Keys, Add key, Create new key, JSON. A key
+   file downloads. Treat it like a password.
+5. In Play Console, Users and permissions, Invite new users. Enter the service
+   account's email (ends in `iam.gserviceaccount.com`). Leave account
+   permissions empty. Under App permissions, add Wagebird, Wrenchnote and
+   Housetally, and tick only **Release apps to testing tracks**. Invite.
+6. Put the key in all three repos from your computer (change the path):
+
+   ```
+   for r in shift-pay fuel-service-log home-inventory; do gh secret set PLAY_SERVICE_ACCOUNT_JSON -R shuklamrajat/$r < ~/Downloads/your-key.json; done
+   ```
+
+7. Delete the downloaded key file. If you ever need it again, make a new key
+   and delete the old one in Cloud Console.
+
+### Checks
+
+`tool/play_upload_e2e.py` runs the upload against a local fake of Play's API
+on every build, before anything is built: before the first manual upload,
+missing release rights, a revoked key, a key pasted wrong, a failed upload
+mid-way, a live tester build on the track, Play refusing to commit without
+`changesNotSentForReview`, and over-long release notes. It writes every
+request and result to `tool/test-output/play_upload_e2e.json`, kept as a run
+artifact.
 
 ## Before the stores
 

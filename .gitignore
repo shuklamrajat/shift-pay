@@ -8,3 +8,4 @@ build/
 pubspec_overrides.yaml
 store/**/screenshots/e2e/
 store/**/screenshots/run.log
+tool/test-output/
