@@ -65,7 +65,11 @@ def check(name, want, got):
 def shot(name):
     SHOT[0] += 1
     path = f'{ARGS.out}/{SHOT[0]:02d}-{name}.png'
-    open(path, 'wb').write(adb('exec-out', 'screencap', '-p', binary=True))
+    png = adb('exec-out', 'screencap', '-p', binary=True)
+    # A Fold has two screens, and screencap prints a warning ahead of the
+    # picture; keep only the PNG (it is of the screen in use).
+    i = png.find(b'\x89PNG')
+    open(path, 'wb').write(png[i:] if i >= 0 else png)
 
 
 def death_log():
@@ -244,10 +248,32 @@ def launch():
     time.sleep(3)
 
 
+def pid():
+    return adb('shell', 'pidof', ARGS.package, check=False).strip()
+
+
 def restart():
+    """Closes the app for real (a new process), then opens it again."""
+    old = pid()
     adb('shell', 'am', 'force-stop', ARGS.package)
-    time.sleep(1.5)
+    end = time.time() + 15
+    while pid() and time.time() < end:
+        time.sleep(0.5)
     launch()
+    end = time.time() + 20
+    while pid() in ('', old) and time.time() < end:
+        time.sleep(0.5)
+
+
+def settled(present, timeout=25):
+    """True once [present]() is true. Just after a relaunch the screen goes
+    from the old window to a loading frame to the app, so poll."""
+    end = time.time() + timeout
+    while time.time() < end:
+        if present():
+            return True
+        time.sleep(1)
+    return False
 
 
 def rotate(landscape):
@@ -356,7 +382,7 @@ def wagebird():
 
     def after_reopen():
         wait('6h', timeout=40)
-        check('after reopening: the edited 6h shift is still there', True, bool(find('6h')))
+        check('after reopening: the edited 6h shift is still there', True, settled(lambda: bool(find('6h'))))
         check('after reopening: no onboarding again', False, bool(find('Get started')))
         check('after reopening: the shift row still says 8:00', True, reveal(row))
         delete_entry(lambda: open_row(row, lambda: tap('8:00'), 'Edit shift'), 'Delete shift',
@@ -404,7 +430,7 @@ def wrenchnote():
 
     def after_reopen():
         wait('Civic', timeout=40)
-        check('after reopening: Civic and both fill-ups are still there', True, both())
+        check('after reopening: Civic and both fill-ups are still there', True, settled(both))
         check('after reopening: the edit (61.00) is still there', True, reveal(paid))
         to_top()
         check('after reopening: no onboarding again', False, bool(find('Get started')))
@@ -446,7 +472,7 @@ def housetally():
 
     def after_reopen():
         wait('Add item', timeout=40)
-        check('after reopening: the edited item ($350.00) is still counted', True, has())
+        check('after reopening: the edited item ($350.00) is still counted', True, settled(has))
         check('after reopening: no onboarding again', False, bool(find('Get started')))
         delete_entry(lambda: open_row(mower, lambda: tap('Lawn mower'), 'Edit item'), 'Delete item',
                      mower, 'the lawn mower', 'Add item')
