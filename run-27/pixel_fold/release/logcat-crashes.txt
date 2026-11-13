@@ -1,0 +1,18 @@
+11-13 18:13:02.854   566   598 W ActivityManager: Slow operation: 76ms so far, now at startProcess: returned from zygote!
+11-13 18:13:03.033   566   598 W ActivityManager: Slow operation: 255ms so far, now at startProcess: done updating battery stats
+11-13 18:13:03.033   566   598 W ActivityManager: Slow operation: 255ms so far, now at startProcess: building log message
+11-13 18:13:03.033   566   598 W ActivityManager: Slow operation: 255ms so far, now at startProcess: starting to update pids map
+11-13 18:13:03.034   566   598 W ActivityManager: Slow operation: 255ms so far, now at startProcess: done updating pids map
+11-13 18:17:24.462  1096  1178 F libc    : Fatal signal 6 (SIGABRT), code -1 (SI_QUEUE) in tid 1178 (bt_stack_manage), pid 1096 (droid.bluetooth)
+11-13 18:18:25.799   566   590 W ActivityManager: Slow operation: 96ms so far, now at startProcess: done starting proc!
+11-13 18:18:25.810   566   598 W ActivityManager: Slow operation: 86ms so far, now at startProcess: asking zygote to start proc
+11-13 18:18:25.848   566   598 W ActivityManager: Slow operation: 124ms so far, now at startProcess: returned from zygote!
+11-13 18:18:25.848   566   598 W ActivityManager: Slow operation: 124ms so far, now at startProcess: done updating battery stats
+11-13 18:18:25.848   566   598 W ActivityManager: Slow operation: 124ms so far, now at startProcess: building log message
+11-13 18:18:25.848   566   598 W ActivityManager: Slow operation: 125ms so far, now at startProcess: starting to update pids map
+11-13 18:18:25.848   566   598 W ActivityManager: Slow operation: 125ms so far, now at startProcess: done updating pids map
+11-13 18:20:37.537   566   598 W ActivityManager: Slow operation: 83ms so far, now at startProcess: returned from zygote!
+11-13 18:20:37.537   566   598 W ActivityManager: Slow operation: 83ms so far, now at startProcess: done updating battery stats
+11-13 18:20:37.538   566   598 W ActivityManager: Slow operation: 83ms so far, now at startProcess: building log message
+11-13 18:20:37.538   566   598 W ActivityManager: Slow operation: 83ms so far, now at startProcess: starting to update pids map
+11-13 18:20:37.538   566   598 W ActivityManager: Slow operation: 83ms so far, now at startProcess: done updating pids map
