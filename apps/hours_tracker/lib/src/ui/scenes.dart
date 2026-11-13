@@ -422,3 +422,62 @@ void timesheetProScene(Canvas c, Size s, SceneFrame f) {
   }
   paintSparkField(c, s, f, _amber, count: 7, seed: 12);
 }
+
+/// The week's hero: a sky that runs from sunrise to sunset as the week's hours
+/// add up ([progress] 0 to 1), the bird flapping along its flight path, and a
+/// coin for each shift ([coins]) dropping into the nest with a bounce.
+ScenePaint weekHeroScene({required double progress, required int coins}) => (Canvas c, Size s, SceneFrame f) {
+  final w = s.width, h = s.height;
+  final p = progress.clamp(0.0, 1.0) * phase(f.intro, 0, 0.6);
+  // Sky: dawn blue and peach, through midday, to a warm sunset.
+  const dawn = [Color(0xFF7FB3E8), Color(0xFFFFD1A6)];
+  const noon = [Color(0xFF4FA3E0), Color(0xFFBFE6F5)];
+  const dusk = [Color(0xFF6A4C93), Color(0xFFFF8A65)];
+  Color mix(int i) => p < 0.5 ? Color.lerp(dawn[i], noon[i], p * 2)! : Color.lerp(noon[i], dusk[i], (p - 0.5) * 2)!;
+  final sky = Offset.zero & s;
+  c.drawRect(sky, Paint()..shader = LinearGradient(colors: [mix(0), mix(1)], begin: Alignment.topCenter, end: Alignment.bottomCenter).createShader(sky));
+  // The sun climbs and sets along an arc.
+  final sun = Offset(w * (0.08 + 0.84 * p), h * (0.78 - 0.55 * math.sin(p * math.pi)));
+  Ink2.glow(c, sun, h * 0.5, const Color(0xFFFFE082).withValues(alpha: 0.7));
+  c.drawCircle(sun, h * 0.12, Ink2.fill(Color.lerp(const Color(0xFFFFE082), const Color(0xFFFF7043), (p - 0.6).clamp(0, 0.4) / 0.4)!));
+  // Drifting clouds.
+  for (var i = 0; i < 2; i++) {
+    final x = ((f.loop + i * 0.5) % 1) * (w + 80) - 40;
+    final y = h * (0.2 + i * 0.18);
+    final cl = Ink2.fill(Colors.white.withValues(alpha: 0.75));
+    c.drawOval(Rect.fromCenter(center: Offset(x, y), width: 46, height: 16), cl);
+    c.drawCircle(Offset(x - 6, y - 6), 9, cl);
+    c.drawCircle(Offset(x + 8, y - 4), 7, cl);
+  }
+  // Rolling hills.
+  final hills = Path()
+    ..moveTo(0, h)
+    ..lineTo(0, h * 0.82)
+    ..quadraticBezierTo(w * 0.25, h * 0.62, w * 0.5, h * 0.8)
+    ..quadraticBezierTo(w * 0.75, h * 0.95, w, h * 0.74)
+    ..lineTo(w, h)
+    ..close();
+  c.drawPath(hills, Paint()..shader = const LinearGradient(colors: [Color(0xFF26A69A), Color(0xFF00695C)], begin: Alignment.topCenter, end: Alignment.bottomCenter).createShader(sky));
+  // The nest, with a coin per shift dropping in.
+  final nest = Offset(w * 0.86, h * 0.8);
+  final shown = coins.clamp(0, 6);
+  for (var i = 0; i < shown; i++) {
+    final start = 0.45 + i * 0.07;
+    final t = phase(f.intro, start, math.min(1, start + 0.2), Curves.bounceOut);
+    final rest = nest + Offset((i % 3 - 1) * 9.0, -6.0 - (i ~/ 3) * 7);
+    final pos = Offset(rest.dx, rest.dy - (1 - t) * h * 0.8);
+    if (t <= 0) continue;
+    final spin = math.cos((f.loop * 2 + i * 0.2) * 2 * math.pi);
+    c.drawOval(Rect.fromCenter(center: pos, width: 12 * (0.35 + 0.65 * spin.abs()), height: 12),
+        Paint()..shader = const RadialGradient(colors: [Color(0xFFFFE082), Color(0xFFFFA000)]).createShader(Rect.fromCircle(center: pos, radius: 6)));
+  }
+  final twig = Ink2.stroke(const Color(0xFF8D6E63), 3);
+  c.drawArc(Rect.fromCenter(center: nest, width: 40, height: 22), 0.1, math.pi - 0.2, false, twig);
+  c.drawArc(Rect.fromCenter(center: nest.translate(0, 2), width: 34, height: 16), 0.2, math.pi - 0.4, false, Ink2.stroke(const Color(0xFFA1887F), 2.5));
+  // The bird follows a wavy path across the sky, then glides on its loop.
+  final along = f.loop == 0 ? 0.42 : f.loop;
+  final bx = -30 + (w + 60) * along;
+  final by = h * 0.42 + math.sin(along * 4 * math.pi) * h * 0.12;
+  final arrive = phase(f.intro, 0.1, 0.5, Curves.easeOutBack);
+  wagebird(c, Offset(bx, by), h * 0.34 * arrive, f, flap: f.loop == 0 ? 0.6 : _flapAt(f.loop * 2));
+};

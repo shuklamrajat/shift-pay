@@ -87,6 +87,20 @@ class WeekTab extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(18),
+                  child: SizedBox(
+                    height: 96,
+                    width: double.infinity,
+                    child: AnimatedScene(
+                      paint: weekHeroScene(progress: summary.workedMin / (40 * 60), coins: summary.shifts.length),
+                      aspectRatio: 3.4,
+                      intro: const Duration(milliseconds: 2000),
+                      loop: const Duration(seconds: 9),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 14),
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
