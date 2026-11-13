@@ -242,6 +242,9 @@ jobs:
           cd "$APP_DIR"
           first=$(ls integration_test/*_test.dart | head -n 1)
           flutter build apk --debug --target "$first" --dart-define=ADMOB_BANNER_ID=ca-app-pub-0000000000000000/0000000000
+          # Free the build's memory for the emulator; later builds start a new one.
+          (cd android && ./gradlew --stop) || true
+          pkill -f KotlinCompileDaemon || true
 
       - name: Room for the emulator
         run: |
@@ -274,6 +277,7 @@ jobs:
           profile: ${{ matrix.device }}
           ram-size: 2048M
           force-avd-creation: false
+          emulator-boot-timeout: 300
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           disable-animations: false
           # Let first-boot work finish before the snapshot is saved, or every
@@ -291,6 +295,7 @@ jobs:
           profile: ${{ matrix.device }}
           ram-size: 2048M
           force-avd-creation: false
+          emulator-boot-timeout: 300
           # The app's own tests run with animations off; the release session
           # turns them back on, like a real phone.
           disable-animations: true
@@ -313,6 +318,7 @@ jobs:
           profile: ${{ matrix.device }}
           ram-size: 2048M
           force-avd-creation: false
+          emulator-boot-timeout: 300
           # The app's own tests run with animations off; the release session
           # turns them back on, like a real phone.
           disable-animations: true
