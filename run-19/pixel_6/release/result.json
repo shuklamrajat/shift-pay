@@ -1,0 +1,22 @@
+{
+  "package": "com.shuklamrajat.wagebird",
+  "device": "pixel_6 API 35",
+  "apk": "universal.apk",
+  "passed": false,
+  "emulator_stopped": false,
+  "android_stalls_not_the_app": [],
+  "checks": [
+    {
+      "check": "the session finished without an error",
+      "want": null,
+      "got": "adb install -r universal.apk failed: adb: failed to install universal.apk: Failure [INSTALL_FAILED_UPDATE_INCOMPATIBLE: Existing package com.shuklamrajat.wagebird signatures do not match newer version; ignoring!]\n\n",
+      "ok": false
+    },
+    {
+      "check": "logcat has no crash for this app",
+      "want": [],
+      "got": [],
+      "ok": true
+    }
+  ]
+}

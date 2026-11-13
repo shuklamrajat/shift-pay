@@ -1,0 +1,4 @@
+Device: pixel_6 API 35, part: release
+Release APK session: 1/2 checks passed
+  FAIL the session finished without an error: want None, got 'adb install -r universal.apk failed: adb: failed to install universal.apk: Failure [INSTALL_FAILED_UPDATE_INCOMPATIBLE: Existing package com.shuklamrajat.wagebird signatures do not match newer version; ignoring!]\n\n'
+RESULT: release on pixel_6 API 35 FAILED
