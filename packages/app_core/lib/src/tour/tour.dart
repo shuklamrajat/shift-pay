@@ -496,8 +496,11 @@ class _Dots extends StatelessWidget {
   );
 }
 
-/// The step's icon on a brand-gradient disc, with a ring that draws itself in
-/// and three sparks that orbit it while ambient motion is on.
+/// The step's icon on a brand-coloured disc with a lighter crescent, a ring,
+/// a one-shot pop-in and three sparks that orbit while ambient motion is on.
+///
+/// Solid colours only, no gradient shader: a gradient disc in the tour card
+/// stopped the Android emulator's GPU dead, even painted once and still.
 class _StepBadge extends StatefulWidget {
   const _StepBadge({required this.icon, required this.colors, required this.onBrand});
   final IconData icon;
@@ -508,92 +511,93 @@ class _StepBadge extends StatefulWidget {
   State<_StepBadge> createState() => _StepBadgeState();
 }
 
-class _StepBadgeState extends State<_StepBadge> with TickerProviderStateMixin {
-  late final AnimationController _ring = AnimationController(vsync: this, duration: const Duration(milliseconds: 650));
-  late final AnimationController _orbit = AnimationController(vsync: this, duration: const Duration(seconds: 4));
+class _StepBadgeState extends State<_StepBadge> with SingleTickerProviderStateMixin {
+  late final AnimationController _spin = AnimationController(vsync: this, duration: const Duration(seconds: 4));
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (Motion.reduced(context)) {
-      _ring.value = 1;
-    } else if (_ring.status == AnimationStatus.dismissed) {
-      _ring.forward();
-    }
     if (Motion.ambient && !Motion.reduced(context)) {
-      if (!_orbit.isAnimating) _orbit.repeat();
+      if (!_spin.isAnimating) _spin.repeat();
     } else {
-      _orbit.stop();
+      _spin.stop();
     }
   }
 
   @override
   void dispose() {
-    _ring.dispose();
-    _orbit.dispose();
+    _spin.dispose();
     super.dispose();
   }
 
   @override
-  Widget build(BuildContext context) => SizedBox.square(
-    dimension: 52,
-    child: AnimatedBuilder(
-      animation: Listenable.merge([_ring, _orbit]),
-      builder: (_, child) => CustomPaint(
-        painter: _BadgePainter(
-          ring: Curves.easeOutCubic.transform(_ring.value),
-          orbit: _orbit.value,
-          colors: widget.colors,
-        ),
-        child: child,
+  Widget build(BuildContext context) {
+    final base = widget.colors.first;
+    return SizedBox.square(
+      dimension: 52,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          Container(
+            width: 46,
+            height: 46,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(color: widget.colors.last.withValues(alpha: 0.8), width: 1.6),
+            ),
+          ),
+          TweenAnimationBuilder<double>(
+            tween: Tween(begin: 0.7, end: 1),
+            duration: Motion.of(context, 650),
+            curve: Curves.easeOutBack,
+            builder: (_, s, child) => Transform.scale(scale: s, child: child),
+            child: Container(
+              width: 42,
+              height: 42,
+              decoration: BoxDecoration(shape: BoxShape.circle, color: base),
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  Positioned(
+                    left: 5,
+                    top: 4,
+                    child: Container(
+                      width: 24,
+                      height: 24,
+                      decoration: BoxDecoration(shape: BoxShape.circle, color: Color.lerp(base, Colors.white, 0.22)),
+                    ),
+                  ),
+                  Icon(widget.icon, color: widget.onBrand, size: 24),
+                ],
+              ),
+            ),
+          ),
+          RotationTransition(
+            turns: _spin,
+            child: SizedBox.square(dimension: 52, child: CustomPaint(painter: _Sparks(widget.colors))),
+          ),
+        ],
       ),
-      child: Icon(widget.icon, color: widget.onBrand, size: 24),
-    ),
-  );
+    );
+  }
 }
 
-class _BadgePainter extends CustomPainter {
-  _BadgePainter({required this.ring, required this.orbit, required this.colors});
-  final double ring;
-  final double orbit;
+class _Sparks extends CustomPainter {
+  _Sparks(this.colors);
   final List<Color> colors;
 
   @override
   void paint(Canvas canvas, Size size) {
     final c = size.center(Offset.zero);
-    final r = size.shortestSide / 2 - 5;
-    final disc = Rect.fromCircle(center: c, radius: r);
-    canvas.drawCircle(
-      c,
-      r * (0.7 + 0.3 * ring),
-      Paint()
-        ..shader = LinearGradient(
-          colors: colors,
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ).createShader(disc),
-    );
-    canvas.drawArc(
-      Rect.fromCircle(center: c, radius: r + 3),
-      -math.pi / 2,
-      2 * math.pi * ring,
-      false,
-      Paint()
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.6
-        ..strokeCap = StrokeCap.round
-        ..color = colors.last.withValues(alpha: 0.8),
-    );
-    if (ring < 1) return;
+    final r = size.shortestSide / 2 - 3;
     for (var i = 0; i < 3; i++) {
-      final a = 2 * math.pi * (orbit + i / 3);
-      final p = c + Offset(math.cos(a), math.sin(a)) * (r + 3);
-      canvas.drawCircle(p, i == 0 ? 2.6 : 1.8, Paint()..color = colors[i % colors.length]);
+      final a = 2 * math.pi * i / 3;
+      canvas.drawCircle(c + Offset(math.cos(a), math.sin(a)) * r, i == 0 ? 2.6 : 1.8, Paint()..color = colors[i % colors.length]);
     }
   }
 
   @override
-  bool shouldRepaint(_BadgePainter old) => old.ring != ring || old.orbit != orbit || old.colors != colors;
+  bool shouldRepaint(_Sparks old) => old.colors != colors;
 }
 
 /// Dims everything but a rounded window over the control, rims the window in
