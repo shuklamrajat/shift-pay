@@ -1,0 +1,40 @@
+{
+  "package": "com.shuklamrajat.wagebird",
+  "device": "pixel_fold API 35",
+  "apk": "universal.apk",
+  "passed": false,
+  "emulator_stopped": false,
+  "android_stalls_not_the_app": [],
+  "checks": [
+    {
+      "check": "still running 8 s after launch",
+      "want": true,
+      "got": true,
+      "ok": true
+    },
+    {
+      "check": "first screen: onboarding shows",
+      "want": true,
+      "got": true,
+      "ok": true
+    },
+    {
+      "check": "onboarding: Next turns the pages to Get started",
+      "want": true,
+      "got": false,
+      "ok": false
+    },
+    {
+      "check": "the session finished without an error",
+      "want": null,
+      "got": "\"Get started\" never appeared. On screen: ['$0.00', '0', '0m', 'Add shift', 'Clock in to Warehouse', 'HOURS', 'Jobs', 'Mon 21 Dec \u2013 Sun 27 Dec', 'Next week', 'No shifts this week yet.', 'Overtime', 'PAY', 'Pay', 'Previous week', 'Settings', 'Shifts', 'Tab 1 of 3', 'Tab 2 of 3', 'Tab 3 of 3', 'Warehouse', 'Week']",
+      "ok": false
+    },
+    {
+      "check": "logcat has no crash for this app",
+      "want": [],
+      "got": [],
+      "ok": true
+    }
+  ]
+}

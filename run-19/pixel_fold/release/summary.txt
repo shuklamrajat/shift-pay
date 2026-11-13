@@ -1,0 +1,6 @@
+Device: pixel_fold API 35, part: release
+Release APK session: no result ([Errno 2] No such file or directory: '/home/runner/work/shift-pay/shift-pay/device-e2e/pixel_fold/release/release/result.json')
+Release APK session: 3/5 checks passed
+  FAIL onboarding: Next turns the pages to Get started: want True, got 'False'
+  FAIL the session finished without an error: want None, got '"Get started" never appeared. On screen: [\'$0.00\', \'0\', \'0m\', \'Add shift\', \'Clock in to Warehouse\', \'HOURS\', \'Jobs\', \'Mon 21 Dec – Sun 27 Dec\', \'Next week\', \'No shifts this week yet.\', \'Overtime\', \'PAY\', \'Pay\', \'Previous week\', \'Settings\', \'Shifts\', \'Tab 1 of 3\', \'Tab 2 of 3\', \'Tab 3 of 3\', \'Warehou'
+RESULT: release on pixel_fold API 35 FAILED
