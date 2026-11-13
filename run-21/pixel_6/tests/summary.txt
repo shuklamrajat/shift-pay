@@ -1,0 +1,13 @@
+Device: pixel_6 API 35, part: tests
+PASS ads_e2e_test (79s)
+FAIL app_e2e_test (84s):
+══╡ EXCEPTION CAUGHT BY FLUTTER TEST FRAMEWORK ╞════════════════════════════════════════════════════
+The following TestFailure was thrown running a test:
+Expected: empty
+  Actual: [
+#4      main.<anonymous closure> (file:///home/runner/work/shift-pay/shift-pay/apps/hours_tracker/integration_test/app_e2e_test.dart:449:5)
+#5      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:192:15)
+#6      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1953:5)
+PASS free_build_e2e_test (50s)
+STOPPED tour_e2e_test: the emulator stopped answering (149s)
+RESULT: tests on pixel_6 API 35 FAILED
