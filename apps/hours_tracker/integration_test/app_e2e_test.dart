@@ -170,6 +170,10 @@ void main() {
     // shows its hours. Returns whether the chart on that frame already
     // looks the way it does once everything has come to rest.
     Future<({bool chartAtRest, bool rollingNumber})> previousWeekFirstFrame(String hours) async {
+      // Back to the top first: reading the chart aloud may have scrolled the
+      // week's header off a short screen (the Fold folded).
+      await reveal(find.byKey(const Key('week-prev')));
+      await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('week-prev')));
       final end = DateTime.now().add(const Duration(seconds: 15));
       final f = find.byKey(const Key('week-hours'));
