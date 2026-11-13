@@ -1,0 +1,4 @@
+11-13 13:19:21.483   566   598 W ActivityManager: Slow operation: 116ms so far, now at startProcess: done updating battery stats
+11-13 13:19:21.484   566   598 W ActivityManager: Slow operation: 116ms so far, now at startProcess: building log message
+11-13 13:19:21.484   566   598 W ActivityManager: Slow operation: 116ms so far, now at startProcess: starting to update pids map
+11-13 13:19:21.484   566   598 W ActivityManager: Slow operation: 116ms so far, now at startProcess: done updating pids map

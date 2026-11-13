@@ -1,0 +1,14 @@
+Device: pixel_fold API 35, part: tests
+PASS ads_e2e_test (94s)
+FAIL app_e2e_test (83s):
+══╡ EXCEPTION CAUGHT BY FLUTTER TEST FRAMEWORK ╞════════════════════════════════════════════════════
+The following StateError was thrown running a test:
+#0      SemanticsController.find (package:flutter_test/src/controller.dart:98:7)
+#1      WidgetController.getSemantics (package:flutter_test/src/controller.dart:2364:79)
+#2      main.<anonymous closure>.spoken (file:///home/runner/work/shift-pay/shift-pay/apps/hours_tracker/integration_test/app_e2e_test.dart:146:39)
+#3      main.<anonymous closure> (file:///home/runner/work/shift-pay/shift-pay/apps/hours_tracker/integration_test/app_e2e_test.dart:261:9)
+#4      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:192:15)
+#5      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1953:5)
+PASS free_build_e2e_test (61s)
+PASS tour_e2e_test (47s)
+RESULT: tests on pixel_fold API 35 FAILED
