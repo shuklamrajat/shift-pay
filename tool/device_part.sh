@@ -54,6 +54,9 @@ timeout 20 adb shell pm disable-user --user 0 com.google.android.googlesdksetup 
 timeout 10 adb shell input keyevent KEYCODE_HOME || true
 
 if [ "$part" = release ]; then
+  # Start from a phone that has never seen the app, so the install, the first
+  # screen and the "no onboarding after reopening" checks mean what they say.
+  timeout 60 adb uninstall "$pkg" >/dev/null 2>&1 || true
   timeout 1500 python3 tool/device_e2e.py --apk "$apk" --package "$pkg" --out "$out/release" --device "$label"
   rc=$?
   python3 - "$out/release/result.json" >> "$out/summary.txt" <<'PY'

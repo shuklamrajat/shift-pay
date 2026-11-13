@@ -258,14 +258,17 @@ jobs:
           sudo udevadm trigger --name-match=kvm
           df -h / && free -h && nproc
 
+      # Restore only. The cache is saved right after the snapshot is made, never
+      # at the end of the job: a job-end save kept whatever the run left on the
+      # emulator (an installed app, or a disk from an emulator that died).
       - name: Cached emulator
-        uses: actions/cache@v4
+        uses: actions/cache/restore@v4
         id: avd-cache
         with:
           path: |
             ~/.android/avd/*
             ~/.android/adb*
-          key: avd-${{ matrix.device }}-${{ matrix.api }}-v2
+          key: avd-${{ matrix.device }}-${{ matrix.api }}-v3
 
       - name: Make the emulator snapshot (first run only)
         if: steps.avd-cache.outputs.cache-hit != 'true'
@@ -283,6 +286,16 @@ jobs:
           # Let first-boot work finish before the snapshot is saved, or every
           # later boot resumes in the middle of it.
           script: for i in $(seq 1 60); do l=$(adb shell cat /proc/loadavg | cut -d' ' -f1); echo "load $l"; awk -v l="$l" 'BEGIN { exit !(l < 1.5) }' && break; sleep 5; done; adb shell pm disable-user --user 0 com.google.android.googlesdksetup || true
+
+      - name: Save the clean emulator snapshot (first run only)
+        if: steps.avd-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        continue-on-error: true   # another job may have saved it first
+        with:
+          path: |
+            ~/.android/avd/*
+            ~/.android/adb*
+          key: avd-${{ matrix.device }}-${{ matrix.api }}-v3
 
       - name: Run on the emulator
         id: try1
