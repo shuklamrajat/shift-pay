@@ -25,7 +25,7 @@ What could go wrong, written down before the code:
      not stick after the app is reopened.
 The session runs with system animations on, like most phones. The app's own
 end-to-end tests then run on the same emulator with animations off
-(tool/device_suite.sh), which covers people who turn motion off.
+(tool/device_part.sh tests), which covers people who turn motion off.
 Each run records every check with a screenshot of the screen at that moment
 (NN-PASS-... or NN-FAIL-...), and the full logcat, in OUT.
 

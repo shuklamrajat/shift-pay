@@ -14,7 +14,7 @@ name: Android build
 # (a phone on API 34 and a Pixel Fold on API 35), launches it, walks a real
 # first session (sideways, folded and unfolded, Settings, export), reopens the
 # app and checks logcat for crashes and ANRs (tool/device_e2e.py); then runs
-# the app's own end-to-end tests on the same emulator (tool/device_suite.sh).
+# the app's own end-to-end tests on the same emulator (tool/device_part.sh).
 # Added Nov 13 after Wagebird v11 and Wrenchnote v10 crashed on launch.
 
 on:
