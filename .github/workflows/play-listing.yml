@@ -1,0 +1,26 @@
+name: Play listing art
+
+# Pushing the play-listing branch saves the store art (store/<app>/) to the
+# Play listing as a change that is not sent for review. Nothing goes to
+# Google review from here: that is done by hand in Play Console.
+on:
+  push:
+    branches: [play-listing]
+
+permissions:
+  contents: read
+
+jobs:
+  listing:
+    runs-on: ubuntu-latest
+    env:
+      PACKAGE: com.shuklamrajat.wagebird
+      STORE: store/hours_tracker
+    steps:
+      - uses: actions/checkout@v4
+      - name: Save the listing art (not sent for review)
+        env:
+          PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+        run: |
+          python3 -m pip install --quiet google-auth requests cryptography
+          python3 tool/play_listing.py --package "$PACKAGE" --store "$STORE"
