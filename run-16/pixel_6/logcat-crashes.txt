@@ -1,0 +1,6 @@
+11-13 07:54:11.757   532  3320 E ActivityManager: ANR in com.google.android.as
+11-13 07:54:37.496   532  3766 E ActivityManager: ANR in com.google.android.gms.persistent
+11-13 07:54:40.104  3952  3952 E AndroidRuntime: FATAL EXCEPTION: main
+11-13 07:54:41.352   532  3766 E ActivityManager: ANR in com.google.android.as
+11-13 07:54:42.791   532  3766 E ActivityManager: ANR in com.google.android.apps.wellbeing
+11-13 07:54:43.293   532  3766 E ActivityManager: ANR in com.google.android.as
