@@ -389,6 +389,10 @@ void main() {
 
       // Motion: changing week animates the chart and rolls the numbers;
       // with the system's reduce-motion setting on, both arrive at rest.
+      // Say "motion on" outright: a test phone (the emulator gate) may have
+      // animations switched off, and then the app rightly shows no motion.
+      tester.platformDispatcher.accessibilityFeaturesTestValue = const FakeAccessibilityFeatures();
+      await tester.pumpAndSettle();
       await tapKey('tab-week');
       final moving = await previousWeekFirstFrame('54h');
       log.check('motion on: week chart still growing on first frame', false, moving.chartAtRest);
