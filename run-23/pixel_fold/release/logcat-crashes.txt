@@ -1,0 +1,14 @@
+11-13 13:32:07.377  1096  1178 F libc    : Fatal signal 6 (SIGABRT), code -1 (SI_QUEUE) in tid 1178 (bt_stack_manage), pid 1096 (droid.bluetooth)
+11-13 13:33:37.358   566   590 W ActivityManager: Slow operation: 53ms so far, now at startProcess: done creating new process record
+11-13 13:33:37.358   566   590 W ActivityManager: Slow operation: 54ms so far, now at startProcess: stepping in to startProcess
+11-13 13:33:37.363   566   590 W ActivityManager: Slow operation: 57ms so far, now at startProcess: done starting proc!
+11-13 13:33:37.413   566   598 W ActivityManager: Slow operation: 55ms so far, now at startProcess: returned from zygote!
+11-13 13:33:37.413   566   598 W ActivityManager: Slow operation: 55ms so far, now at startProcess: done updating battery stats
+11-13 13:33:37.413   566   598 W ActivityManager: Slow operation: 55ms so far, now at startProcess: building log message
+11-13 13:33:37.413   566   598 W ActivityManager: Slow operation: 55ms so far, now at startProcess: starting to update pids map
+11-13 13:33:37.414   566   598 W ActivityManager: Slow operation: 55ms so far, now at startProcess: done updating pids map
+11-13 13:35:01.250   566   598 W ActivityManager: Slow operation: 60ms so far, now at startProcess: returned from zygote!
+11-13 13:35:01.250   566   598 W ActivityManager: Slow operation: 60ms so far, now at startProcess: done updating battery stats
+11-13 13:35:01.250   566   598 W ActivityManager: Slow operation: 61ms so far, now at startProcess: building log message
+11-13 13:35:01.250   566   598 W ActivityManager: Slow operation: 61ms so far, now at startProcess: starting to update pids map
+11-13 13:35:01.255   566   598 W ActivityManager: Slow operation: 65ms so far, now at startProcess: done updating pids map
