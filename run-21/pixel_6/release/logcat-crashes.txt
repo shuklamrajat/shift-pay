@@ -1,0 +1,17 @@
+11-13 13:05:32.665   555   592 W ActivityManager: Slow operation: 62ms so far, now at startProcess: returned from zygote!
+11-13 13:05:32.665   555   592 W ActivityManager: Slow operation: 63ms so far, now at startProcess: done updating battery stats
+11-13 13:05:32.665   555   592 W ActivityManager: Slow operation: 63ms so far, now at startProcess: building log message
+11-13 13:05:32.665   555   592 W ActivityManager: Slow operation: 63ms so far, now at startProcess: starting to update pids map
+11-13 13:05:32.668   555   592 W ActivityManager: Slow operation: 65ms so far, now at startProcess: done updating pids map
+11-13 13:07:15.349   555   581 W ActivityManager: Slow operation: 91ms so far, now at startProcess: done creating new process record
+11-13 13:07:15.350   555   581 W ActivityManager: Slow operation: 91ms so far, now at startProcess: stepping in to startProcess
+11-13 13:07:15.385   555   581 W ActivityManager: Slow operation: 127ms so far, now at startProcess: done starting proc!
+11-13 13:07:15.427   555   592 W ActivityManager: Slow operation: 78ms so far, now at startProcess: returned from zygote!
+11-13 13:07:15.427   555   592 W ActivityManager: Slow operation: 78ms so far, now at startProcess: done updating battery stats
+11-13 13:07:15.427   555   592 W ActivityManager: Slow operation: 78ms so far, now at startProcess: building log message
+11-13 13:07:15.428   555   592 W ActivityManager: Slow operation: 78ms so far, now at startProcess: starting to update pids map
+11-13 13:07:15.428   555   592 W ActivityManager: Slow operation: 78ms so far, now at startProcess: done updating pids map
+11-13 13:07:17.083   555   592 W ActivityManager: Slow operation: 69ms so far, now at startProcess: done updating battery stats
+11-13 13:07:17.083   555   592 W ActivityManager: Slow operation: 69ms so far, now at startProcess: building log message
+11-13 13:07:17.083   555   592 W ActivityManager: Slow operation: 69ms so far, now at startProcess: starting to update pids map
+11-13 13:07:17.083   555   592 W ActivityManager: Slow operation: 70ms so far, now at startProcess: done updating pids map

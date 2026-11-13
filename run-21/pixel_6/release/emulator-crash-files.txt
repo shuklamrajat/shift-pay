@@ -1,0 +1,5 @@
+total 16
+drwxr--r--  4 runner runner 4096 Nov 13 13:01 .
+drwxrwxrwt 15 root   root   4096 Nov 13 13:08 ..
+drwx------  6 runner runner 4096 Nov 13 12:56 emu-crash-37.2.13.db
+drwxr-xr-x  2 runner runner 4096 Nov 13 13:08 netsimd
