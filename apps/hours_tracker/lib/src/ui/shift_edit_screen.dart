@@ -114,6 +114,25 @@ class _ShiftEditScreenState extends ConsumerState<ShiftEditScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.shift == null ? 'Add shift' : 'Edit shift'),
+        // Why Save was refused (an overlapping shift, say). Pinned here: as the
+        // form's last line it sat under the keyboard on the Fold unfolded.
+        bottom: _error == null
+            ? null
+            : PreferredSize(
+                preferredSize: const Size.fromHeight(48),
+                child: Container(
+                  width: double.infinity,
+                  color: Theme.of(context).colorScheme.errorContainer,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  child: Text(
+                    _error!,
+                    key: const Key('shift-error'),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(color: Theme.of(context).colorScheme.onErrorContainer),
+                  ),
+                ),
+              ),
         actions: [
           TextButton(key: const Key('save-shift'), onPressed: _saving ? null : _save, child: const Text('Save')),
           if (widget.shift != null)
@@ -172,15 +191,6 @@ class _ShiftEditScreenState extends ConsumerState<ShiftEditScreen> {
               controller: _note,
               decoration: const InputDecoration(labelText: 'Note (optional)'),
             ),
-            if (_error != null)
-              Padding(
-                padding: const EdgeInsets.only(top: 12),
-                child: Text(
-                  _error!,
-                  key: const Key('shift-error'),
-                  style: TextStyle(color: Theme.of(context).colorScheme.error),
-                ),
-              ),
             const SizedBox(height: 20),
             FilledButton(
               key: const Key('save-shift-bottom'),
