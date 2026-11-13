@@ -232,6 +232,11 @@ jobs:
             /opt/hostedtoolcache/CodeQL /usr/share/swift /usr/local/share/powershell || true
           sudo docker image prune -af >/dev/null 2>&1 || true
           df -h /
+          # The emulator plus the app's test build can outgrow the runner's
+          # memory; extra swap keeps the runner from being shut down.
+          sudo swapoff -a || true
+          sudo fallocate -l 10G /swapfile2 && sudo chmod 600 /swapfile2 && sudo mkswap /swapfile2 && sudo swapon /swapfile2 || true
+          free -h
 
       - name: Enable KVM
         run: |
@@ -246,6 +251,7 @@ jobs:
           arch: x86_64
           target: google_apis
           profile: ${{ matrix.device }}
+          ram-size: 2048M
           disable-animations: true   # the app's own tests; the release session turns them back on
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           script: bash tool/device_suite.sh universal.apk "$PLAY_PACKAGE" "$APP_DIR" "device-e2e/${{ matrix.device }}" "${{ matrix.device }} API ${{ matrix.api }}"

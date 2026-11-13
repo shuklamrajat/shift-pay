@@ -151,6 +151,43 @@ def tap_match(pattern, timeout=25):
     raise RuntimeError(f'nothing matching /{pattern}/ appeared. On screen: {sorted({l for n in nodes() for l in n["lines"]})}')
 
 
+def swipe(up):
+    """One slow drag on the middle of the screen: up shows what is lower down."""
+    out = adb('shell', 'wm', 'size', check=False)
+    m = re.findall(r'(\d+)x(\d+)', out)
+    w, h = map(int, m[-1]) if m else (1080, 2400)
+    # user_rotation may have swapped the sides; the drag stays inside either way.
+    w, h = min(w, h), min(w, h)
+    y1, y2 = (int(h * 0.75), int(h * 0.35)) if up else (int(h * 0.35), int(h * 0.75))
+    adb('shell', 'input', 'swipe', str(w // 2), str(y1), str(w // 2), str(y2), '600')
+    time.sleep(1)
+
+
+def reveal(present, tries=5):
+    """Scrolls down until [present]() is true. A list only builds the rows
+    near the screen, so a row lower down is invisible until scrolled to."""
+    for i in range(tries + 1):
+        if present():
+            return True
+        if i < tries:
+            swipe(True)
+    return False
+
+
+def to_top(tries=5):
+    for _ in range(tries):
+        swipe(False)
+
+
+def open_row(present, tap_it, title):
+    """Scrolls to a row, taps it and waits for its edit screen."""
+    if not reveal(present):
+        raise RuntimeError(f'the row for "{title}" never appeared, even after scrolling. On screen: '
+                           f'{sorted({l for n in nodes() for l in n["lines"]})}')
+    tap_it()
+    wait(title)
+
+
 def gone(present, timeout=12):
     """Waits until [present]() is false; returns True if it went away."""
     end = time.time() + timeout
@@ -168,11 +205,12 @@ def delete_entry(open_it, delete_label, present, what, home):
     tap(delete_label)
     wait('Cancel')  # the confirm dialog
     tap('Delete')
-    check(f'delete: {what} is gone from the list', True, gone(present))
+    to_top()
+    check(f'delete: {what} is gone from the list', True, gone(lambda: reveal(present)))
     restart()
     wait(home, timeout=40)  # the list has loaded, so an absence means something
     time.sleep(2)
-    check(f'delete: {what} stays gone after reopening', True, gone(present, timeout=8))
+    check(f'delete: {what} stays gone after reopening', True, gone(lambda: reveal(present), timeout=8))
     check('still running after the delete and reopen', True, alive())
 
 
@@ -303,11 +341,12 @@ def wagebird():
     tap('Save')
     wait('4h')
     check('add: a 08:00-12:00 shift today counts 4h this week', True, bool(find('4h')))
-    tap('8:00')  # the shift's row
-    wait('Edit shift')
+    row = lambda: bool(find('8:00'))  # the shift's row, below the week chart
+    open_row(row, lambda: tap('8:00'), 'Edit shift')
     type_into('End', '14:00', 2)
     hide_keyboard()
     tap('Save')
+    to_top()
     wait('6h')
     check('edit: changing the end to 14:00 makes it 6h', True, bool(find('6h')))
     screen_changes(lambda: bool(find('6h')))
@@ -319,8 +358,9 @@ def wagebird():
         wait('6h', timeout=40)
         check('after reopening: the edited 6h shift is still there', True, bool(find('6h')))
         check('after reopening: no onboarding again', False, bool(find('Get started')))
-        delete_entry(lambda: (tap('8:00'), wait('Edit shift')), 'Delete shift',
-                     lambda: bool(find('8:00')), 'the shift', 'Week')
+        check('after reopening: the shift row still says 8:00', True, reveal(row))
+        delete_entry(lambda: open_row(row, lambda: tap('8:00'), 'Edit shift'), 'Delete shift',
+                     row, 'the shift', 'Week')
     return after_reopen
 
 
@@ -343,29 +383,34 @@ def wrenchnote():
         hide_keyboard()
         tap('Save')
         wait('Add fill-up')
-    odo = r'10[,.\u00a0\u202f ]?500'
+    # The rows read "13 Nov 2026 · 10,500 km"; the odometer card at the top
+    # also says "10,500 km", so match the row's dot.
+    odo = r'\u00b7 *10[,.\u00a0\u202f ]?500'
     seen = lambda: bool(matching(odo))
-    first = lambda: bool(matching(r'10[,.\u00a0\u202f ]?000'))
-    check('add: both fill-ups are listed (10,000 and 10,500 on the odometer)', True, seen() and first())
-    tap_match(odo)
-    wait('Edit fill-up')
+    first = lambda: bool(matching(r'\u00b7 *10[,.\u00a0\u202f ]?000'))
+    both = lambda: reveal(seen) and reveal(first)
+    check('add: both fill-ups are listed (10,000 and 10,500 on the odometer)', True, both())
+    open_row(seen, lambda: tap_match(odo), 'Edit fill-up')
     type_into('Total paid', '61.00', 3)
     hide_keyboard()
     tap('Save')
     wait('Add fill-up')
     paid = lambda: any('61.00' in l for n in nodes() for l in n['lines'])
-    check('edit: the 10,500 fill-up now shows 61.00 paid', True, gone(lambda: not paid()))
-    screen_changes(seen)
+    check('edit: the 10,500 fill-up now shows 61.00 paid', True, gone(lambda: not reveal(paid)))
+    to_top()
+    screen_changes(lambda: reveal(seen))
     settings_open()
     share_sheet_opens('cost report CSV export', lambda: (tap('Costs'), tap('CSV')))
 
     def after_reopen():
         wait('Civic', timeout=40)
-        check('after reopening: Civic and both fill-ups are still there', True, seen() and first())
-        check('after reopening: the edit (61.00) is still there', True, paid())
+        check('after reopening: Civic and both fill-ups are still there', True, both())
+        check('after reopening: the edit (61.00) is still there', True, reveal(paid))
+        to_top()
         check('after reopening: no onboarding again', False, bool(find('Get started')))
-        delete_entry(lambda: (tap_match(odo), wait('Edit fill-up')), 'Delete fill-up', seen, 'the 10,500 fill-up', 'Civic')
-        check('delete: the other fill-up (10,000) is untouched', True, first())
+        delete_entry(lambda: open_row(seen, lambda: tap_match(odo), 'Edit fill-up'), 'Delete fill-up', seen,
+                     'the 10,500 fill-up', 'Civic')
+        check('delete: the other fill-up (10,000) is untouched', True, reveal(first))
     return after_reopen
 
 
@@ -386,12 +431,13 @@ def housetally():
     wait('Add item')
     priced = lambda v: (lambda: any(v in l for n in nodes() for l in n['lines']))
     check('add: the lawn mower ($300.00) counts toward the home value', True, priced('300.00')())
-    tap('Lawn mower')
-    wait('Edit item')
+    mower = lambda: bool(find('Lawn mower'))
+    open_row(mower, lambda: tap('Lawn mower'), 'Edit item')
     type_into('Price paid', '350', 5)
     hide_keyboard()
     tap('Save')
     wait('Add item')
+    to_top()
     has = priced('350.00')
     check('edit: the new price ($350.00) is counted instead', True, gone(lambda: not has()))
     screen_changes(has)
@@ -402,8 +448,8 @@ def housetally():
         wait('Add item', timeout=40)
         check('after reopening: the edited item ($350.00) is still counted', True, has())
         check('after reopening: no onboarding again', False, bool(find('Get started')))
-        delete_entry(lambda: (tap('Lawn mower'), wait('Edit item')), 'Delete item',
-                     lambda: bool(find('Lawn mower')), 'the lawn mower', 'Add item')
+        delete_entry(lambda: open_row(mower, lambda: tap('Lawn mower'), 'Edit item'), 'Delete item',
+                     mower, 'the lawn mower', 'Add item')
     return after_reopen
 
 

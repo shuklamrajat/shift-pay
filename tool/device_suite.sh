@@ -24,6 +24,8 @@ sleep 3
 adb wait-for-device
 adb shell setprop persist.sys.timezone America/New_York || true
 adb logcat -c
+# Keep the test build's Gradle small so it fits beside the emulator.
+sed -i -E 's/-Xmx[0-9]+[GgMm]/-Xmx2G/; s/MaxMetaspaceSize=[0-9]+[GgMm]/MaxMetaspaceSize=768m/' "$app/android/gradle.properties" 2>/dev/null || true
 dev=$(adb devices | awk 'NR>1 && $2=="device" {print $1; exit}')
 # The app can only write inside its own folder on a phone.
 art=/data/user/0/$pkg/cache/e2e
