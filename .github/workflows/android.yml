@@ -192,7 +192,7 @@ jobs:
         part: [release, tests]
         include:
           - device: pixel_6
-            api: 34
+            api: 35   # API 34 images kept crashing on these machines
           - device: pixel_fold
             api: 35
     env:
@@ -262,7 +262,7 @@ jobs:
           path: |
             ~/.android/avd/*
             ~/.android/adb*
-          key: avd-${{ matrix.device }}-${{ matrix.api }}-v1
+          key: avd-${{ matrix.device }}-${{ matrix.api }}-v2
 
       - name: Make the emulator snapshot (first run only)
         if: steps.avd-cache.outputs.cache-hit != 'true'
@@ -276,7 +276,9 @@ jobs:
           force-avd-creation: false
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           disable-animations: false
-          script: echo "Emulator snapshot made for the cache."
+          # Let first-boot work finish before the snapshot is saved, or every
+          # later boot resumes in the middle of it.
+          script: for i in $(seq 1 60); do l=$(adb shell cat /proc/loadavg | cut -d' ' -f1); echo "load $l"; awk -v l="$l" 'BEGIN { exit !(l < 1.5) }' && break; sleep 5; done; adb shell pm disable-user --user 0 com.google.android.googlesdksetup || true
 
       - name: Run on the emulator
         id: try1
@@ -351,6 +353,10 @@ jobs:
               [ -f "$f" ] && grep -E "FATAL EXCEPTION|Process: |Fatal signal|ANR in" "$f" > "$d/$(basename "$f" .txt)-crashes.txt" || true
             done
           fi
+          # Why an emulator died, if it did: the host kernel's view (out of
+          # memory, crashes) and the emulator's own crash files.
+          sudo dmesg 2>/dev/null | grep -iE "killed process|out of memory|oom|segfault|qemu|emulator" | tail -n 40 > "$d/host-kernel.txt" || true
+          ls -la /tmp/android-runner/ > "$d/emulator-crash-files.txt" 2>/dev/null || true
           git -C "$dest" add -A
           git -C "$dest" -c user.name=ci -c user.email=ci@users.noreply.github.com commit -qm "Emulator proof $RUN $DEVICE $PART"
           for i in 1 2 3 4 5; do

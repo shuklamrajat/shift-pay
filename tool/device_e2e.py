@@ -93,9 +93,9 @@ def shot(name):
 def death_log():
     """What Android logged about the app's process going away."""
     try:
-        log = adb('logcat', '-d', check=False)
-    except EmulatorGone:
-        gone, log = True, ''.splitlines()
+        log = adb('logcat', '-d', check=False).splitlines()
+    except Exception:
+        log = []
     keep = [l for l in log if ARGS.package in l or ' F DEBUG' in l or 'Fatal signal' in l
             or ' F libc' in l or 'lowmemorykiller' in l or 'AndroidRuntime' in l or ' E flutter' in l]
     return '\n'.join(keep[-60:])
@@ -144,12 +144,46 @@ def find(label, edit=False):
     return []
 
 
+APP_NAMES = {'com.shuklamrajat.wagebird': 'Wagebird', 'com.shuklamrajat.wrenchnote': 'Wrenchnote',
+             'com.shuklamrajat.housetally': 'Housetally'}
+SYSTEM_STALLS = []
+
+
+def system_dialog():
+    """Android's "X isn't responding" dialog. If X is this app, the app froze
+    (a real failure). If X is part of Android itself (a slow emulator's own
+    launcher, say), press Wait, note it, and carry on: it covers the app, so
+    nothing of the app can be read until it goes."""
+    for n in nodes(any_app=True):
+        for l in n['lines']:
+            m = re.match(r"(.+?) (isn't|is not) responding", l)
+            if not m:
+                continue
+            who = m.group(1).strip()
+            if who == APP_NAMES.get(ARGS.package) or ARGS.package in who:
+                raise RuntimeError(f'the app froze: Android showed "{l}"')
+            SYSTEM_STALLS.append(who)
+            print(f'note: Android showed "{l}" (not the app); pressing Wait', flush=True)
+            for b in nodes(any_app=True):
+                if 'Wait' in b['lines']:
+                    adb('shell', 'input', 'tap', *map(str, b['center']))
+                    time.sleep(2)
+                    return True
+            adb('shell', 'input', 'keyevent', 'KEYCODE_BACK')
+            time.sleep(2)
+            return True
+    return False
+
+
 def wait(label, timeout=25, edit=False):
     end = time.time() + timeout
     while time.time() < end:
         hit = find(label, edit=edit)
         if hit:
             return hit[0]
+        if system_dialog():
+            end += 10  # time lost to Android's dialog, not to the app
+            continue
         if not alive():
             raise RuntimeError(f'the app stopped running while waiting for "{label}"\n' + death_log())
         time.sleep(1)
@@ -576,7 +610,10 @@ def main():
             shot('at-failure')
         except Exception:
             pass
-    log = adb('logcat', '-d', check=False)
+    try:
+        log = adb('logcat', '-d', check=False)
+    except Exception:  # the emulator is gone, so there is no log to read
+        gone, log = True, ''
     open(f'{ARGS.out}/logcat.txt', 'w').write(log)
     found = crashes(log)
     check('logcat has no crash for this app', [], found[:5])
@@ -587,7 +624,8 @@ def main():
     # emulator stopped answering, the run says so (exit 3) so CI can retry once.
     infra = gone and not found
     result = {'package': ARGS.package, 'device': ARGS.device, 'apk': ARGS.apk,
-              'passed': all(c['ok'] for c in CHECKS), 'emulator_stopped': infra, 'checks': CHECKS}
+              'passed': all(c['ok'] for c in CHECKS), 'emulator_stopped': infra,
+              'android_stalls_not_the_app': SYSTEM_STALLS, 'checks': CHECKS}
     json.dump(result, open(f'{ARGS.out}/result.json', 'w'), indent=2)
     print(f"{sum(c['ok'] for c in CHECKS)}/{len(CHECKS)} checks passed on {ARGS.device}")
     if infra:

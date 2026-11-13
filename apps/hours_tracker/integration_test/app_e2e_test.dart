@@ -310,7 +310,10 @@ void main() {
       }
       final confettiOverForm = find.byKey(const Key('celebration')).evaluate().isNotEmpty;
       log.inputs['confetti_over_job_form_when_tapped'] = confettiOverForm;
-      log.check('confetti plays after buying Pro', true, sawConfetti);
+      // The phone's own setting: with animations turned off, the app skips the
+      // confetti on purpose (Motion.reduced).
+      final motionOff = MediaQuery.maybeDisableAnimationsOf(tester.element(find.byType(Scaffold).first)) ?? false;
+      log.check(motionOff ? 'no confetti with animations off' : 'confetti plays after buying Pro', !motionOff, sawConfetti);
       // A swallowed tap would fail the run (hit-test warnings are fatal).
       await tester.tap(jobName);
       await tester.pump();

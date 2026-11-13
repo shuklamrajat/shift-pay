@@ -37,6 +37,21 @@ finish() {
 
 echo "Device: $label, part: $part" > "$out/summary.txt"
 device_ok || finish 3
+# Right after boot, Android itself is busy (its launcher stalls on this
+# machine). Let it calm down first: up to 3 minutes, until the load is low.
+for i in $(seq 1 36); do
+  load=$(timeout 10 adb shell cat /proc/loadavg 2>/dev/null | cut -d' ' -f1)
+  echo "emulator load: ${load:-?}"
+  awk -v l="${load:-99}" 'BEGIN { exit !(l < 2.5) }' && break
+  sleep 5
+done
+# Android's own parts (its launcher, its SDK setup app) stall on this machine
+# and their "isn't responding" dialogs cover the app. Hide those dialogs and
+# switch off the setup app. A freeze of the app itself is still caught: it is
+# logged as "ANR in <app>", which fails the run.
+timeout 10 adb shell settings put global hide_error_dialogs 1 || true
+timeout 20 adb shell pm disable-user --user 0 com.google.android.googlesdksetup >/dev/null 2>&1 || true
+timeout 10 adb shell input keyevent KEYCODE_HOME || true
 
 if [ "$part" = release ]; then
   timeout 1500 python3 tool/device_e2e.py --apk "$apk" --package "$pkg" --out "$out/release" --device "$label"
@@ -56,6 +71,9 @@ PY
     timeout 60 adb logcat -d > "$out/release/logcat.txt" 2>/dev/null
     if app_crashed "$out/release/logcat.txt"; then rc=1; elif device_ok; then rc=1; else rc=3; fi
   fi
+  # The session script itself died without a result: it was the emulator if
+  # the emulator no longer answers and the app logged no crash.
+  if [ ! -f "$out/release/result.json" ] && ! device_ok && ! app_crashed "$out/release/logcat.txt"; then rc=3; fi
   [ $rc -eq 0 ] || [ $rc -eq 3 ] || rc=1
   finish $rc
 fi
