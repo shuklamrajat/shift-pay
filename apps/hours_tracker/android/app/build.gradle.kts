@@ -60,6 +60,8 @@ android {
             // Upload key when key.properties exists; otherwise the debug key, so
             // `flutter run --release` still works on a developer machine.
             signingConfig = signingConfigs.getByName(if (hasUploadKey) "upload" else "debug")
+            // Keep rules R8 needs for the ads library's WorkManager; see the file.
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }
 }
