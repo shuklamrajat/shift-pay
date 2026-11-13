@@ -18,7 +18,11 @@ What could go wrong, written down before the code:
   4. Entries look saved but are gone after the app is closed and reopened.
   5. It crashes when reopened (a schema or settings problem on second run).
   6. The ads library crashes a few seconds after the home screen shows.
-  7. Any of the above only on a large or folding screen.
+  7. Any of the above only on a large or folding screen, after turning the
+     phone sideways, or when a Fold is folded or unfolded mid-session.
+  8. Settings or the export/share sheet crash in the release build.
+Edits, deletes and every other flow run as the app's own end-to-end tests on
+the same emulator right after this (tool/device_suite.sh).
 Each run records every check, screenshots and the full logcat in OUT.
 
 Usage: device_e2e.py --apk universal.apk --package com.x.y --out out/
@@ -56,11 +60,19 @@ def shot(name):
     open(path, 'wb').write(adb('exec-out', 'screencap', '-p', binary=True))
 
 
+def death_log():
+    """What Android logged about the app's process going away."""
+    log = adb('logcat', '-d', check=False).splitlines()
+    keep = [l for l in log if ARGS.package in l or ' F DEBUG' in l or 'Fatal signal' in l
+            or ' F libc' in l or 'lowmemorykiller' in l or 'AndroidRuntime' in l or ' E flutter' in l]
+    return '\n'.join(keep[-60:])
+
+
 def alive():
     return adb('shell', 'pidof', ARGS.package, check=False).strip() != ''
 
 
-def nodes():
+def nodes(any_app=False):
     adb('shell', 'uiautomator', 'dump', '/sdcard/ui.xml', check=False)
     raw = adb('exec-out', 'cat', '/sdcard/ui.xml', check=False)
     try:
@@ -69,7 +81,7 @@ def nodes():
         return []
     out = []
     for n in root.iter('node'):
-        if n.get('package') != ARGS.package:
+        if not any_app and n.get('package') != ARGS.package:
             continue
         m = re.match(r'\[(\d+),(\d+)\]\[(\d+),(\d+)\]', n.get('bounds', ''))
         if not m:
@@ -80,7 +92,7 @@ def nodes():
         words = [n.get('text', ''), n.get('content-desc', ''), n.get('hint', '')]
         out.append({'lines': [l.strip() for w in words for l in w.split('\n') if l.strip()],
                     'cls': n.get('class', ''), 'center': ((x1 + x2) // 2, (y1 + y2) // 2),
-                    'clickable': n.get('clickable') == 'true'})
+                    'clickable': n.get('clickable') == 'true', 'package': n.get('package', '')})
     return out
 
 
@@ -102,7 +114,7 @@ def wait(label, timeout=25, edit=False):
         if hit:
             return hit[0]
         if not alive():
-            raise RuntimeError(f'the app stopped running while waiting for "{label}"')
+            raise RuntimeError(f'the app stopped running while waiting for "{label}"\n' + death_log())
         time.sleep(1)
     dump = sorted({l for n in nodes() for l in n['lines']})
     raise RuntimeError(f'"{label}" never appeared. On screen: {dump}')
@@ -150,6 +162,67 @@ def restart():
     launch()
 
 
+def rotate(landscape):
+    adb('shell', 'settings', 'put', 'system', 'accelerometer_rotation', '0')
+    adb('shell', 'settings', 'put', 'system', 'user_rotation', '1' if landscape else '0')
+    time.sleep(3)
+
+
+def posture(folded):
+    """Folds or unfolds a foldable emulator (no-op answer 'KO' on a phone)."""
+    r = subprocess.run(['adb', 'emu', 'fold' if folded else 'unfold'], capture_output=True, text=True, timeout=30)
+    time.sleep(4)
+    return r.stdout.strip()
+
+
+def share_sheet_opens(name, open_it):
+    """Runs [open_it], then expects Android's share sheet (another app's
+    window) on top; closes it again."""
+    open_it()
+    end = time.time() + 20
+    seen = False
+    while time.time() < end and not seen:
+        seen = any(n['package'] != ARGS.package for n in nodes(any_app=True))
+        time.sleep(1)
+    check(f'{name}: the share sheet opens', True, seen)
+    shot('share-sheet')
+    adb('shell', 'input', 'keyevent', 'KEYCODE_BACK')
+    time.sleep(2)
+    check(f'{name}: still running after closing the share sheet', True, alive())
+
+
+def screen_changes(still_there):
+    """Turns the phone sideways and back, and folds and unfolds a Fold, each
+    time checking the app is alive and the entries are still on screen."""
+    rotate(True)
+    check('sideways: still running', True, alive())
+    check('sideways: the entries are still on screen', True, still_there())
+    shot('landscape')
+    rotate(False)
+    check('upright again: the entries are still on screen', True, still_there())
+    if 'fold' in ARGS.device:
+        check('Fold: the emulator folds', True, 'OK' in posture(True))
+        check('folded (outer screen): still running', True, alive())
+        check('folded (outer screen): the entries are still on screen', True, still_there())
+        shot('folded')
+        posture(False)
+        check('unfolded (inner screen): still running', True, alive())
+        check('unfolded (inner screen): the entries are still on screen', True, still_there())
+        shot('unfolded')
+
+
+def settings_open():
+    tap('Settings')
+    wait('Privacy')
+    check('Settings opens', True, bool(find('Privacy')))
+    shot('settings')
+    rotate(True)
+    check('Settings sideways: still running', True, alive())
+    rotate(False)
+    adb('shell', 'input', 'keyevent', 'KEYCODE_BACK')
+    time.sleep(2)
+
+
 def skip_tour():
     tap('Skip')
 
@@ -164,8 +237,11 @@ def wagebird():
     wait('Next', timeout=40)
     check('first screen: onboarding shows', True, bool(find('Next')))
     shot('first-screen')
-    tap('Next')
-    tap('Next')
+    for _ in range(6):  # however many onboarding pages there are
+        if find('Get started'):
+            break
+        tap('Next')
+        time.sleep(0.8)
     tap('Get started')
     tap('Add job')
     type_into('Job name', 'Warehouse', 0)
@@ -183,6 +259,10 @@ def wagebird():
     wait('4h')
     check('a 08:00-12:00 shift today counts 4h this week', True, bool(find('4h')))
     shot('shift-logged')
+    screen_changes(lambda: bool(find('4h')))
+    settings_open()
+    share_sheet_opens('timesheet CSV export', lambda: (tap('Pay'), tap('CSV')))
+    tap('Week')
     return lambda: (wait('4h', timeout=40), check('after reopening: the shift is still there', True, bool(find('4h'))),
                     check('after reopening: no onboarding again', False, bool(find('Get started'))))
 
@@ -210,6 +290,9 @@ def wrenchnote():
     seen = lambda: any(re.search(r'10[,.  ]?500', l) for n in nodes() for l in n['lines'])
     check('the second fill-up (10,500 on the odometer) is listed', True, seen())
     shot('fill-ups-logged')
+    screen_changes(seen)
+    settings_open()
+    share_sheet_opens('cost report CSV export', lambda: (tap('Costs'), tap('CSV')))
     return lambda: (wait('Civic', timeout=40), check('after reopening: Civic and its fill-ups are still there', True, seen()),
                     check('after reopening: no onboarding again', False, bool(find('Get started'))))
 
@@ -233,6 +316,9 @@ def housetally():
     has = lambda: any('300.00' in l for n in nodes() for l in n['lines'])
     check('the lawn mower ($300.00) counts toward the home value', True, has())
     shot('item-logged')
+    screen_changes(has)
+    settings_open()
+    share_sheet_opens('inventory CSV export', lambda: (tap('Show menu'), tap('Spreadsheet (CSV)')))
     return lambda: (wait('Add item', timeout=40), check('after reopening: the item is still counted', True, has()),
                     check('after reopening: no onboarding again', False, bool(find('Get started'))))
 
@@ -262,7 +348,8 @@ def main():
         adb('logcat', '-c')
         launch()
         time.sleep(5)
-        check('still running 8 s after launch', True, alive())
+        if not check('still running 8 s after launch', True, alive()):
+            print(death_log())
         reopen_checks = FLOWS[ARGS.package]()
         time.sleep(8)  # the banner ad loads on the home screen meanwhile
         check('still running on the home screen after 8 s more', True, alive())
