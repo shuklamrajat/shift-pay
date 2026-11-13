@@ -1,0 +1,27 @@
+{
+  "package": "com.shuklamrajat.wagebird",
+  "device": "pixel_6 API 34",
+  "apk": "universal.apk",
+  "passed": false,
+  "emulator_stopped": false,
+  "checks": [
+    {
+      "check": "still running 8 s after launch",
+      "want": true,
+      "got": true,
+      "ok": true
+    },
+    {
+      "check": "the session finished without an error",
+      "want": null,
+      "got": "\"Next\" never appeared. On screen: []",
+      "ok": false
+    },
+    {
+      "check": "logcat has no crash for this app",
+      "want": [],
+      "got": [],
+      "ok": true
+    }
+  ]
+}

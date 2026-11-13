@@ -1,0 +1,4 @@
+Device: pixel_6 API 34, part: release
+Release APK session: 2/3 checks passed
+  FAIL the session finished without an error: want None, got '"Next" never appeared. On screen: []'
+RESULT: release on pixel_6 API 34 FAILED
