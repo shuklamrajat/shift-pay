@@ -143,7 +143,14 @@ void main() {
       return tester.widget<Text>(f).data!;
     }
 
-    String spoken(String k) => tester.getSemantics(find.byKey(Key(k))).label;
+    // What a screen reader says for a widget. Scrolls to it first: a list only
+    // builds what is near the screen (the Fold folded is short).
+    Future<String> spoken(String k) async {
+      final f = find.byKey(Key(k));
+      await reveal(f);
+      await tester.pump();
+      return tester.getSemantics(f).label;
+    }
 
     // Raw pixels of one widget as it is on screen now.
     Future<List<int>> pixelsOf(Finder f) async {
@@ -258,7 +265,7 @@ void main() {
         'week of 2 Nov day chart (screen reader)',
         'Hours by day. Mon 9h, 1h overtime. Tue 8h 30m, 30m overtime. Wed 5h. '
             'Thu 13h 30m, 4h overtime, 1h 30m double time. Fri 8h. Sat 6h, 3h overtime. Sun 4h, 4h overtime.',
-        spoken('week-chart'),
+        await spoken('week-chart'),
       );
       await shots.take('1_week');
       await tapKey('week-next');
@@ -280,7 +287,7 @@ void main() {
       log.check(
         'this week day chart after clock out',
         'Hours by day. Mon 4h. Tue 4h 15m. Wed no shifts. Thu no shifts. Fri no shifts. Sat no shifts. Sun no shifts.',
-        spoken('week-chart'),
+        await spoken('week-chart'),
       );
 
       log.check('no review prompt in the first two days', 0, reviews.requests);
@@ -359,7 +366,7 @@ void main() {
       log.check(
         'Warehouse pay split bar (screen reader)',
         r'Pay split. Regular $960.00, overtime $405.00, double time $60.00.',
-        spoken('pay-split'),
+        await spoken('pay-split'),
       );
       await shots.take('2_pay');
 

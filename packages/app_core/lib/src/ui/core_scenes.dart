@@ -37,7 +37,7 @@ void proGemScene(Canvas c, Size s, SceneFrame f) {
       ..shader = LinearGradient(
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
-        colors: [f.brand.accent, f.scheme.primary, f.brand.gradient.last],
+        colors: [f.brand.accent, f.brand.gradient.last],
       ).createShader(Rect.fromLTRB(center.dx - r, top, center.dx + r, bottom)),
   );
   final facet = Ink2.stroke(Colors.white.withValues(alpha: 0.55), 2);
