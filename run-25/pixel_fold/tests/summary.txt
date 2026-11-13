@@ -1,0 +1,6 @@
+Device: pixel_fold API 35, part: tests
+PASS ads_e2e_test (96s)
+PASS app_e2e_test (133s)
+PASS free_build_e2e_test (77s)
+STOPPED tour_e2e_test: the emulator stopped answering (168s)
+RESULT: tests on pixel_fold API 35 stopped because the emulator stopped answering (test machine, not the app)
