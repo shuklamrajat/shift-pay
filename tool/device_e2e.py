@@ -221,7 +221,9 @@ def swipe(up):
     w, h = map(int, m[-1]) if m else (1080, 2400)
     # user_rotation may have swapped the sides; the drag stays inside either way.
     w, h = min(w, h), min(w, h)
-    y1, y2 = (int(h * 0.75), int(h * 0.35)) if up else (int(h * 0.35), int(h * 0.75))
+    # Sideways on a phone the bottom bar starts near 75% of the short side, so
+    # the drag stays above it (a drag that starts on the bar scrolls nothing).
+    y1, y2 = (int(h * 0.62), int(h * 0.28)) if up else (int(h * 0.28), int(h * 0.62))
     adb('shell', 'input', 'swipe', str(w // 2), str(y1), str(w // 2), str(y2), '600')
     time.sleep(1)
 
