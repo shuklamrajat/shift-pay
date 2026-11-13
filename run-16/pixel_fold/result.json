@@ -1,0 +1,170 @@
+{
+  "package": "com.shuklamrajat.wagebird",
+  "device": "pixel_fold API 35",
+  "apk": "universal.apk",
+  "passed": false,
+  "checks": [
+    {
+      "check": "still running 8 s after launch",
+      "want": true,
+      "got": true,
+      "ok": true
+    },
+    {
+      "check": "first screen: onboarding shows",
+      "want": true,
+      "got": true,
+      "ok": true
+    },
+    {
+      "check": "onboarding: Next turns the pages to Get started",
+      "want": true,
+      "got": true,
+      "ok": true
+    },
+    {
+      "check": "set up: the job is saved and the home screen shows",
+      "want": true,
+      "got": true,
+      "ok": true
+    },
+    {
+      "check": "add: a 08:00-12:00 shift today counts 4h this week",
+      "want": true,
+      "got": true,
+      "ok": true
+    },
+    {
+      "check": "edit: changing the end to 14:00 makes it 6h",
+      "want": true,
+      "got": true,
+      "ok": true
+    },
+    {
+      "check": "sideways: still running",
+      "want": true,
+      "got": true,
+      "ok": true
+    },
+    {
+      "check": "sideways: the entries are still on screen",
+      "want": true,
+      "got": true,
+      "ok": true
+    },
+    {
+      "check": "upright again: the entries are still on screen",
+      "want": true,
+      "got": true,
+      "ok": true
+    },
+    {
+      "check": "Fold: the emulator folds",
+      "want": true,
+      "got": true,
+      "ok": true
+    },
+    {
+      "check": "folded (outer screen): still running",
+      "want": true,
+      "got": true,
+      "ok": true
+    },
+    {
+      "check": "folded (outer screen): the entries are still on screen",
+      "want": true,
+      "got": true,
+      "ok": true
+    },
+    {
+      "check": "unfolded (inner screen): still running",
+      "want": true,
+      "got": true,
+      "ok": true
+    },
+    {
+      "check": "unfolded (inner screen): the entries are still on screen",
+      "want": true,
+      "got": true,
+      "ok": true
+    },
+    {
+      "check": "Settings opens",
+      "want": true,
+      "got": true,
+      "ok": true
+    },
+    {
+      "check": "Settings sideways: still running",
+      "want": true,
+      "got": true,
+      "ok": true
+    },
+    {
+      "check": "timesheet CSV export: the share sheet opens",
+      "want": true,
+      "got": true,
+      "ok": true
+    },
+    {
+      "check": "timesheet CSV export: still running after closing the share sheet",
+      "want": true,
+      "got": true,
+      "ok": true
+    },
+    {
+      "check": "ads: still running after the banner had time to load",
+      "want": true,
+      "got": true,
+      "ok": true
+    },
+    {
+      "check": "after reopening: the edited 6h shift is still there",
+      "want": true,
+      "got": false,
+      "ok": false
+    },
+    {
+      "check": "after reopening: no onboarding again",
+      "want": false,
+      "got": false,
+      "ok": true
+    },
+    {
+      "check": "after reopening: the shift row still says 8:00",
+      "want": true,
+      "got": true,
+      "ok": true
+    },
+    {
+      "check": "delete: the shift is gone from the list",
+      "want": true,
+      "got": true,
+      "ok": true
+    },
+    {
+      "check": "delete: the shift stays gone after reopening",
+      "want": true,
+      "got": true,
+      "ok": true
+    },
+    {
+      "check": "still running after the delete and reopen",
+      "want": true,
+      "got": true,
+      "ok": true
+    },
+    {
+      "check": "still running at the end",
+      "want": true,
+      "got": true,
+      "ok": true
+    },
+    {
+      "check": "logcat has no crash for this app",
+      "want": [],
+      "got": [],
+      "ok": true
+    }
+  ]
+}

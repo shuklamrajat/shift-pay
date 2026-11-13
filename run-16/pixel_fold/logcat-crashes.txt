@@ -1,0 +1,4 @@
+11-13 07:53:39.532   573  3130 E ActivityManager: ANR in com.google.android.gms.persistent
+11-13 07:54:24.131   573  3690 E ActivityManager: ANR in com.google.android.gms.persistent
+11-13 08:01:32.022   573   705 I WindowManager: ANR in Window{b10bd1e u0 com.android.intentresolver/com.android.intentresolver.ChooserActivityLauncher}. Reason:Input dispatching timed out (b10bd1e com.android.intentresolver/com.android.intentresolver.ChooserActivityLauncher (server) is not responding. Waited 5010ms for FocusEvent(hasFocus=true)).
+11-13 08:01:56.831   573  7102 E ActivityManager: ANR in com.android.intentresolver (com.android.intentresolver/.ChooserActivityLauncher)

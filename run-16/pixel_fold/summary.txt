@@ -1,0 +1,5 @@
+Device: pixel_fold API 35
+Release APK session: FAIL (26/27 checks)
+  FAIL after reopening: the edited 6h shift is still there: want True, got False
+App end-to-end tests on this emulator: PASS
+12:46 +5: All tests passed!
