@@ -8,10 +8,17 @@ name: Android build
 # With the PLAY_SERVICE_ACCOUNT_JSON secret also set (see README, "Play upload"),
 # the signed bundle is uploaded to Play's closed testing track as a DRAFT
 # release. Nothing reaches testers until someone rolls it out in Play Console.
+#
+# Nothing goes to Play unless the device-e2e job passes first: it turns that
+# exact bundle into the APK a phone downloads, installs it on an emulator
+# (a phone on API 34 and a Pixel Fold on API 35), launches it, walks a real
+# first session, reopens the app and checks nothing crashed (tool/device_e2e.py).
+# Added Nov 13 after Wagebird v11 and Wrenchnote v10 crashed on launch.
 
 on:
   push:
-    branches: [main]
+    # gate/* branches run the build and the emulator check without uploading.
+    branches: [main, 'gate/**']
   workflow_dispatch:
 
 permissions:
@@ -25,6 +32,8 @@ jobs:
   android:
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    outputs:
+      signed: ${{ steps.meta.outputs.signed }}
     env:
       APP_DIR: apps/hours_tracker
       HAS_UPLOAD_KEY: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
@@ -37,6 +46,10 @@ jobs:
       PLAY_PACKAGE: com.shuklamrajat.wagebird
       PLAY_LISTING: store/hours_tracker/listing.md
     steps:
+      - name: Signed build?
+        id: meta
+        run: echo "signed=$HAS_UPLOAD_KEY" >> "$GITHUB_OUTPUT"
+
       - uses: actions/checkout@v4
 
       - uses: actions/setup-java@v4
@@ -138,18 +151,6 @@ jobs:
           path: ${{ env.APP_DIR }}/build/app/outputs/bundle/release/app-release.aab
           if-no-files-found: error
 
-      - name: Upload to Play closed testing as a draft
-        if: env.HAS_UPLOAD_KEY == 'true' && env.HAS_PLAY_KEY == 'true'
-        env:
-          PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
-        run: |
-          python3 tool/play_upload.py --package "$PLAY_PACKAGE" --listing "$PLAY_LISTING" \
-            --aab "$APP_DIR/build/app/outputs/bundle/release/app-release.aab" --track alpha
-
-      - name: Play upload skipped (no PLAY_SERVICE_ACCOUNT_JSON secret)
-        if: env.HAS_UPLOAD_KEY == 'true' && env.HAS_PLAY_KEY != 'true'
-        run: echo "::notice::No PLAY_SERVICE_ACCOUNT_JSON secret, so the bundle was not sent to Play. See README, Play upload."
-
       - name: Build debug APK (no signing secrets set)
         if: env.HAS_UPLOAD_KEY != 'true'
         working-directory: ${{ env.APP_DIR }}
@@ -169,3 +170,100 @@ jobs:
       - name: Remove signing files
         if: always()
         run: rm -f "$RUNNER_TEMP/upload-keystore.jks" "$APP_DIR/android/key.properties"
+
+  device-e2e:
+    name: Release build on ${{ matrix.device }} (API ${{ matrix.api }})
+    needs: android
+    if: needs.android.outputs.signed == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - device: pixel_6
+            api: 34
+          - device: pixel_fold
+            api: 35
+    env:
+      PLAY_PACKAGE: com.shuklamrajat.wagebird
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: wagebird-release-aab-${{ github.run_number }}
+          path: bundle
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: The APK a phone gets from this bundle
+        # bundletool builds it the way Play does. It is signed with a throwaway
+        # key: the code inside is byte for byte what Play serves.
+        run: |
+          curl -sSfL -o "$RUNNER_TEMP/bundletool.jar" https://github.com/google/bundletool/releases/download/1.18.1/bundletool-all-1.18.1.jar
+          keytool -genkeypair -keystore "$RUNNER_TEMP/throwaway.jks" -storepass android -keypass android -alias t \
+            -keyalg RSA -dname CN=device-e2e -validity 2 >/dev/null
+          java -jar "$RUNNER_TEMP/bundletool.jar" build-apks --bundle=bundle/app-release.aab --output="$RUNNER_TEMP/app.apks" \
+            --mode=universal --ks="$RUNNER_TEMP/throwaway.jks" --ks-pass=pass:android --ks-key-alias=t --key-pass=pass:android
+          unzip -o -q "$RUNNER_TEMP/app.apks" universal.apk
+          ls -la universal.apk
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Install, launch and use it on the emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: ${{ matrix.api }}
+          arch: x86_64
+          target: google_apis
+          profile: ${{ matrix.device }}
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          script: python3 tool/device_e2e.py --apk universal.apk --package "$PLAY_PACKAGE" --out "device-e2e/${{ matrix.device }}" --device "${{ matrix.device }} API ${{ matrix.api }}"
+
+      - name: Keep the screenshots, logcat and results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: device-e2e-${{ matrix.device }}-${{ github.run_number }}
+          path: device-e2e/
+          if-no-files-found: warn
+
+  play:
+    name: Upload to Play closed testing (draft)
+    needs: [android, device-e2e]
+    if: needs.android.outputs.signed == 'true' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      HAS_PLAY_KEY: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON != '' }}
+      PLAY_PACKAGE: com.shuklamrajat.wagebird
+      PLAY_LISTING: store/hours_tracker/listing.md
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: wagebird-release-aab-${{ github.run_number }}
+          path: bundle
+
+      - name: Upload to Play closed testing as a draft
+        if: env.HAS_PLAY_KEY == 'true'
+        env:
+          PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+        run: |
+          python3 -m pip install --quiet google-auth requests cryptography
+          python3 tool/play_upload.py --package "$PLAY_PACKAGE" --listing "$PLAY_LISTING" \
+            --aab bundle/app-release.aab --track alpha
+
+      - name: Play upload skipped (no PLAY_SERVICE_ACCOUNT_JSON secret)
+        if: env.HAS_PLAY_KEY != 'true'
+        run: echo "::notice::No PLAY_SERVICE_ACCOUNT_JSON secret, so the bundle was not sent to Play. See README, Play upload."
