@@ -53,7 +53,15 @@ class E2eDriver {
 
   Future<void> type(String k, String text) async {
     final f = find.byKey(Key(k));
-    await reveal(f);
+    final editable = find.descendant(of: f, matching: find.byType(EditableText));
+    // On a phone the keyboard shrinks the form while it opens, and a list
+    // drops fields that leave the screen; scroll to the field again until its
+    // text box is really there.
+    for (var i = 0; i < 4; i++) {
+      await reveal(f);
+      if (editable.evaluate().isNotEmpty) break;
+      await tester.pump(const Duration(milliseconds: 400));
+    }
     await tester.enterText(f, text);
     await tester.pump();
   }
