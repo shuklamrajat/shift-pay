@@ -49,7 +49,7 @@ jobs:
           target: google_apis
           disable-animations: true
           script: |
-            mkdir -p out; adb install -r universal.apk; adb logcat -c; adb shell monkey -p "$PKG" -c android.intent.category.LAUNCHER 1; sleep 20; adb shell pidof "$PKG" > out/pid.txt || echo "NOT RUNNING" > out/pid.txt; cat out/pid.txt; adb exec-out screencap -p > out/screen.png; adb logcat -d > out/logcat.txt; grep -n -A40 -E "FATAL EXCEPTION|AndroidRuntime|DEBUG   :|F libc" out/logcat.txt | head -150 || true
+            mkdir -p out; adb install -r universal.apk; adb logcat -c; adb shell monkey -p "$PKG" -c android.intent.category.LAUNCHER 1; sleep 20; adb shell pidof "$PKG" > out/pid.txt || echo "NOT RUNNING" > out/pid.txt; cat out/pid.txt; adb exec-out screencap -p > out/screen.png; adb logcat -d > out/logcat.txt; grep -E "AndroidRuntime" out/logcat.txt | grep -vE "^.{30,60}AndroidRuntime:\s+at (android|com.android|java.lang.reflect|dalvik)" | head -80 || true
       - uses: actions/upload-artifact@v4
         if: always()
         with:
