@@ -3,20 +3,19 @@
 real screenshots.
 
 Steps per app:
-  1. Renders the app's mascot, icon and illustrations with Flutter
-     (apps/<app>/tool/art_test.dart) into build/art/<app>/.
-  2. Writes the Play icon, Android launcher icons and iOS app icons.
+  1. Renders the app's mascot, logo and illustrations with Flutter
+     (apps/<app>/tool/art_test.dart) into build/art/<app>/, and checks the
+     in-app logo still matches brand/logo-1024.png from tool/make_icons.py,
+     which owns the Play icon, launcher icons and iOS app icons.
+  2. (Icons: see tool/make_icons.py.)
   3. Frames the phone screenshots from tool/store_shots.sh into Play
      listing screenshots: soft brand gradient, brand row, big headline,
      one-line subhead, two tilted phones, the mascot popping out on some.
   4. Draws the 1024x500 feature graphic in the same style.
 
 Writes:
-  store/<app>/icon-512.png
   store/<app>/feature-graphic.png
   store/<app>/listing-screenshots/NN.png   (1080x1920, upload in order)
-  apps/<app>/android/app/src/main/res/mipmap-*/ic_launcher.png
-  apps/<app>/ios/Runner/Assets.xcassets/AppIcon.appiconset/*.png
 
 Run tool/store_shots.sh first. Usage: tool/make_store_art.py [app ...]
 """
@@ -127,8 +126,24 @@ def render_art(app):
     env = dict(os.environ, PATH='/opt/flutter/bin:' + os.environ.get('PATH', ''))
     subprocess.run(['flutter', 'test', 'tool/art_test.dart', f'--dart-define=ART_OUT={out}'],
                    cwd=os.path.join(ROOT, 'apps', app), env=env, check=True, stdout=subprocess.DEVNULL)
-    return {n: Image.open(os.path.join(out, n + '.png')).convert('RGBA')
-            for n in ('icon', 'mascot', 'mascot_dark', 'hero', 'pro')}
+    art = {n: Image.open(os.path.join(out, n + '.png')).convert('RGBA')
+           for n in ('icon', 'mascot', 'mascot_dark', 'hero', 'pro')}
+    # The brand logo (the launcher icon) is the icon on the store art. The
+    # Flutter-drawn logo in the app must still look like it.
+    for cand in (os.path.join(ROOT, 'brand'), os.path.join(ROOT, 'apps', app, 'brand')):
+        if os.path.exists(os.path.join(cand, 'logo-1024.png')):
+            brand = Image.open(os.path.join(cand, 'logo-1024.png')).convert('RGBA')
+            break
+    else:
+        raise SystemExit(f'{app}: no brand/logo-1024.png; run tool/make_icons.py first')
+    a = np.asarray(art['icon'].convert('RGB').resize((256, 256), Image.LANCZOS), dtype=float)
+    b = np.asarray(brand.convert('RGB').resize((256, 256), Image.LANCZOS), dtype=float)
+    diff = np.abs(a - b).mean()
+    print(f'{app}: in-app logo vs brand logo, mean pixel difference {diff:.1f}/255')
+    if diff > 12:
+        raise SystemExit(f'{app}: the in-app logo has drifted from brand/logo.svg')
+    art['icon'] = brand
+    return art
 
 
 def gradient(size, c1, c2, blob):
@@ -338,18 +353,6 @@ def main(apps):
         art = render_art(app)
         store = os.path.join(ROOT, 'store', app)
         shots_dir = os.path.join(store, 'screenshots')
-        icon = art['icon'].convert('RGB')
-        icon.resize((512, 512), Image.LANCZOS).save(os.path.join(store, 'icon-512.png'))
-        res = os.path.join(ROOT, 'apps', app, 'android/app/src/main/res')
-        for density, px in MIPMAP.items():
-            rounded(art['icon'].resize((px, px), Image.LANCZOS), round(px * 0.22)).save(
-                os.path.join(res, f'mipmap-{density}', 'ic_launcher.png'))
-        ios = os.path.join(ROOT, 'apps', app, 'ios/Runner/Assets.xcassets/AppIcon.appiconset')
-        for f in os.listdir(ios):
-            if f.endswith('.png'):
-                px = Image.open(os.path.join(ios, f)).size[0]
-                # App Store icons must be square and opaque: no rounding, no alpha.
-                icon.resize((px, px), Image.LANCZOS).save(os.path.join(ios, f))
         out = os.path.join(store, 'listing-screenshots')
         os.makedirs(out, exist_ok=True)
         for f in os.listdir(out):
@@ -357,7 +360,7 @@ def main(apps):
         for i, spec in enumerate(cfg['slides'], 1):
             slide(cfg, art, shots_dir, spec, i).save(os.path.join(out, f'{i:02d}.png'), optimize=True)
         feature_graphic(cfg, art, shots_dir).save(os.path.join(store, 'feature-graphic.png'))
-        print(app, len(cfg['slides']), 'listing screenshots, icons and feature graphic')
+        print(app, len(cfg['slides']), 'listing screenshots and feature graphic')
 
 
 if __name__ == '__main__':

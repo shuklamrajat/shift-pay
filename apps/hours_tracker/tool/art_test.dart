@@ -6,6 +6,7 @@ import 'package:app_core/art.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hours_tracker/src/app.dart';
+import 'package:hours_tracker/src/ui/logo.dart';
 import 'package:hours_tracker/src/ui/scenes.dart';
 
 const out = String.fromEnvironment('ART_OUT', defaultValue: 'build/art');
@@ -13,12 +14,8 @@ const out = String.fromEnvironment('ART_OUT', defaultValue: 'build/art');
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   test('store art', () async {
-    await writeScenePng(
-      '$out/icon.png',
-      iconPaint((c, s, f) => wagebird(c, s.center(const Offset(0, -0.02) * s.width), s.width * 0.58, f, flap: 0.6)),
-      const Size(1024, 1024),
-      hoursConfig,
-    );
+    // The in-app logo at rest, checked against brand/logo-1024.png.
+    await writeScenePng('$out/icon.png', wagebirdLogo, const Size(1024, 1024), hoursConfig, loop: 0);
     await writeScenePng(
       '$out/mascot.png',
       (c, s, f) => wagebird(c, s.center(Offset.zero), s.width * 0.62, f, flap: 0.6),

@@ -20,6 +20,7 @@ export 'src/storage/db_open.dart';
 export 'src/theme/app_theme.dart';
 export 'src/tour/tour.dart';
 export 'src/ui/brand.dart';
+export 'src/ui/brand_logo.dart';
 export 'src/ui/celebrate.dart';
 export 'src/ui/charts.dart';
 export 'src/ui/core_scenes.dart';

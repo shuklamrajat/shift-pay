@@ -5,6 +5,7 @@ import '../ads/ads.dart';
 import '../entitlements/entitlements.dart';
 import '../entitlements/paywall.dart';
 import '../tour/tour.dart';
+import '../ui/brand_logo.dart';
 import 'links.dart';
 import 'settings.dart';
 
@@ -108,6 +109,14 @@ class CoreSettingsScreen extends ConsumerWidget {
               subtitle: const Text('Change what you agreed to for ads'),
               onTap: () => ref.read(adsControllerProvider.notifier).openPrivacyOptions(),
             ),
+          const Divider(),
+          ListTile(
+            key: const Key('settings-about'),
+            contentPadding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+            leading: const BrandLogo(size: 48),
+            title: Text(config.appName, style: const TextStyle(fontWeight: FontWeight.w800)),
+            subtitle: Text(config.tagline),
+          ),
         ],
       ),
     );

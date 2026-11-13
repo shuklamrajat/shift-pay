@@ -2,6 +2,7 @@ import 'package:app_core/app_core.dart';
 import 'package:flutter/material.dart';
 
 import 'ui/home_screen.dart';
+import 'ui/logo.dart';
 import 'ui/scenes.dart';
 
 const featureMultipleJobs = 'multiple_jobs';
@@ -15,6 +16,7 @@ const hoursConfig = AppConfig(
   accentColor: Color(0xFFFFB300),
   gradientEndColor: Color(0xFF01579B),
   paywallScene: timesheetProScene,
+  logo: wagebirdLogo,
   onboarding: [
     OnboardingPage(
       icon: Icons.schedule,

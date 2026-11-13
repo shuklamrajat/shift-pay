@@ -130,6 +130,17 @@ void main() {
             .evaluate()
             .isNotEmpty,
       );
+      // About, at the foot of Settings: the new logo (the launcher icon's
+      // artwork, drawn live) beside the app's name.
+      log.check('About row names the app', 'Wagebird | ${hoursConfig.tagline}', await d.textsIn('settings-about'));
+      log.check(
+        'About row shows the drawn logo, not the plain brand dot',
+        1,
+        find
+            .descendant(of: find.byKey(const Key('settings-about')), matching: find.byType(AnimatedScene))
+            .evaluate()
+            .length,
+      );
       await tester.pageBack();
       await tester.pumpAndSettle();
 

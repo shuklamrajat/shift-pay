@@ -34,6 +34,7 @@ class AppConfig {
     this.accentColor,
     this.gradientEndColor,
     this.paywallScene,
+    this.logo,
     this.tour = const [],
     this.privacyNote =
         'Everything you enter stays on this device, and there is no account. '
@@ -56,6 +57,11 @@ class AppConfig {
 
   /// Illustration at the top of the paywall. Null uses the shared one.
   final ScenePaint? paywallScene;
+
+  /// The app's logo, drawn on a 512x512 grid scaled to the canvas, with its
+  /// own motion (see [SceneFrame]). Shown in onboarding and settings. Null
+  /// shows a plain brand dot.
+  final ScenePaint? logo;
   final String privacyNote;
 
   /// Stops of the guided tour over the home screen, in order. Empty means no

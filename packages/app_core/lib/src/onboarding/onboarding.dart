@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../config/app_config.dart';
 import '../settings/settings.dart';
 import '../ui/brand.dart';
+import '../ui/brand_logo.dart';
 import '../ui/core_scenes.dart';
 import '../ui/motion.dart';
 import '../ui/scene.dart';
@@ -62,12 +63,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                   padding: const EdgeInsets.fromLTRB(20, 4, 4, 0),
                   child: Row(
                     children: [
-                      Container(
-                        width: 10,
-                        height: 10,
-                        decoration: BoxDecoration(shape: BoxShape.circle, gradient: brand.linear),
-                      ),
-                      const SizedBox(width: 8),
+                      const BrandLogo(size: 30),
+                      const SizedBox(width: 10),
                       Text(config.appName, style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800)),
                       const Spacer(),
                       TextButton(
