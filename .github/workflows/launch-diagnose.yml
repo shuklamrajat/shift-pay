@@ -1,0 +1,57 @@
+name: Launch diagnosis
+
+# Diagnosis only: takes the release bundle an earlier "Android build" run sent
+# to Play, turns it into the APK a phone would get, installs it on an emulator,
+# launches it and keeps the logcat. Runs on pushes to diag/* branches.
+on:
+  push:
+    branches: ['diag/**']
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  launch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - name: Which bundle
+        run: cat tool/diag_source.env >> "$GITHUB_ENV"
+      - uses: actions/download-artifact@v4
+        with:
+          name: ${{ env.ARTIFACT }}
+          run-id: ${{ env.RUN_ID }}
+          github-token: ${{ github.token }}
+          path: bundle
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Universal APK from the bundle
+        run: |
+          curl -sSL -o bundletool.jar https://github.com/google/bundletool/releases/download/1.18.1/bundletool-all-1.18.1.jar
+          keytool -genkeypair -keystore test.jks -storepass android -keypass android -alias t -keyalg RSA -dname CN=test -validity 2 >/dev/null
+          java -jar bundletool.jar build-apks --bundle=bundle/app-release.aab --output=app.apks --mode=universal \
+            --ks=test.jks --ks-pass=pass:android --ks-key-alias=t --key-pass=pass:android
+          unzip -o app.apks universal.apk
+          ls -la universal.apk
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules && sudo udevadm trigger --name-match=kvm
+      - name: Launch on an emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          disable-animations: true
+          script: |
+            mkdir -p out; adb install -r universal.apk; adb logcat -c; adb shell monkey -p "$PKG" -c android.intent.category.LAUNCHER 1; sleep 20; adb shell pidof "$PKG" > out/pid.txt || echo "NOT RUNNING" > out/pid.txt; cat out/pid.txt; adb exec-out screencap -p > out/screen.png; adb logcat -d > out/logcat.txt; grep -n -A40 -E "FATAL EXCEPTION|AndroidRuntime|DEBUG   :|F libc" out/logcat.txt | head -150 || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: launch-diagnosis
+          path: out/
