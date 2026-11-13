@@ -1,0 +1,6 @@
+Device: pixel_6 API 35, part: tests
+PASS ads_e2e_test (87s)
+PASS app_e2e_test (93s)
+PASS free_build_e2e_test (53s)
+PASS tour_e2e_test (46s)
+RESULT: tests on pixel_6 API 35 passed
