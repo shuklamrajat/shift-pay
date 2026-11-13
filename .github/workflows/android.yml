@@ -179,6 +179,8 @@ jobs:
     if: needs.android.outputs.signed == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 75
+    permissions:
+      contents: write   # only to push screenshots to the emulator-proof branch
     strategy:
       fail-fast: false
       matrix:
@@ -224,6 +226,13 @@ jobs:
       - name: Get packages
         run: flutter pub get
 
+      - name: Free disk space for the emulator image
+        run: |
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/.ghcup /usr/local/share/boost \
+            /opt/hostedtoolcache/CodeQL /usr/share/swift /usr/local/share/powershell || true
+          sudo docker image prune -af >/dev/null 2>&1 || true
+          df -h /
+
       - name: Enable KVM
         run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
@@ -237,7 +246,7 @@ jobs:
           arch: x86_64
           target: google_apis
           profile: ${{ matrix.device }}
-          disable-animations: true
+          disable-animations: true   # the app's own tests; the release session turns them back on
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           script: bash tool/device_suite.sh universal.apk "$PLAY_PACKAGE" "$APP_DIR" "device-e2e/${{ matrix.device }}" "${{ matrix.device }} API ${{ matrix.api }}"
 
@@ -246,6 +255,36 @@ jobs:
         run: |
           cat "device-e2e/${{ matrix.device }}/summary.txt" >> "$GITHUB_STEP_SUMMARY" 2>/dev/null \
             || echo "No summary - the emulator step stopped before writing one." >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Save the screenshots and results to the emulator-proof branch
+        if: always()
+        env:
+          RUN: run-${{ github.run_number }}
+          DEVICE: ${{ matrix.device }}
+          REMOTE: https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}
+        run: |
+          src="device-e2e/$DEVICE"
+          [ -d "$src" ] || { echo "nothing to save"; exit 0; }
+          dest=$(mktemp -d)
+          if ! git clone -q --depth 1 --branch emulator-proof "$REMOTE" "$dest" 2>/dev/null; then
+            git init -q "$dest"
+            git -C "$dest" checkout -q --orphan emulator-proof
+            git -C "$dest" remote add origin "$REMOTE"
+          fi
+          d="$dest/$RUN/$DEVICE"
+          mkdir -p "$d"
+          cp "$src"/release/*.png "$src"/release/result.json "$d"/ 2>/dev/null || true
+          cp "$src"/summary.txt "$d"/ 2>/dev/null || true
+          grep -E "FATAL EXCEPTION|Fatal signal|ANR in" "$src"/release/logcat.txt > "$d/logcat-crashes.txt" 2>/dev/null || true
+          tail -n 80 "$src"/integration.log > "$d/integration-tail.txt" 2>/dev/null || true
+          git -C "$dest" add -A
+          git -C "$dest" -c user.name=ci -c user.email=ci@users.noreply.github.com commit -qm "Emulator proof $RUN $DEVICE"
+          for i in 1 2 3 4 5; do
+            git -C "$dest" pull -q --rebase origin emulator-proof 2>/dev/null || true
+            git -C "$dest" push -q origin HEAD:emulator-proof && exit 0
+            sleep $((i * 5))
+          done
+          echo "::warning::could not push the screenshots"
 
       - name: Keep the screenshots, logcat and results
         if: always()

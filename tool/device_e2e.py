@@ -21,9 +21,13 @@ What could go wrong, written down before the code:
   7. Any of the above only on a large or folding screen, after turning the
      phone sideways, or when a Fold is folded or unfolded mid-session.
   8. Settings or the export/share sheet crash in the release build.
-Edits, deletes and every other flow run as the app's own end-to-end tests on
-the same emulator right after this (tool/device_suite.sh).
-Each run records every check, screenshots and the full logcat in OUT.
+  9. Editing an entry does not change what is shown, or deleting one does
+     not stick after the app is reopened.
+The session runs with system animations on, like most phones. The app's own
+end-to-end tests then run on the same emulator with animations off
+(tool/device_suite.sh), which covers people who turn motion off.
+Each run records every check with a screenshot of the screen at that moment
+(NN-PASS-... or NN-FAIL-...), and the full logcat, in OUT.
 
 Usage: device_e2e.py --apk universal.apk --package com.x.y --out out/
 """
@@ -51,6 +55,10 @@ def check(name, want, got):
     ok = want == got
     CHECKS.append({'check': name, 'want': want, 'got': got, 'ok': ok})
     print(('PASS ' if ok else 'FAIL ') + f'{name}: want {want!r}, got {got!r}', flush=True)
+    try:  # the screen at the moment of the check, as proof either way
+        shot(('PASS-' if ok else 'FAIL-') + re.sub(r'[^a-z0-9]+', '-', name.lower()).strip('-')[:70])
+    except Exception:
+        pass
     return ok
 
 
@@ -126,6 +134,48 @@ def tap(label, timeout=25):
     time.sleep(1.2)
 
 
+def matching(pattern):
+    return [n for n in nodes() if any(re.search(pattern, l) for l in n['lines'])]
+
+
+def tap_match(pattern, timeout=25):
+    """Taps the first node with a line matching the regex [pattern]."""
+    end = time.time() + timeout
+    while time.time() < end:
+        hit = matching(pattern)
+        if hit:
+            adb('shell', 'input', 'tap', *map(str, hit[0]['center']))
+            time.sleep(1.2)
+            return
+        time.sleep(1)
+    raise RuntimeError(f'nothing matching /{pattern}/ appeared. On screen: {sorted({l for n in nodes() for l in n["lines"]})}')
+
+
+def gone(present, timeout=12):
+    """Waits until [present]() is false; returns True if it went away."""
+    end = time.time() + timeout
+    while time.time() < end:
+        if not present():
+            return True
+        time.sleep(1)
+    return False
+
+
+def delete_entry(open_it, delete_label, present, what, home):
+    """Opens an entry, deletes it through the confirm dialog, then checks it
+    is gone, and still gone after the app is closed and opened again."""
+    open_it()
+    tap(delete_label)
+    wait('Cancel')  # the confirm dialog
+    tap('Delete')
+    check(f'delete: {what} is gone from the list', True, gone(present))
+    restart()
+    wait(home, timeout=40)  # the list has loaded, so an absence means something
+    time.sleep(2)
+    check(f'delete: {what} stays gone after reopening', True, gone(present, timeout=8))
+    check('still running after the delete and reopen', True, alive())
+
+
 def type_into(label, text, idx):
     """Types into the text field labelled [label]. Some Android versions leave
     a field's label out of the accessibility dump once it holds a value, so
@@ -185,7 +235,6 @@ def share_sheet_opens(name, open_it):
         seen = any(n['package'] != ARGS.package for n in nodes(any_app=True))
         time.sleep(1)
     check(f'{name}: the share sheet opens', True, seen)
-    shot('share-sheet')
     adb('shell', 'input', 'keyevent', 'KEYCODE_BACK')
     time.sleep(2)
     check(f'{name}: still running after closing the share sheet', True, alive())
@@ -197,25 +246,21 @@ def screen_changes(still_there):
     rotate(True)
     check('sideways: still running', True, alive())
     check('sideways: the entries are still on screen', True, still_there())
-    shot('landscape')
     rotate(False)
     check('upright again: the entries are still on screen', True, still_there())
     if 'fold' in ARGS.device:
         check('Fold: the emulator folds', True, 'OK' in posture(True))
         check('folded (outer screen): still running', True, alive())
         check('folded (outer screen): the entries are still on screen', True, still_there())
-        shot('folded')
         posture(False)
         check('unfolded (inner screen): still running', True, alive())
         check('unfolded (inner screen): the entries are still on screen', True, still_there())
-        shot('unfolded')
 
 
 def settings_open():
     tap('Settings')
     wait('Privacy')
     check('Settings opens', True, bool(find('Privacy')))
-    shot('settings')
     rotate(True)
     check('Settings sideways: still running', True, alive())
     rotate(False)
@@ -236,12 +281,12 @@ def today():
 def wagebird():
     wait('Next', timeout=40)
     check('first screen: onboarding shows', True, bool(find('Next')))
-    shot('first-screen')
     for _ in range(6):  # however many onboarding pages there are
         if find('Get started'):
             break
         tap('Next')
         time.sleep(0.8)
+    check('onboarding: Next turns the pages to Get started', True, bool(find('Get started')))
     tap('Get started')
     tap('Add job')
     type_into('Job name', 'Warehouse', 0)
@@ -249,7 +294,7 @@ def wagebird():
     hide_keyboard()
     tap('Save')
     skip_tour()
-    shot('home-after-setup')
+    check('set up: the job is saved and the home screen shows', True, bool(wait('Add shift')))
     tap('Add shift')
     type_into('Date the shift starts', today(), 0)
     type_into('Start', '08:00', 1)
@@ -257,27 +302,38 @@ def wagebird():
     hide_keyboard()
     tap('Save')
     wait('4h')
-    check('a 08:00-12:00 shift today counts 4h this week', True, bool(find('4h')))
-    shot('shift-logged')
-    screen_changes(lambda: bool(find('4h')))
+    check('add: a 08:00-12:00 shift today counts 4h this week', True, bool(find('4h')))
+    tap('8:00')  # the shift's row
+    wait('Edit shift')
+    type_into('End', '14:00', 2)
+    hide_keyboard()
+    tap('Save')
+    wait('6h')
+    check('edit: changing the end to 14:00 makes it 6h', True, bool(find('6h')))
+    screen_changes(lambda: bool(find('6h')))
     settings_open()
     share_sheet_opens('timesheet CSV export', lambda: (tap('Pay'), tap('CSV')))
     tap('Week')
-    return lambda: (wait('4h', timeout=40), check('after reopening: the shift is still there', True, bool(find('4h'))),
-                    check('after reopening: no onboarding again', False, bool(find('Get started'))))
+
+    def after_reopen():
+        wait('6h', timeout=40)
+        check('after reopening: the edited 6h shift is still there', True, bool(find('6h')))
+        check('after reopening: no onboarding again', False, bool(find('Get started')))
+        delete_entry(lambda: (tap('8:00'), wait('Edit shift')), 'Delete shift',
+                     lambda: bool(find('8:00')), 'the shift', 'Week')
+    return after_reopen
 
 
 def wrenchnote():
     wait('Skip', timeout=40)
     check('first screen: onboarding shows', True, bool(find('Skip')))
-    shot('first-screen')
     tap('Skip')
     tap('Add vehicle')
     type_into('Name', 'Civic', 0)
     hide_keyboard()
     tap('Save')
     skip_tour()
-    shot('home-after-setup')
+    check('set up: the Civic is saved and the home screen shows', True, bool(wait('Add fill-up')))
     for km, fuel, paid in (('10000', '35', '52.50'), ('10500', '40', '60.00')):
         tap('Add fill-up')
         type_into('Date', today(), 0)
@@ -287,23 +343,38 @@ def wrenchnote():
         hide_keyboard()
         tap('Save')
         wait('Add fill-up')
-    seen = lambda: any(re.search(r'10[,.  ]?500', l) for n in nodes() for l in n['lines'])
-    check('the second fill-up (10,500 on the odometer) is listed', True, seen())
-    shot('fill-ups-logged')
+    odo = r'10[,.\u00a0\u202f ]?500'
+    seen = lambda: bool(matching(odo))
+    first = lambda: bool(matching(r'10[,.\u00a0\u202f ]?000'))
+    check('add: both fill-ups are listed (10,000 and 10,500 on the odometer)', True, seen() and first())
+    tap_match(odo)
+    wait('Edit fill-up')
+    type_into('Total paid', '61.00', 3)
+    hide_keyboard()
+    tap('Save')
+    wait('Add fill-up')
+    paid = lambda: any('61.00' in l for n in nodes() for l in n['lines'])
+    check('edit: the 10,500 fill-up now shows 61.00 paid', True, gone(lambda: not paid()))
     screen_changes(seen)
     settings_open()
     share_sheet_opens('cost report CSV export', lambda: (tap('Costs'), tap('CSV')))
-    return lambda: (wait('Civic', timeout=40), check('after reopening: Civic and its fill-ups are still there', True, seen()),
-                    check('after reopening: no onboarding again', False, bool(find('Get started'))))
+
+    def after_reopen():
+        wait('Civic', timeout=40)
+        check('after reopening: Civic and both fill-ups are still there', True, seen() and first())
+        check('after reopening: the edit (61.00) is still there', True, paid())
+        check('after reopening: no onboarding again', False, bool(find('Get started')))
+        delete_entry(lambda: (tap_match(odo), wait('Edit fill-up')), 'Delete fill-up', seen, 'the 10,500 fill-up', 'Civic')
+        check('delete: the other fill-up (10,000) is untouched', True, first())
+    return after_reopen
 
 
 def housetally():
     wait('Skip', timeout=40)
     check('first screen: onboarding shows', True, bool(find('Skip')))
-    shot('first-screen')
     tap('Skip')
     skip_tour()
-    shot('home-after-setup')
+    check('set up: the home screen shows', True, bool(wait('Add item')))
     tap('Add item')
     type_into('What is it?', 'Lawn mower', 0)
     hide_keyboard()
@@ -313,14 +384,27 @@ def housetally():
     hide_keyboard()
     tap('Save')
     wait('Add item')
-    has = lambda: any('300.00' in l for n in nodes() for l in n['lines'])
-    check('the lawn mower ($300.00) counts toward the home value', True, has())
-    shot('item-logged')
+    priced = lambda v: (lambda: any(v in l for n in nodes() for l in n['lines']))
+    check('add: the lawn mower ($300.00) counts toward the home value', True, priced('300.00')())
+    tap('Lawn mower')
+    wait('Edit item')
+    type_into('Price paid', '350', 5)
+    hide_keyboard()
+    tap('Save')
+    wait('Add item')
+    has = priced('350.00')
+    check('edit: the new price ($350.00) is counted instead', True, gone(lambda: not has()))
     screen_changes(has)
     settings_open()
     share_sheet_opens('inventory CSV export', lambda: (tap('Show menu'), tap('Spreadsheet (CSV)')))
-    return lambda: (wait('Add item', timeout=40), check('after reopening: the item is still counted', True, has()),
-                    check('after reopening: no onboarding again', False, bool(find('Get started'))))
+
+    def after_reopen():
+        wait('Add item', timeout=40)
+        check('after reopening: the edited item ($350.00) is still counted', True, has())
+        check('after reopening: no onboarding again', False, bool(find('Get started')))
+        delete_entry(lambda: (tap('Lawn mower'), wait('Edit item')), 'Delete item',
+                     lambda: bool(find('Lawn mower')), 'the lawn mower', 'Add item')
+    return after_reopen
 
 
 FLOWS = {'com.shuklamrajat.wagebird': wagebird, 'com.shuklamrajat.wrenchnote': wrenchnote,
@@ -344,6 +428,11 @@ def main():
     subprocess.run(['mkdir', '-p', ARGS.out], check=True)
     error = None
     try:
+        for k in ('window_animation_scale', 'transition_animation_scale', 'animator_duration_scale'):
+            adb('shell', 'settings', 'put', 'global', k, '1', check=False)
+        print('screen:', adb('shell', 'wm', 'size', check=False).strip(), flush=True)
+        if 'fold' in ARGS.device:
+            print('fold: start unfolded:', posture(False), flush=True)
         adb('install', '-r', ARGS.apk)
         adb('logcat', '-c')
         launch()
@@ -352,12 +441,13 @@ def main():
             print(death_log())
         reopen_checks = FLOWS[ARGS.package]()
         time.sleep(8)  # the banner ad loads on the home screen meanwhile
-        check('still running on the home screen after 8 s more', True, alive())
+        banner = bool(find('Ad'))
+        print('banner ad on screen:', 'yes' if banner else 'no (no ad served to this emulator)', flush=True)
+        check('ads: still running after the banner had time to load', True, alive())
         restart()
         reopen_checks()
-        shot('after-reopen')
         time.sleep(5)
-        check('still running after reopening', True, alive())
+        check('still running at the end', True, alive())
     except Exception as e:  # recorded as a failed check, with what was on screen
         error = str(e)
         check('the session finished without an error', None, error)

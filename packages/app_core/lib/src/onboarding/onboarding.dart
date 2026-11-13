@@ -122,7 +122,13 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                         if (last) {
                           ref.read(coreSettingsProvider.notifier).completeOnboarding();
                         } else {
-                          _controller.nextPage(duration: Motion.of(context, 450), curve: Curves.easeOutCubic);
+                          // With system animations off, a page turn must jump: a
+                          // zero-length animated scroll does nothing on Android.
+                          if (Motion.reduced(context)) {
+                            _controller.jumpToPage(_page + 1);
+                          } else {
+                            _controller.nextPage(duration: const Duration(milliseconds: 450), curve: Curves.easeOutCubic);
+                          }
                         }
                       },
                       child: AnimatedSwitcher(

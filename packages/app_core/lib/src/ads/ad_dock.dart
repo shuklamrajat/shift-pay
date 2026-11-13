@@ -73,11 +73,15 @@ class _AdDockState extends ConsumerState<AdDock> {
               });
             }
             final banner = show ? _banner : null;
+            final child = banner == null ? const SizedBox(width: double.infinity) : _BannerFrame(banner: banner);
+            // AnimatedSize runs its animation inside layout; with a zero
+            // duration (system animations off) it re-dirties itself mid-layout.
+            if (Motion.reduced(context)) return child;
             return AnimatedSize(
-              duration: Motion.of(context, 420),
+              duration: const Duration(milliseconds: 420),
               curve: Curves.easeOutBack,
               alignment: Alignment.bottomCenter,
-              child: banner == null ? const SizedBox(width: double.infinity) : _BannerFrame(banner: banner),
+              child: child,
             );
           },
         ),
