@@ -174,16 +174,22 @@ jobs:
         run: rm -f "$RUNNER_TEMP/upload-keystore.jks" "$APP_DIR/android/key.properties"
 
   device-e2e:
-    name: Release build on ${{ matrix.device }} (API ${{ matrix.api }})
+    # Each device gets two shorter jobs: the release APK session and the app's
+    # own tests. A job fails on any app crash, freeze or failed check. If the
+    # emulator itself stops answering (a test machine problem), it gets one
+    # fresh emulator and one more try; an app crash is never retried.
+    name: ${{ matrix.part == 'release' && 'Release APK' || 'App tests' }} on ${{ matrix.device }} (API ${{ matrix.api }})
     needs: android
     if: needs.android.outputs.signed == 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 75
+    timeout-minutes: ${{ matrix.part == 'release' && 40 || 55 }}
     permissions:
       contents: write   # only to push screenshots to the emulator-proof branch
     strategy:
       fail-fast: false
       matrix:
+        device: [pixel_6, pixel_fold]
+        part: [release, tests]
         include:
           - device: pixel_6
             api: 34
@@ -192,6 +198,7 @@ jobs:
     env:
       APP_DIR: apps/hours_tracker
       PLAY_PACKAGE: com.shuklamrajat.wagebird
+      OUT: device-e2e/${{ matrix.device }}/${{ matrix.part }}
     steps:
       - uses: actions/checkout@v4
 
@@ -218,33 +225,47 @@ jobs:
           ls -la universal.apk
 
       - uses: subosito/flutter-action@v2
+        if: matrix.part == 'tests'
         with:
           flutter-version: 3.47.9
           channel: stable
           cache: true
 
-      - name: Get packages
-        run: flutter pub get
+      - name: Build the test app before the emulator starts
+        # This machine has 2 cores. Building while the emulator runs starves
+        # the emulator, so the first (slow) build happens here; each test file
+        # later only rebuilds what changed.
+        if: matrix.part == 'tests'
+        run: |
+          flutter pub get
+          sed -i -E 's/-Xmx[0-9]+[GgMm]/-Xmx2G/; s/MaxMetaspaceSize=[0-9]+[GgMm]/MaxMetaspaceSize=768m/' "$APP_DIR/android/gradle.properties"
+          cd "$APP_DIR"
+          first=$(ls integration_test/*_test.dart | head -n 1)
+          flutter build apk --debug --target "$first" --dart-define=ADMOB_BANNER_ID=ca-app-pub-0000000000000000/0000000000
 
-      - name: Free disk space for the emulator image
+      - name: Room for the emulator
         run: |
           sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/.ghcup /usr/local/share/boost \
             /opt/hostedtoolcache/CodeQL /usr/share/swift /usr/local/share/powershell || true
           sudo docker image prune -af >/dev/null 2>&1 || true
-          df -h /
-          # The emulator plus the app's test build can outgrow the runner's
-          # memory; extra swap keeps the runner from being shut down.
           sudo swapoff -a || true
           sudo fallocate -l 10G /swapfile2 && sudo chmod 600 /swapfile2 && sudo mkswap /swapfile2 && sudo swapon /swapfile2 || true
-          free -h
-
-      - name: Enable KVM
-        run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
+          df -h / && free -h && nproc
 
-      - name: Install, launch and use it on the emulator
+      - name: Cached emulator
+        uses: actions/cache@v4
+        id: avd-cache
+        with:
+          path: |
+            ~/.android/avd/*
+            ~/.android/adb*
+          key: avd-${{ matrix.device }}-${{ matrix.api }}-v1
+
+      - name: Make the emulator snapshot (first run only)
+        if: steps.avd-cache.outputs.cache-hit != 'true'
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: ${{ matrix.api }}
@@ -252,39 +273,86 @@ jobs:
           target: google_apis
           profile: ${{ matrix.device }}
           ram-size: 2048M
-          disable-animations: true   # the app's own tests; the release session turns them back on
+          force-avd-creation: false
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
-          script: bash tool/device_suite.sh universal.apk "$PLAY_PACKAGE" "$APP_DIR" "device-e2e/${{ matrix.device }}" "${{ matrix.device }} API ${{ matrix.api }}"
+          disable-animations: false
+          script: echo "Emulator snapshot made for the cache."
+
+      - name: Run on the emulator
+        id: try1
+        continue-on-error: true
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: ${{ matrix.api }}
+          arch: x86_64
+          target: google_apis
+          profile: ${{ matrix.device }}
+          ram-size: 2048M
+          force-avd-creation: false
+          # The app's own tests run with animations off; the release session
+          # turns them back on, like a real phone.
+          disable-animations: true
+          emulator-options: -no-window -no-snapshot-save -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          script: STATUS_FILE="$RUNNER_TEMP/part-status" bash tool/device_part.sh ${{ matrix.part }} universal.apk "$PLAY_PACKAGE" "$APP_DIR" "$OUT" "${{ matrix.device }} API ${{ matrix.api }}"
+
+      - name: Read the result
+        id: first
+        if: always()
+        run: echo "status=$(cat "$RUNNER_TEMP/part-status" 2>/dev/null || echo 3)" >> "$GITHUB_OUTPUT"
+
+      - name: Run again on a fresh emulator (only if the emulator stopped answering)
+        if: always() && steps.first.outputs.status == '3'
+        continue-on-error: true
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: ${{ matrix.api }}
+          arch: x86_64
+          target: google_apis
+          profile: ${{ matrix.device }}
+          ram-size: 2048M
+          force-avd-creation: false
+          # The app's own tests run with animations off; the release session
+          # turns them back on, like a real phone.
+          disable-animations: true
+          emulator-options: -no-window -no-snapshot-save -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          script: STATUS_FILE="$RUNNER_TEMP/part-status" bash tool/device_part.sh ${{ matrix.part }} universal.apk "$PLAY_PACKAGE" "$APP_DIR" "$OUT" "${{ matrix.device }} API ${{ matrix.api }}"
 
       - name: Pass/fail report
         if: always()
         run: |
-          cat "device-e2e/${{ matrix.device }}/summary.txt" >> "$GITHUB_STEP_SUMMARY" 2>/dev/null \
-            || echo "No summary - the emulator step stopped before writing one." >> "$GITHUB_STEP_SUMMARY"
+          cat "$OUT/summary.txt" >> "$GITHUB_STEP_SUMMARY" 2>/dev/null \
+            || echo "No summary - the emulator never started." >> "$GITHUB_STEP_SUMMARY"
+          cat "$OUT/summary.txt" 2>/dev/null || true
 
       - name: Save the screenshots and results to the emulator-proof branch
         if: always()
         env:
           RUN: run-${{ github.run_number }}
           DEVICE: ${{ matrix.device }}
+          PART: ${{ matrix.part }}
           REMOTE: https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}
         run: |
-          src="device-e2e/$DEVICE"
-          [ -d "$src" ] || { echo "nothing to save"; exit 0; }
+          [ -d "$OUT" ] || { echo "nothing to save"; exit 0; }
           dest=$(mktemp -d)
           if ! git clone -q --depth 1 --branch emulator-proof "$REMOTE" "$dest" 2>/dev/null; then
             git init -q "$dest"
             git -C "$dest" checkout -q --orphan emulator-proof
             git -C "$dest" remote add origin "$REMOTE"
           fi
-          d="$dest/$RUN/$DEVICE"
+          d="$dest/$RUN/$DEVICE/$PART"
           mkdir -p "$d"
-          cp "$src"/release/*.png "$src"/release/result.json "$d"/ 2>/dev/null || true
-          cp "$src"/summary.txt "$d"/ 2>/dev/null || true
-          grep -E "FATAL EXCEPTION|Fatal signal|ANR in" "$src"/release/logcat.txt > "$d/logcat-crashes.txt" 2>/dev/null || true
-          tail -n 80 "$src"/integration.log > "$d/integration-tail.txt" 2>/dev/null || true
+          cp "$OUT"/summary.txt "$d"/ 2>/dev/null || true
+          if [ "$PART" = release ]; then
+            cp "$OUT"/release/*.png "$OUT"/release/result.json "$d"/ 2>/dev/null || true
+            grep -E "FATAL EXCEPTION|Process: |Fatal signal|ANR in" "$OUT"/release/logcat.txt > "$d/logcat-crashes.txt" 2>/dev/null || true
+          else
+            cp "$OUT"/*_test.log "$d"/ 2>/dev/null || true
+            for f in "$OUT"/*-logcat.txt; do
+              [ -f "$f" ] && grep -E "FATAL EXCEPTION|Process: |Fatal signal|ANR in" "$f" > "$d/$(basename "$f" .txt)-crashes.txt" || true
+            done
+          fi
           git -C "$dest" add -A
-          git -C "$dest" -c user.name=ci -c user.email=ci@users.noreply.github.com commit -qm "Emulator proof $RUN $DEVICE"
+          git -C "$dest" -c user.name=ci -c user.email=ci@users.noreply.github.com commit -qm "Emulator proof $RUN $DEVICE $PART"
           for i in 1 2 3 4 5; do
             git -C "$dest" pull -q --rebase origin emulator-proof 2>/dev/null || true
             git -C "$dest" push -q origin HEAD:emulator-proof && exit 0
@@ -296,9 +364,19 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: device-e2e-${{ matrix.device }}-${{ github.run_number }}
-          path: device-e2e/
+          name: device-e2e-${{ matrix.device }}-${{ matrix.part }}-${{ github.run_number }}
+          path: ${{ env.OUT }}
           if-no-files-found: warn
+
+      - name: Pass only if the app passed
+        if: always()
+        run: |
+          s=$(cat "$RUNNER_TEMP/part-status" 2>/dev/null || echo 3)
+          case $s in
+            0) echo "Passed." ;;
+            3) echo "::error::The emulator stopped answering twice. This is the test machine, not the app; nothing is uploaded."; exit 1 ;;
+            *) echo "::error::The app failed on this emulator (see the report above). Nothing is uploaded."; exit 1 ;;
+          esac
 
   play:
     name: Upload to Play closed testing (draft)

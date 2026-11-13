@@ -44,8 +44,26 @@ CHECKS = []
 SHOT = [0]
 
 
+class EmulatorGone(Exception):
+    """The emulator stopped answering: a test machine problem, not the app."""
+
+
+def device_ok():
+    try:
+        st = subprocess.run(['adb', 'get-state'], capture_output=True, text=True, timeout=20).stdout.strip()
+        ok = subprocess.run(['adb', 'shell', 'echo', 'ok'], capture_output=True, text=True, timeout=20).stdout.strip()
+        return st == 'device' and ok == 'ok'
+    except subprocess.TimeoutExpired:
+        return False
+
+
 def adb(*a, check=True, binary=False):
-    r = subprocess.run(['adb', *a], capture_output=True, timeout=120)
+    try:
+        r = subprocess.run(['adb', *a], capture_output=True, timeout=120)
+    except subprocess.TimeoutExpired:
+        if not device_ok():
+            raise EmulatorGone(f"the emulator stopped answering (adb {' '.join(a)} timed out)")
+        raise
     if check and r.returncode != 0:
         raise RuntimeError(f"adb {' '.join(a)} failed: {r.stderr.decode(errors='replace')}")
     return r.stdout if binary else r.stdout.decode(errors='replace')
@@ -74,14 +92,21 @@ def shot(name):
 
 def death_log():
     """What Android logged about the app's process going away."""
-    log = adb('logcat', '-d', check=False).splitlines()
+    try:
+        log = adb('logcat', '-d', check=False)
+    except EmulatorGone:
+        gone, log = True, ''.splitlines()
     keep = [l for l in log if ARGS.package in l or ' F DEBUG' in l or 'Fatal signal' in l
             or ' F libc' in l or 'lowmemorykiller' in l or 'AndroidRuntime' in l or ' E flutter' in l]
     return '\n'.join(keep[-60:])
 
 
 def alive():
-    return adb('shell', 'pidof', ARGS.package, check=False).strip() != ''
+    if adb('shell', 'pidof', ARGS.package, check=False).strip():
+        return True
+    if not device_ok():  # an empty answer from a dead emulator is not the app stopping
+        raise EmulatorGone('the emulator stopped answering')
+    return False
 
 
 def nodes(any_app=False):
@@ -181,6 +206,16 @@ def reveal(present, tries=5):
 def to_top(tries=5):
     for _ in range(tries):
         swipe(False)
+
+
+def tap_scrolled(label):
+    """Taps [label], scrolling down to it first if it is below the screen
+    (short wide screens, like an unfolded Fold, push buttons down)."""
+    time.sleep(1)
+    if not reveal(lambda: bool(find(label))):
+        raise RuntimeError(f'"{label}" never appeared, even after scrolling. On screen: '
+                           f'{sorted({l for n in nodes() for l in n["lines"]})}')
+    tap(label, timeout=5)
 
 
 def open_row(present, tap_it, title):
@@ -377,7 +412,7 @@ def wagebird():
     check('edit: changing the end to 14:00 makes it 6h', True, bool(find('6h')))
     screen_changes(lambda: bool(find('6h')))
     settings_open()
-    share_sheet_opens('timesheet CSV export', lambda: (tap('Pay'), tap('CSV')))
+    share_sheet_opens('timesheet CSV export', lambda: (tap('Pay'), tap_scrolled('CSV')))
     tap('Week')
 
     def after_reopen():
@@ -426,7 +461,7 @@ def wrenchnote():
     to_top()
     screen_changes(lambda: reveal(seen))
     settings_open()
-    share_sheet_opens('cost report CSV export', lambda: (tap('Costs'), tap('CSV')))
+    share_sheet_opens('cost report CSV export', lambda: (tap('Costs'), tap_scrolled('CSV')))
 
     def after_reopen():
         wait('Civic', timeout=40)
@@ -484,9 +519,18 @@ FLOWS = {'com.shuklamrajat.wagebird': wagebird, 'com.shuklamrajat.wrenchnote': w
 
 
 def crashes(log):
-    return [l for l in log.splitlines()
-            if ('FATAL EXCEPTION' in l or 'Fatal signal' in l or 'ANR in ' + ARGS.package in l
-                or f'Process: {ARGS.package}' in l)]
+    """Crash and freeze lines that belong to this app's process. Android's
+    own tools (uiautomator, for one) can crash on a slow emulator; those are
+    not the app."""
+    pkg = ARGS.package
+    lines = log.splitlines()
+    out = []
+    for i, l in enumerate(lines):
+        if 'FATAL EXCEPTION' in l and any(f'Process: {pkg}' in n for n in lines[i + 1:i + 4]):
+            out.append(l)
+        elif f'ANR in {pkg}' in l or (('Fatal signal' in l or '>>> ' in l) and pkg in l):
+            out.append(l)
+    return out
 
 
 def main():
@@ -499,6 +543,7 @@ def main():
     ARGS = p.parse_args()
     subprocess.run(['mkdir', '-p', ARGS.out], check=True)
     error = None
+    gone = False
     try:
         for k in ('window_animation_scale', 'transition_animation_scale', 'animator_duration_scale'):
             adb('shell', 'settings', 'put', 'global', k, '1', check=False)
@@ -520,6 +565,10 @@ def main():
         reopen_checks()
         time.sleep(5)
         check('still running at the end', True, alive())
+    except EmulatorGone as e:
+        gone = True
+        error = str(e)
+        check('the session finished without an error', None, error)
     except Exception as e:  # recorded as a failed check, with what was on screen
         error = str(e)
         check('the session finished without an error', None, error)
@@ -532,13 +581,18 @@ def main():
     found = crashes(log)
     check('logcat has no crash for this app', [], found[:5])
     if found:
-        start = log.find('FATAL EXCEPTION')
+        start = log.find(found[0])
         print(log[start:start + 4000] if start >= 0 else '\n'.join(found))
+    # A crash of the app always counts against the app. Otherwise, if the
+    # emulator stopped answering, the run says so (exit 3) so CI can retry once.
+    infra = gone and not found
     result = {'package': ARGS.package, 'device': ARGS.device, 'apk': ARGS.apk,
-              'passed': all(c['ok'] for c in CHECKS), 'checks': CHECKS}
+              'passed': all(c['ok'] for c in CHECKS), 'emulator_stopped': infra, 'checks': CHECKS}
     json.dump(result, open(f'{ARGS.out}/result.json', 'w'), indent=2)
     print(f"{sum(c['ok'] for c in CHECKS)}/{len(CHECKS)} checks passed on {ARGS.device}")
-    sys.exit(0 if result['passed'] else 1)
+    if infra:
+        print('The emulator stopped answering: a test machine problem, not the app.')
+    sys.exit(0 if result['passed'] else 3 if infra else 1)
 
 
 if __name__ == '__main__':
