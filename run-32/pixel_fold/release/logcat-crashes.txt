@@ -1,0 +1,6 @@
+11-14 03:54:16.723  1096  1178 F libc    : Fatal signal 6 (SIGABRT), code -1 (SI_QUEUE) in tid 1178 (bt_stack_manage), pid 1096 (droid.bluetooth)
+11-14 03:57:05.562   566   598 W ActivityManager: Slow operation: 67ms so far, now at startProcess: returned from zygote!
+11-14 03:57:05.563   566   598 W ActivityManager: Slow operation: 67ms so far, now at startProcess: done updating battery stats
+11-14 03:57:05.563   566   598 W ActivityManager: Slow operation: 67ms so far, now at startProcess: building log message
+11-14 03:57:05.563   566   598 W ActivityManager: Slow operation: 67ms so far, now at startProcess: starting to update pids map
+11-14 03:57:05.563   566   598 W ActivityManager: Slow operation: 67ms so far, now at startProcess: done updating pids map
