@@ -87,8 +87,8 @@ def main(argv=None):
                              f"upload {os.path.basename(f)} as {kind}", data=fh,
                              headers={"Content-Type": "image/png"})
                     print(f"{kind}: {os.path.basename(f)}")
-            call("POST", f"{app}/edits/{edit}:validate", "validate the edit")
-            print("Edit validated")
+            # The service account gets 403 on edits:validate (it may still
+            # commit), so validation is left to the commit itself.
             if a.dry_run:
                 call("DELETE", f"{app}/edits/{edit}", "delete the dry-run edit")
                 print("Dry run: edit deleted. Nothing saved, nothing sent to Google.")
