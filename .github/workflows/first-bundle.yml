@@ -1,0 +1,39 @@
+name: First bundle export
+# Copies one gate run's signed release bundle to the first-bundle branch in
+# 9 MB parts, so the first upload to a new Play app can be done in the browser.
+on:
+  push:
+    branches: [first-bundle-export]
+permissions:
+  contents: write
+  actions: read
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Read which run
+        id: cfg
+        run: |
+          echo "run=$(cat .first-bundle-run | head -1)" >> "$GITHUB_OUTPUT"
+          echo "name=$(sed -n 2p .first-bundle-run)" >> "$GITHUB_OUTPUT"
+      - uses: actions/download-artifact@v4
+        with:
+          name: ${{ steps.cfg.outputs.name }}
+          run-id: ${{ steps.cfg.outputs.run }}
+          github-token: ${{ github.token }}
+          path: bundle
+      - name: Split and push
+        run: |
+          set -e
+          aab=$(ls bundle/*.aab | head -1)
+          mkdir out && cd out
+          split -b 9000000 -d -a 2 "../$aab" part-
+          sha256sum "../$aab" | awk '{print $1}' > sha256.txt
+          basename "$aab" > name.txt
+          echo "${{ steps.cfg.outputs.run }} ${{ steps.cfg.outputs.name }}" > source.txt
+          ls -la
+          git init -q -b first-bundle
+          git config user.name "github-actions"; git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add . && git commit -q -m "First bundle parts from run ${{ steps.cfg.outputs.run }}"
+          git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" first-bundle
