@@ -1,0 +1,35 @@
+name: Send to Google review
+
+# Run by hand only, on Rajat's yes. dry_run=true checks everything with Play
+# and deletes the edit; dry_run=false commits, which sends the alpha release
+# and the listing art to Google review.
+on:
+  workflow_dispatch:
+    inputs:
+      version_code:
+        description: Version code of the alpha draft to send
+        required: true
+      dry_run:
+        description: Check only, send nothing
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+jobs:
+  submit:
+    runs-on: ubuntu-latest
+    env:
+      PACKAGE: com.shuklamrajat.wagebird
+      STORE: store/hours_tracker
+    steps:
+      - uses: actions/checkout@v4
+      - name: Send the draft and listing art
+        env:
+          PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+          VC: ${{ inputs.version_code }}
+          DRY: ${{ inputs.dry_run }}
+        run: |
+          python3 -m pip install --quiet google-auth requests cryptography
+          python3 tool/play_submit.py --package "$PACKAGE" --store "$STORE" --version-code "$VC" $([ "$DRY" = true ] && echo --dry-run)
