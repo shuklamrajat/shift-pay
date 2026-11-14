@@ -36,6 +36,8 @@ def main(argv=None):
     p.add_argument("--package", required=True)
     p.add_argument("--store", required=True)
     p.add_argument("--version-code", required=True)
+    p.add_argument("--listing-only", action="store_true",
+                   help="send only the listing art; leave the alpha track as it is")
     p.add_argument("--dry-run", action="store_true",
                    help="do everything up to validate, then delete the edit: nothing is saved or sent")
     a = p.parse_args(argv)
@@ -61,19 +63,22 @@ def main(argv=None):
 
         edit = call("POST", f"{app}/edits", "open an edit")["id"]
         try:
-            track = call("GET", f"{app}/edits/{edit}/tracks/{TRACK}", f"read the {TRACK} track")
-            print("Track before:", json.dumps([{k: r.get(k) for k in ("name", "status", "versionCodes")}
-                                               for r in track.get("releases", [])]))
-            target = [r for r in track.get("releases", [])
-                      if r.get("status") == "draft" and r.get("versionCodes") == [vc]]
-            if len(target) != 1:
-                raise PlayError(f"Expected one draft with version code {vc} on {TRACK}; found {len(target)}. Nothing saved.")
-            rel = dict(target[0])
-            rel["status"] = "completed"
-            rel.pop("userFraction", None)
-            call("PUT", f"{app}/edits/{edit}/tracks/{TRACK}", f"set release {vc} on {TRACK}",
-                 json={"track": TRACK, "releases": [rel]})
-            print(f"Release {rel.get('name')} ({vc}) set to completed on {TRACK}")
+            if a.listing_only:
+                print("Listing only: the alpha track is left as it is")
+            else:
+                track = call("GET", f"{app}/edits/{edit}/tracks/{TRACK}", f"read the {TRACK} track")
+                print("Track before:", json.dumps([{k: r.get(k) for k in ("name", "status", "versionCodes")}
+                                                   for r in track.get("releases", [])]))
+                target = [r for r in track.get("releases", [])
+                          if r.get("status") == "draft" and r.get("versionCodes") == [vc]]
+                if len(target) != 1:
+                    raise PlayError(f"Expected one draft with version code {vc} on {TRACK}; found {len(target)}. Nothing saved.")
+                rel = dict(target[0])
+                rel["status"] = "completed"
+                rel.pop("userFraction", None)
+                call("PUT", f"{app}/edits/{edit}/tracks/{TRACK}", f"set release {vc} on {TRACK}",
+                     json={"track": TRACK, "releases": [rel]})
+                print(f"Release {rel.get('name')} ({vc}) set to completed on {TRACK}")
             for kind, files in (("phoneScreenshots", shots), ("featureGraphic", [graphic])):
                 call("DELETE", f"{app}/edits/{edit}/listings/{LANG}/{kind}", f"clear the old {kind}")
                 for f in files:

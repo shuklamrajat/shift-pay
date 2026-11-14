@@ -9,6 +9,10 @@ on:
       version_code:
         description: Version code of the alpha draft to send
         required: true
+      listing_only:
+        description: Send only the listing art
+        type: boolean
+        default: false
       dry_run:
         description: Check only, send nothing
         type: boolean
@@ -30,6 +34,7 @@ jobs:
           PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
           VC: ${{ inputs.version_code }}
           DRY: ${{ inputs.dry_run }}
+          LISTING_ONLY: ${{ inputs.listing_only }}
         run: |
           python3 -m pip install --quiet google-auth requests cryptography
-          python3 tool/play_submit.py --package "$PACKAGE" --store "$STORE" --version-code "$VC" $([ "$DRY" = true ] && echo --dry-run)
+          python3 tool/play_submit.py --package "$PACKAGE" --store "$STORE" --version-code "$VC" $([ "$DRY" = true ] && echo --dry-run) $([ "$LISTING_ONLY" = true ] && echo --listing-only)
