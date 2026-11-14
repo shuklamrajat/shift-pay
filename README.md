@@ -224,7 +224,7 @@ picture of every stop in `test-artifacts/e2e/tour/`.
 
 ## Before the stores
 
-See store/README.md. In short: the app id is `com.shuklamrajat.wagebird`; signed builds (see Android builds above; keep the upload key out of this repo),
+See store/README.md. In short: the app id is `com.studioswiddle.wagebird`; signed builds (see Android builds above; keep the upload key out of this repo),
 then Play internal testing.
 
 Every Pro feature is free for now: `proFreeUntilBillingIsLive` in

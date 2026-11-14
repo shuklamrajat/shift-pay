@@ -144,8 +144,8 @@ def find(label, edit=False):
     return []
 
 
-APP_NAMES = {'com.shuklamrajat.wagebird': 'Wagebird', 'com.shuklamrajat.wrenchnote': 'Wrenchnote',
-             'com.shuklamrajat.housetally': 'Housetally'}
+APP_NAMES = {'com.studioswiddle.wagebird': 'Wagebird', 'com.studioswiddle.wrenchnote': 'Wrenchnote',
+             'com.studioswiddle.housetally': 'Housetally'}
 SYSTEM_STALLS = []
 
 
@@ -550,8 +550,8 @@ def housetally():
     return after_reopen
 
 
-FLOWS = {'com.shuklamrajat.wagebird': wagebird, 'com.shuklamrajat.wrenchnote': wrenchnote,
-         'com.shuklamrajat.housetally': housetally}
+FLOWS = {'com.studioswiddle.wagebird': wagebird, 'com.studioswiddle.wrenchnote': wrenchnote,
+         'com.studioswiddle.housetally': housetally}
 
 
 def crashes(log):

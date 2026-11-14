@@ -2,13 +2,13 @@
 
 Google Play first (closed testing track), App Store later. Final names
 chosen by Rajat on 12 Nov 2026. App and bundle ids use one scheme on Android,
-iOS and Linux: `com.shuklamrajat.<brand>`.
+iOS and Linux: `com.studioswiddle.<brand>`.
 
 | App | Name and id | Free | Pro ($19.99/year with 7-day trial, or $39.99 once) |
 |-----|--------------|------|------|
-| hours_tracker | Wagebird: Hours & Pay Tracker, `com.shuklamrajat.wagebird` | one job, all overtime rules, pay summaries | more jobs, CSV and PDF timesheets |
-| fuel_log | Wrenchnote: Car & Fuel Log, `com.shuklamrajat.wrenchnote` | one vehicle, fill-ups, economy, reminders, costs | more vehicles, CSV and PDF history |
-| home_inventory | Housetally: Home Inventory, `com.shuklamrajat.housetally` | 25 items with photos, receipts, warranties | unlimited items, insurance PDF and CSV |
+| hours_tracker | Wagebird: Hours & Pay Tracker, `com.studioswiddle.wagebird` | one job, all overtime rules, pay summaries | more jobs, CSV and PDF timesheets |
+| fuel_log | Wrenchnote: Car & Fuel Log, `com.studioswiddle.wrenchnote` | one vehicle, fill-ups, economy, reminders, costs | more vehicles, CSV and PDF history |
+| home_inventory | Housetally: Home Inventory, `com.studioswiddle.housetally` | 25 items with photos, receipts, warranties | unlimited items, insurance PDF and CSV |
 
 Files per app:
 - `listing.md`: title, short and full description (checked against Play's

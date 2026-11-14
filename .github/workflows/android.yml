@@ -45,7 +45,7 @@ jobs:
       # Empty ids make a release build fall back to Google's test ads.
       ADMOB_APP_ID: ${{ vars.ADMOB_APP_ID || 'ca-app-pub-4772684050013957~7009892675' }}
       ADMOB_BANNER_ID: ${{ vars.ADMOB_BANNER_ID || 'ca-app-pub-4772684050013957/9249043205' }}
-      PLAY_PACKAGE: com.shuklamrajat.wagebird
+      PLAY_PACKAGE: com.studioswiddle.wagebird
       PLAY_LISTING: store/hours_tracker/listing.md
     steps:
       - name: Signed build?
@@ -197,7 +197,7 @@ jobs:
             api: 35
     env:
       APP_DIR: apps/hours_tracker
-      PLAY_PACKAGE: com.shuklamrajat.wagebird
+      PLAY_PACKAGE: com.studioswiddle.wagebird
       OUT: device-e2e/${{ matrix.device }}/${{ matrix.part }}
     steps:
       - uses: actions/checkout@v4
@@ -411,7 +411,7 @@ jobs:
     timeout-minutes: 15
     env:
       HAS_PLAY_KEY: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON != '' }}
-      PLAY_PACKAGE: com.shuklamrajat.wagebird
+      PLAY_PACKAGE: com.studioswiddle.wagebird
       PLAY_LISTING: store/hours_tracker/listing.md
     steps:
       - uses: actions/checkout@v4

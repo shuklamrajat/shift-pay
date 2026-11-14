@@ -25,7 +25,7 @@ jobs:
   submit:
     runs-on: ubuntu-latest
     env:
-      PACKAGE: com.shuklamrajat.wagebird
+      PACKAGE: com.studioswiddle.wagebird
       STORE: store/hours_tracker
     steps:
       - uses: actions/checkout@v4

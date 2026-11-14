@@ -1,4 +1,4 @@
-package com.shuklamrajat.wagebird
+package com.studioswiddle.wagebird
 
 import io.flutter.embedding.android.FlutterActivity
 

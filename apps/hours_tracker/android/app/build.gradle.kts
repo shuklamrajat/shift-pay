@@ -15,7 +15,7 @@ plugins {
 }
 
 android {
-    namespace = "com.shuklamrajat.wagebird"
+    namespace = "com.studioswiddle.wagebird"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -25,7 +25,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.shuklamrajat.wagebird"
+        applicationId = "com.studioswiddle.wagebird"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion
