@@ -1,0 +1,6 @@
+Device: pixel_fold API 35, part: tests
+PASS ads_e2e_test (122s)
+PASS app_e2e_test (138s)
+PASS free_build_e2e_test (80s)
+PASS tour_e2e_test (61s)
+RESULT: tests on pixel_fold API 35 passed
