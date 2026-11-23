@@ -1,0 +1,4 @@
+Device: pixel_6 API 35, part: release
+Release APK session: 4/5 checks passed
+  FAIL the session finished without an error: want None, got '"Save shift" never appeared. On screen: [\'Ad\', \'AdMob Adaptive Banner\', \'Jobs\', \'Log shift\', \'No shifts yet\', \'OPEN\', \'Settings\', \'Shifts\', \'Stats\', \'Tab 1 of 4\', \'Tab 2 of 4\', \'Tab 3 of 4\', \'Tab 4 of 4\', \'Tap Log shift at the end of your next shift. Only the hours are needed.\', \'Test Ad\', \'Tipwell\''
+RESULT: release on pixel_6 API 35 FAILED
