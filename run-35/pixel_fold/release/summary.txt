@@ -1,0 +1,4 @@
+Device: pixel_fold API 35, part: release
+Release APK session: 3/4 checks passed
+  FAIL the session finished without an error: want None, got 'no field "Hourly wage" (#1); fields on screen: [[]]'
+RESULT: release on pixel_fold API 35 FAILED
