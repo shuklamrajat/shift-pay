@@ -1,0 +1,3 @@
+Device: pixel_6 API 35, part: tests
+PASS app_e2e_test (142s)
+RESULT: tests on pixel_6 API 35 passed
