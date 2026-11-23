@@ -137,10 +137,21 @@ void main() {
     Future<void> save() async {
       await tapKey('shift-save');
       // The save does real I/O; wait for either the list or an error.
-      await d.waitUntil(
-        () => find.byKey(const Key('shift-form')).evaluate().isEmpty || find.byKey(const Key('shift-error')).evaluate().isNotEmpty,
-        'shift save',
-      );
+      try {
+        await d.waitUntil(
+          () => find.byKey(const Key('shift-form')).evaluate().isEmpty || find.byKey(const Key('shift-error')).evaluate().isNotEmpty,
+          'shift save',
+        );
+      } on StateError {
+        // What was on screen, for the emulator gate's log.
+        final btn = find.byKey(const Key('shift-save'));
+        debugPrint('SAVE-DIAG save button: ${btn.evaluate().length}, enabled: '
+            '${btn.evaluate().isEmpty ? '-' : tester.widget<ButtonStyleButton>(btn).enabled}, '
+            'view insets: ${tester.view.viewInsets}, size: ${tester.view.physicalSize}');
+        final texts = find.byType(Text).evaluate().map((e) => (e.widget as Text).data).whereType<String>().toSet();
+        debugPrint('SAVE-DIAG texts: ${texts.join(' | ')}');
+        rethrow;
+      }
     }
 
     Future<void> skipTourIfShown() async {

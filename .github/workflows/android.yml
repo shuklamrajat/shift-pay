@@ -371,6 +371,7 @@ jobs:
             grep -E "FATAL EXCEPTION|Process: |Fatal signal|ANR in" "$OUT"/release/logcat.txt > "$d/logcat-crashes.txt" 2>/dev/null || true
           else
             cp "$OUT"/*_test.log "$d"/ 2>/dev/null || true
+            cp -r "$OUT"/files "$d"/ 2>/dev/null || true
             for f in "$OUT"/*-logcat.txt; do
               [ -f "$f" ] && grep -E "FATAL EXCEPTION|Process: |Fatal signal|ANR in" "$f" > "$d/$(basename "$f" .txt)-crashes.txt" || true
             done

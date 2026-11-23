@@ -326,9 +326,27 @@ def type_into(label, text, idx):
 
 def type_scrolled(label, text, idx):
     """type_into for a field that may sit below the keyboard or the screen:
-    closes the keyboard and scrolls to the field first."""
+    closes the keyboard and scrolls to the field first. Some screens show a
+    field's label as a separate node from its text box (seen on the Fold), so
+    then it types into the text box nearest to the label."""
     hide_keyboard()
-    reveal(lambda: bool(find(label, edit=True)), tries=4)
+    if reveal(lambda: bool(find(label, edit=True)), tries=0):
+        return type_into(label, text, idx)
+    reveal(lambda: bool(find(label)), tries=4)
+    if find(label, edit=True):
+        return type_into(label, text, idx)
+    near = find(label)
+    edits = [n for n in nodes() if n['cls'].endswith('EditText')]
+    if near and edits:
+        y = near[0]['center'][1]
+        n = min(edits, key=lambda e: abs(e['center'][1] - y))
+        adb('shell', 'input', 'tap', *map(str, n['center']))
+        time.sleep(0.6)
+        adb('shell', 'input', 'keyevent', 'KEYCODE_MOVE_END')
+        adb('shell', 'input', 'keyevent', *(['KEYCODE_DEL'] * 30))
+        adb('shell', 'input', 'text', text.replace(' ', '%s'))
+        time.sleep(0.6)
+        return
     type_into(label, text, idx)
 
 
@@ -610,7 +628,16 @@ def tipwell():
     check('edit: cash changed to 120 makes it 200.00', True, settled(has, timeout=15))
     check('edit: the old 180.00 is gone', True, gone(first))
     screen_changes(has)
-    settings_open()
+    # Tipwell's Settings opens on its backup section; the privacy row is lower.
+    tap('Settings')
+    wait('Backup')
+    check('Settings opens', True, bool(find('Backup')))
+    check('Settings: the privacy policy row is there', True, reveal(lambda: bool(find('Privacy'))))
+    rotate(True)
+    check('Settings sideways: still running', True, alive())
+    rotate(False)
+    adb('shell', 'input', 'keyevent', 'KEYCODE_BACK')
+    time.sleep(2)
     share_sheet_opens('week CSV export', lambda: (tap('Stats'), tap_scrolled('Export this period'),
                                                   tap('Spreadsheet (CSV)')))
     tap('Shifts')
@@ -621,6 +648,8 @@ def tipwell():
         check('after reopening: no onboarding again', False, bool(find('Set up your job')))
         open_row(has, lambda: tap_last_match(r'200\.00'), 'Edit shift')
         tap('Show menu')
+        tap('Delete')
+        wait('Cancel')  # "Delete this shift?"
         tap('Delete')
         wait('Log shift')
         check('delete: the shift is gone from the list', True, gone(has))
