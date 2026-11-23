@@ -1,0 +1,76 @@
+{
+  "package": "com.studioswiddle.tipwell",
+  "device": "pixel_6 API 35",
+  "apk": "universal.apk",
+  "passed": false,
+  "emulator_stopped": false,
+  "android_stalls_not_the_app": [],
+  "checks": [
+    {
+      "check": "still running 8 s after launch",
+      "want": true,
+      "got": true,
+      "ok": true
+    },
+    {
+      "check": "first screen: onboarding shows",
+      "want": true,
+      "got": true,
+      "ok": true
+    },
+    {
+      "check": "set up: the job is saved and the home screen shows",
+      "want": true,
+      "got": true,
+      "ok": true
+    },
+    {
+      "check": "add: 6 h, 100 cash and 50 card at 5.00/h shows 180.00 take-home",
+      "want": true,
+      "got": true,
+      "ok": true
+    },
+    {
+      "check": "edit: cash changed to 120 makes it 200.00",
+      "want": true,
+      "got": true,
+      "ok": true
+    },
+    {
+      "check": "edit: the old 180.00 is gone",
+      "want": true,
+      "got": true,
+      "ok": true
+    },
+    {
+      "check": "sideways: still running",
+      "want": true,
+      "got": true,
+      "ok": true
+    },
+    {
+      "check": "sideways: the entries are still on screen",
+      "want": true,
+      "got": true,
+      "ok": true
+    },
+    {
+      "check": "upright again: the entries are still on screen",
+      "want": true,
+      "got": true,
+      "ok": true
+    },
+    {
+      "check": "the session finished without an error",
+      "want": null,
+      "got": "\"Privacy\" never appeared. On screen: ['15%', 'A pay period started on', 'A quick look around Tipwell', 'A rough share of your income to put away. Not tax advice.', 'Ad', 'AdMob Adaptive Banner', 'Ads keep it free. A paid plan with no ads comes later; there is nothing to buy today.', 'Backup & restore', 'Currency', 'Every Pro feature is free for now', 'Jobs', 'Mon 5 Jan 2026', 'Monday', 'No backup yet', 'OPEN', 'Pay period', 'Settings', 'Shifts', 'Stats', 'System', 'Tab 1 of 4', 'Tab 2 of 4', 'Tab 3 of 4', 'Tab 4 of 4', 'Take the tour', 'Tax set-aside', 'Test Ad', 'Theme', 'USD', 'Week starts on', 'Weekly', \"You've loaded a test ad from AdMob. Way\", \"You've loaded a test ad from AdMob. Way to go! developers.google.com/admob\", 'developers.google.com/admob', 'to go! developers.google.com/admob']",
+      "ok": false
+    },
+    {
+      "check": "logcat has no crash for this app",
+      "want": [],
+      "got": [],
+      "ok": true
+    }
+  ]
+}

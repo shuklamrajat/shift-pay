@@ -1,0 +1,4 @@
+Device: pixel_6 API 35, part: release
+Release APK session: 10/11 checks passed
+  FAIL the session finished without an error: want None, got '"Privacy" never appeared. On screen: [\'15%\', \'A pay period started on\', \'A quick look around Tipwell\', \'A rough share of your income to put away. Not tax advice.\', \'Ad\', \'AdMob Adaptive Banner\', \'Ads keep it free. A paid plan with no ads comes later; there is nothing to buy today.\', \'Backup & restor'
+RESULT: release on pixel_6 API 35 FAILED
