@@ -606,10 +606,14 @@ def tipwell():
     wait('Log a shift', timeout=30)
     skip_tour()
     check('set up: the job is saved and the home screen shows', True, bool(wait('Log shift')))
-    tap('Log shift')
+    time.sleep(2)  # the tour's spotlight fades out over the button
+    for _ in range(3):  # the empty list also says "Tap Log shift..."
+        tap('Log shift')
+        if settled(lambda: bool(find('Save shift')), timeout=8):
+            break
     wait('Save shift')
     tap('Total')
-    type_into('Hours worked', '6', 0)
+    type_scrolled('Hours worked', '6', 0, anchor='Total')
     type_scrolled('Cash', '100', 1)
     type_scrolled('Card', '50', 2)
     hide_keyboard()
