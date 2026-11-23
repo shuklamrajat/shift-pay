@@ -1,0 +1,24 @@
+Device: pixel_6 API 35, part: tests
+FAIL app_e2e_test (94s):
+══╡ EXCEPTION CAUGHT BY ANIMATION LIBRARY ╞═════════════════════════════════════════════════════════
+The following assertion was thrown while notifying listeners for AnimationController:
+#0      RenderObject._debugCanPerformMutations.<anonymous closure> (package:flutter/src/rendering/object.dart:2391:9)
+#1      RenderObject._debugCanPerformMutations (package:flutter/src/rendering/object.dart:2436:6)
+#2      RenderObject.markNeedsLayout (package:flutter/src/rendering/object.dart:2677:12)
+#3      RenderBox.markNeedsLayout (package:flutter/src/rendering/box.dart:2860:11)
+#4      new RenderAnimatedSize.<anonymous closure> (package:flutter/src/rendering/animated_size.dart:92:15)
+#5      AnimationLocalListenersMixin.notifyListeners (package:flutter/src/animation/listener_helpers.dart:160:19)
+#6      AnimationController._animateToInternal (package:flutter/src/animation/animation_controller.dart:675:9)
+#7      AnimationController.forward (package:flutter/src/animation/animation_controller.dart:490:12)
+#8      RenderAnimatedSize._restartAnimation (package:flutter/src/rendering/animated_size.dart:311:17)
+#9      RenderAnimatedSize._layoutStable (package:flutter/src/rendering/animated_size.dart:332:7)
+══╡ EXCEPTION CAUGHT BY FLUTTER TEST FRAMEWORK ╞════════════════════════════════════════════════════
+The following StateError was thrown running a test:
+#0      E2eDriver.waitUntil (package:e2e_driver/e2e_driver.dart:20:40)
+#1      main.<anonymous closure>.save (file:///home/runner/work/shift-pay/shift-pay/apps/tip_tracker/integration_test/app_e2e_test.dart:136:7)
+#2      main.<anonymous closure> (file:///home/runner/work/shift-pay/shift-pay/apps/tip_tracker/integration_test/app_e2e_test.dart:209:7)
+#3      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:192:15)
+#4      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1953:5)
+══╡ EXCEPTION CAUGHT BY FLUTTER TEST FRAMEWORK ╞════════════════════════════════════════════════════
+The following message was thrown:
+RESULT: tests on pixel_6 API 35 FAILED
