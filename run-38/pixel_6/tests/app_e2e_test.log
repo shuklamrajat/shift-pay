@@ -1,0 +1,53 @@
+Resolving dependencies in `/home/runner/work/shift-pay/shift-pay`...
+Downloading packages...
+  archive 4.6.0 (4.7.1 available)
+  built_collection 5.1.2 (6.0.0 available)
+  cli_util 0.6.0 (0.6.1 available)
+  cross_file 0.3.5+5 (0.4.0 available)
+  cupertino_ui 1.1.6 (1.1.7 available)
+  image 4.12.0 (4.13.1 available)
+  jni 1.1.2 (1.2.1 available)
+  jni_flutter 1.0.4+1 (1.1.0 available)
+  material_color_utilities 0.13.0 (0.13.1 available)
+  material_ui 1.11.0 (1.11.1 available)
+  qr 3.0.3 (4.0.1 available)
+  sqlite3 3.9.1 (3.9.2 available)
+  test_api 0.7.12 (0.7.15 available)
+  url_launcher_android 6.3.33 (6.3.35 available)
+Got dependencies in `/home/runner/work/shift-pay/shift-pay`!
+14 packages have newer versions incompatible with dependency constraints.
+Try `flutter pub outdated` for more information.
+00:00 +0: loading /home/runner/work/shift-pay/shift-pay/apps/tip_tracker/integration_test/app_e2e_test.dart
+Running Gradle task 'assembleDebug'...                          
+WARNING: Your app uses the following plugins that apply Kotlin Gradle Plugin (KGP): in_app_review
+Future versions of Flutter will fail to build if your app uses plugins that apply KGP.
+
+Please check the changelogs of these plugins and upgrade to a version that supports Built-in Kotlin.
+If no such version exists, report the issue to the plugin. If necessary, here is a guide on filing
+an issue against a plugin: https://docs.flutter.dev/release/breaking-changes/migrate-to-built-in-kotlin/for-app-developers#report-incompatible-kotlin-gradle-plugin-usage-to-plugin-authors
+
+If you are a plugin author, please migrate your plugin to Built-in Kotlin using this guide: https://docs.flutter.dev/release/breaking-changes/migrate-to-built-in-kotlin/for-plugin-authors
+Running Gradle task 'assembleDebug'...                             45.7s
+✓ Built build/app/outputs/flutter-apk/app-debug.apk
+Installing build/app/outputs/flutter-apk/app-debug.apk...        1,122ms
+00:00 +0: two weeks of shifts, edits, stats, export, backup, new phone restore, damaged data
+WARNING (drift): It looks like you've created the database class TipsDb multiple times. When these two databases use the same QueryExecutor, race conditions will occur and might corrupt the database. 
+Try to follow the advice at https://drift.simonbinder.eu/faq/#using-the-database or, if you know what you're doing, set driftRuntimeOptions.dontWarnAboutMultipleDatabases = true
+Here is the stacktrace from when the database was opened a second time:
+#0      GeneratedDatabase._handleInstantiated (package:drift/src/runtime/api/db_base.dart:96:30)
+#1      GeneratedDatabase._whenConstructed (package:drift/src/runtime/api/db_base.dart:73:12)
+#2      new GeneratedDatabase (package:drift/src/runtime/api/db_base.dart:64:5)
+#3      new _$TipsDb (package:tip_tracker/src/data/database.g.dart:1675:31)
+#4      new TipsDb (package:tip_tracker/src/data/database.dart)
+#5      new Phone (file:///home/runner/work/shift-pay/shift-pay/apps/tip_tracker/integration_test/app_e2e_test.dart:59:26)
+#6      main.<anonymous closure> (file:///home/runner/work/shift-pay/shift-pay/apps/tip_tracker/integration_test/app_e2e_test.dart:480:15)
+<asynchronous suspension>
+#7      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:192:15)
+<asynchronous suspension>
+#8      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1953:5)
+<asynchronous suspension>
+#9      StackZoneSpecification._registerCallback.<anonymous closure> (package:stack_trace/src/stack_zone_specification.dart:114:42)
+<asynchronous suspension>
+This warning will only appear on debug builds.
+01:05 +1: (tearDownAll)
+01:06 +1: All tests passed!
