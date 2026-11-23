@@ -150,6 +150,8 @@ void main() {
             'view insets: ${tester.view.viewInsets}, size: ${tester.view.physicalSize}');
         final texts = find.byType(Text).evaluate().map((e) => (e.widget as Text).data).whereType<String>().toSet();
         debugPrint('SAVE-DIAG texts: ${texts.join(' | ')}');
+        final fields = find.byType(EditableText).evaluate().map((e) => (e.widget as EditableText).controller.text);
+        debugPrint('SAVE-DIAG fields: ${fields.join(' | ')}; error: ${await error()}');
         rethrow;
       }
     }

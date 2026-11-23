@@ -324,22 +324,24 @@ def type_into(label, text, idx):
     time.sleep(0.6)
 
 
-def type_scrolled(label, text, idx):
+def type_scrolled(label, text, idx, anchor=None):
     """type_into for a field that may sit below the keyboard or the screen:
     closes the keyboard and scrolls to the field first. Some screens show a
-    field's label as a separate node from its text box (seen on the Fold), so
-    then it types into the text box nearest to the label."""
+    field's label as a separate node from its text box, or leave it out of the
+    dump (seen on the Fold); then it types into the text box nearest to the
+    label, or to [anchor] (text just below the field)."""
     hide_keyboard()
     if reveal(lambda: bool(find(label, edit=True)), tries=0):
         return type_into(label, text, idx)
-    reveal(lambda: bool(find(label)), tries=4)
+    marks = [label] + ([anchor] if anchor else [])
+    reveal(lambda: any(find(m) for m in marks), tries=4)
     if find(label, edit=True):
         return type_into(label, text, idx)
-    near = find(label)
+    near = next((find(m) for m in marks if find(m)), [])
     edits = [n for n in nodes() if n['cls'].endswith('EditText')]
     if near and edits:
-        y = near[0]['center'][1]
-        n = min(edits, key=lambda e: abs(e['center'][1] - y))
+        x, y = near[0]['center']
+        n = min(edits, key=lambda e: (e['center'][1] - y) ** 2 + (e['center'][0] - x) ** 2)
         adb('shell', 'input', 'tap', *map(str, n['center']))
         time.sleep(0.6)
         adb('shell', 'input', 'keyevent', 'KEYCODE_MOVE_END')
@@ -348,7 +350,6 @@ def type_scrolled(label, text, idx):
         time.sleep(0.6)
         return
     type_into(label, text, idx)
-
 
 def hide_keyboard():
     if 'mInputShown=true' in adb('shell', 'dumpsys', 'input_method', check=False):
@@ -598,7 +599,7 @@ def tipwell():
     tap('Skip')
     wait('Set up your job')
     type_into('Job name', 'Luna Bistro', 0)
-    type_scrolled('Hourly wage', '5.00', 1)
+    type_scrolled('Hourly wage', '5.00', 1, anchor='Leave empty if you only earn tips')
     hide_keyboard()
     tap_scrolled('Start logging')
     # The job screen has a Skip button too, so wait for the tour's own title.

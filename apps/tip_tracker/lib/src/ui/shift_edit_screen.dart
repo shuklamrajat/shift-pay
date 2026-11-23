@@ -610,21 +610,37 @@ class _ShiftEditScreenState extends ConsumerState<ShiftEditScreen> {
                     ],
                   ),
                 ),
-            if (_error != null)
-              Padding(
-                padding: const EdgeInsets.only(top: 10),
-                child: Text(_error!, key: const Key('shift-error'), style: TextStyle(color: theme.colorScheme.error, fontWeight: FontWeight.w600)),
-              ),
           ],
         ),
         bottomNavigationBar: SafeArea(
           child: Padding(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-            child: FilledButton.icon(
-              key: const Key('shift-save'),
-              onPressed: _saving || pickable.isEmpty ? null : _save,
-              icon: const Icon(Icons.savings_outlined),
-              label: Text(_isNew ? 'Save shift' : 'Save changes'),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Right above Save, so it shows even when the keyboard hides
+                // the bottom of the form.
+                if (_error != null)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Row(
+                      children: [
+                        Icon(Icons.error_outline, size: 18, color: theme.colorScheme.error),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(_error!, key: const Key('shift-error'), style: TextStyle(color: theme.colorScheme.error, fontWeight: FontWeight.w600)),
+                        ),
+                      ],
+                    ),
+                  ),
+                FilledButton.icon(
+                  key: const Key('shift-save'),
+                  onPressed: _saving || pickable.isEmpty ? null : _save,
+                  icon: const Icon(Icons.savings_outlined),
+                  label: Text(_isNew ? 'Save shift' : 'Save changes'),
+                ),
+              ],
             ),
           ),
         ),
