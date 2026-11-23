@@ -1,0 +1,5 @@
+11-23 19:21:08.740   556   578 W ActivityManager: Slow operation: 78ms so far, now at startProcess: creating new process record
+11-23 19:21:08.740   556   578 W ActivityManager: Slow operation: 78ms so far, now at startProcess: done creating new process record
+11-23 19:21:08.740   556   578 W ActivityManager: Slow operation: 78ms so far, now at startProcess: stepping in to startProcess
+11-23 19:21:08.740   556   578 W ActivityManager: Slow operation: 79ms so far, now at startProcess: done starting proc!
+11-23 19:21:08.800   556   588 W ActivityManager: Slow operation: 60ms so far, now at startProcess: done updating pids map
