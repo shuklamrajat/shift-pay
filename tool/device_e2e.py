@@ -145,7 +145,8 @@ def find(label, edit=False):
 
 
 APP_NAMES = {'com.studioswiddle.wagebird': 'Wagebird', 'com.studioswiddle.wrenchnote': 'Wrenchnote',
-             'com.studioswiddle.housetally': 'Housetally'}
+             'com.studioswiddle.housetally': 'Housetally',
+             'com.studioswiddle.tipwell': 'Tipwell'}
 SYSTEM_STALLS = []
 
 
@@ -208,6 +209,21 @@ def tap_match(pattern, timeout=25):
         hit = matching(pattern)
         if hit:
             adb('shell', 'input', 'tap', *map(str, hit[0]['center']))
+            time.sleep(1.2)
+            return
+        time.sleep(1)
+    raise RuntimeError(f'nothing matching /{pattern}/ appeared. On screen: {sorted({l for n in nodes() for l in n["lines"]})}')
+
+
+def tap_last_match(pattern, timeout=25):
+    """Taps the lowest node matching [pattern]: on Tipwell's Shifts screen the
+    week card and the week header show the same total above the shift's row."""
+    end = time.time() + timeout
+    while time.time() < end:
+        hit = matching(pattern)
+        if hit:
+            n = max(hit, key=lambda n: n['center'][1])
+            adb('shell', 'input', 'tap', *map(str, n['center']))
             time.sleep(1.2)
             return
         time.sleep(1)
@@ -550,8 +566,67 @@ def housetally():
     return after_reopen
 
 
+def tipwell():
+    wait('Skip', timeout=40)
+    check('first screen: onboarding shows', True, bool(find('Skip')))
+    tap('Skip')
+    wait('Set up your job')
+    type_into('Job name', 'Luna Bistro', 0)
+    type_into('Hourly wage', '5.00', 1)
+    hide_keyboard()
+    tap_scrolled('Start logging')
+    # The job screen has a Skip button too, so wait for the tour's own title.
+    wait('Log a shift', timeout=30)
+    skip_tour()
+    check('set up: the job is saved and the home screen shows', True, bool(wait('Log shift')))
+    tap('Log shift')
+    wait('Save shift')
+    tap('Total')
+    type_into('Hours worked', '6', 0)
+    type_into('Cash', '100', 1)
+    type_into('Card', '50', 2)
+    hide_keyboard()
+    tap_scrolled('Save shift')
+    wait('Log shift')
+    # 150.00 in tips + 6 h x 5.00 wage = 180.00 take-home, no tip-out.
+    made = lambda v: (lambda: any(v in l for n in nodes() for l in n['lines']))
+    first = made('180.00')
+    check('add: 6 h, 100 cash and 50 card at 5.00/h shows 180.00 take-home', True, settled(first, timeout=15))
+    open_row(first, lambda: tap_last_match(r'180\.00'), 'Edit shift')
+    type_into('Cash', '120', 1)
+    hide_keyboard()
+    tap_scrolled('Save changes')
+    wait('Log shift')
+    to_top()
+    has = made('200.00')
+    check('edit: cash changed to 120 makes it 200.00', True, settled(has, timeout=15))
+    check('edit: the old 180.00 is gone', True, gone(first))
+    screen_changes(has)
+    settings_open()
+    share_sheet_opens('week CSV export', lambda: (tap('Stats'), tap_scrolled('Export this period'),
+                                                  tap('Spreadsheet (CSV)')))
+    tap('Shifts')
+
+    def after_reopen():
+        wait('Log shift', timeout=40)
+        check('after reopening: the edited 200.00 shift is still there', True, settled(has))
+        check('after reopening: no onboarding again', False, bool(find('Set up your job')))
+        open_row(has, lambda: tap_last_match(r'200\.00'), 'Edit shift')
+        tap('Show menu')
+        tap('Delete')
+        wait('Log shift')
+        check('delete: the shift is gone from the list', True, gone(has))
+        restart()
+        wait('Log shift', timeout=40)
+        time.sleep(2)
+        check('delete: the shift stays gone after reopening', True, gone(has, timeout=8))
+        check('still running after the delete and reopen', True, alive())
+    return after_reopen
+
+
 FLOWS = {'com.studioswiddle.wagebird': wagebird, 'com.studioswiddle.wrenchnote': wrenchnote,
-         'com.studioswiddle.housetally': housetally}
+         'com.studioswiddle.housetally': housetally,
+         'com.studioswiddle.tipwell': tipwell}
 
 
 def crashes(log):

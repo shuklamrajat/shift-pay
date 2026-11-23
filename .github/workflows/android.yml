@@ -37,16 +37,18 @@ jobs:
     outputs:
       signed: ${{ steps.meta.outputs.signed }}
     env:
-      APP_DIR: apps/hours_tracker
+      APP_DIR: apps/tip_tracker
       HAS_UPLOAD_KEY: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
       HAS_PLAY_KEY: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON != '' }}
       # AdMob ids (studioswiddle@gmail.com's AdMob) are public: they ship inside
       # every copy of the app. Repo variables of the same names override them.
       # Empty ids make a release build fall back to Google's test ads.
-      ADMOB_APP_ID: ${{ vars.ADMOB_APP_ID || 'ca-app-pub-4772684050013957~7009892675' }}
-      ADMOB_BANNER_ID: ${{ vars.ADMOB_BANNER_ID || 'ca-app-pub-4772684050013957/9249043205' }}
-      PLAY_PACKAGE: com.studioswiddle.wagebird
-      PLAY_LISTING: store/hours_tracker/listing.md
+      # Tipwell has no AdMob app of its own yet, so this gate build uses
+      # Google's test ads (empty ids). Never upload a build made this way.
+      ADMOB_APP_ID: ''
+      ADMOB_BANNER_ID: ''
+      PLAY_PACKAGE: com.studioswiddle.tipwell
+      PLAY_LISTING: store/tip_tracker/listing.md
     steps:
       - name: Signed build?
         id: meta
@@ -74,6 +76,7 @@ jobs:
 
       - name: Check the Play upload script against a fake Play server
         run: |
+          if [ ! -f "$PLAY_LISTING" ]; then echo "No Play listing for this app yet; skipped."; exit 0; fi
           python3 -m pip install --quiet google-auth requests cryptography
           python3 tool/play_upload_e2e.py --listing "$PLAY_LISTING" --package "$PLAY_PACKAGE"
 
@@ -149,7 +152,7 @@ jobs:
         if: env.HAS_UPLOAD_KEY == 'true'
         uses: actions/upload-artifact@v4
         with:
-          name: wagebird-release-aab-${{ github.run_number }}
+          name: tipwell-release-aab-${{ github.run_number }}
           path: ${{ env.APP_DIR }}/build/app/outputs/bundle/release/app-release.aab
           if-no-files-found: error
 
@@ -164,7 +167,7 @@ jobs:
         if: env.HAS_UPLOAD_KEY != 'true'
         uses: actions/upload-artifact@v4
         with:
-          name: wagebird-debug-apk-not-for-play-${{ github.run_number }}
+          name: tipwell-debug-apk-not-for-play-${{ github.run_number }}
           path: ${{ env.APP_DIR }}/build/app/outputs/flutter-apk/app-debug.apk
           retention-days: 14
           if-no-files-found: error
@@ -196,15 +199,15 @@ jobs:
           - device: pixel_fold
             api: 35
     env:
-      APP_DIR: apps/hours_tracker
-      PLAY_PACKAGE: com.studioswiddle.wagebird
+      APP_DIR: apps/tip_tracker
+      PLAY_PACKAGE: com.studioswiddle.tipwell
       OUT: device-e2e/${{ matrix.device }}/${{ matrix.part }}
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/download-artifact@v4
         with:
-          name: wagebird-release-aab-${{ github.run_number }}
+          name: tipwell-release-aab-${{ github.run_number }}
           path: bundle
 
       - uses: actions/setup-java@v4
@@ -406,19 +409,21 @@ jobs:
   play:
     name: Upload to Play closed testing (draft)
     needs: [android, device-e2e]
-    if: needs.android.outputs.signed == 'true' && github.ref == 'refs/heads/main'
+    # Off for Tipwell: this branch only proves the build on emulators. Tipwell's
+    # own repo, AdMob ids and upload key come first, on Rajat's yes.
+    if: false
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
       HAS_PLAY_KEY: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON != '' }}
-      PLAY_PACKAGE: com.studioswiddle.wagebird
-      PLAY_LISTING: store/hours_tracker/listing.md
+      PLAY_PACKAGE: com.studioswiddle.tipwell
+      PLAY_LISTING: store/tip_tracker/listing.md
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/download-artifact@v4
         with:
-          name: wagebird-release-aab-${{ github.run_number }}
+          name: tipwell-release-aab-${{ github.run_number }}
           path: bundle
 
       - name: Upload to Play closed testing as a draft
