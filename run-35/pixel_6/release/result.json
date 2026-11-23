@@ -1,0 +1,46 @@
+{
+  "package": "com.studioswiddle.tipwell",
+  "device": "pixel_6 API 35",
+  "apk": "universal.apk",
+  "passed": false,
+  "emulator_stopped": false,
+  "android_stalls_not_the_app": [],
+  "checks": [
+    {
+      "check": "still running 8 s after launch",
+      "want": true,
+      "got": true,
+      "ok": true
+    },
+    {
+      "check": "first screen: onboarding shows",
+      "want": true,
+      "got": true,
+      "ok": true
+    },
+    {
+      "check": "set up: the job is saved and the home screen shows",
+      "want": true,
+      "got": true,
+      "ok": true
+    },
+    {
+      "check": "add: 6 h, 100 cash and 50 card at 5.00/h shows 180.00 take-home",
+      "want": true,
+      "got": false,
+      "ok": false
+    },
+    {
+      "check": "the session finished without an error",
+      "want": null,
+      "got": "the row for \"Edit shift\" never appeared, even after scrolling. On screen: ['$13.33/h', '$80.00', '$80.00 \u00b7 $13.33/h', '23', '6h \u00b7 $13.33/h', '6h \u00b7 card $50.00', 'Ad', 'AdMob Adaptive Banner', 'Jobs', 'Log shift', 'Mon', 'Monday 23 Nov', 'OPEN', 'Pay period 23 Nov to 29 Nov: $80.00', 'Settings', 'Shifts', 'Stats', 'Tab 1 of 4', 'Tab 2 of 4', 'Tab 3 of 4', 'Tab 4 of 4', 'Test Ad', 'This week', 'Tipwell', \"You've loaded a test ad from AdMob. Way\", \"You've loaded a test ad from AdMob. Way to go! developers.google.com/admob\", 'developers.google.com/admob', 'to go! developers.google.com/admob']",
+      "ok": false
+    },
+    {
+      "check": "logcat has no crash for this app",
+      "want": [],
+      "got": [],
+      "ok": true
+    }
+  ]
+}

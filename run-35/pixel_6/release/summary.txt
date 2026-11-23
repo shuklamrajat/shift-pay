@@ -1,0 +1,5 @@
+Device: pixel_6 API 35, part: release
+Release APK session: 4/6 checks passed
+  FAIL add: 6 h, 100 cash and 50 card at 5.00/h shows 180.00 take-home: want True, got 'False'
+  FAIL the session finished without an error: want None, got 'the row for "Edit shift" never appeared, even after scrolling. On screen: [\'$13.33/h\', \'$80.00\', \'$80.00 · $13.33/h\', \'23\', \'6h · $13.33/h\', \'6h · card $50.00\', \'Ad\', \'AdMob Adaptive Banner\', \'Jobs\', \'Log shift\', \'Mon\', \'Monday 23 Nov\', \'OPEN\', \'Pay period 23 Nov to 29 Nov: $80.00\', \'Settings\', \'Shi'
+RESULT: release on pixel_6 API 35 FAILED
