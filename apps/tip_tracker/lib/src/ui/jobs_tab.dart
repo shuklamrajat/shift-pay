@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../app.dart' show featureMultipleJobs;
 import '../data/repository.dart';
+import '../domain/periods.dart';
 import '../domain/tip_math.dart';
 import 'fields.dart';
 import 'job_edit_screen.dart';
@@ -16,12 +17,16 @@ class JobsTab extends ConsumerWidget {
     final jobs = ref.watch(allJobsProvider).value ?? const <Job>[];
     final shifts = ref.watch(allShiftsProvider).value ?? const <Shift>[];
     final money = ref.watch(moneyFmtProvider);
+    final settings = ref.watch(tipSettingsProvider);
+    final now = ref.watch(clockProvider)();
+    final month = Period.containing(PeriodKind.month, now, weekStartsOn: settings.weekStartsOn);
     final active = jobs.where((j) => !j.archived).toList();
     final archived = jobs.where((j) => j.archived).toList();
 
     Widget tile(Job j, int i) {
-      final mine = shifts.where((s) => s.jobId == j.id);
-      final t = Totals(mine.map(mathOf));
+      final mine = shifts.where((s) => s.jobId == j.id).toList();
+      final t = Totals(mine.where((s) => month.containsKey(s.day)).map(mathOf));
+      final ever = Totals(mine.map(mathOf));
       final rule = ruleOfJob(j);
       return Appear(
         index: i,
@@ -39,18 +44,20 @@ class JobsTab extends ConsumerWidget {
               [
                 j.rateCents == 0 ? 'No hourly wage' : '${money(j.rateCents)}/h',
                 if (rule.kind != TipOutKind.none) 'tip-out ${rule.describe(money)}',
+                '${payKindLabel(payKindFor(j, settings)).toLowerCase()} pay',
+                if (ever.count > 0) '${money(ever.perHourCents)}/h over ${ever.count} shift${ever.count == 1 ? '' : 's'}',
               ].join(' · '),
+              key: Key('job-sub-${j.id}'),
             ),
-            trailing: t.count == 0
-                ? null
-                : Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Text('${money(t.perHourCents)}/h', style: const TextStyle(fontWeight: FontWeight.w700)),
-                      Text('${t.count} shifts', style: Theme.of(context).textTheme.bodySmall),
-                    ],
-                  ),
+            isThreeLine: ever.count > 0,
+            trailing: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(money(t.takeHome), key: Key('job-month-${j.id}'), style: const TextStyle(fontWeight: FontWeight.w700)),
+                Text('this month', style: Theme.of(context).textTheme.bodySmall),
+              ],
+            ),
             onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => JobEditScreen(job: j))),
           ),
         ),

@@ -82,3 +82,9 @@ Period payPeriodContaining(DateTime d, PayPeriodKind kind, DateTime anchor) {
 
 const weekdayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 const weekdayShort = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+String payKindLabel(PayPeriodKind k) => switch (k) {
+  PayPeriodKind.weekly => 'Weekly',
+  PayPeriodKind.biweekly => 'Every 2 weeks',
+  PayPeriodKind.semimonthly => 'Twice a month',
+};

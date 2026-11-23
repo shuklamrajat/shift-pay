@@ -117,6 +117,34 @@ class TipsRepository {
     return q.watch();
   }
 
+  /// Every row that can still be read from damaged data, row by row, so one
+  /// bad row doesn't hide the rest. [skipped] counts rows that couldn't be.
+  Future<({List<Job> jobs, List<Shift> shifts, int skipped})> readable() async {
+    var skipped = 0;
+    Future<List<T>> rows<T>(String table, T Function(Map<String, dynamic>) map) async {
+      List<QueryRow> raw;
+      try {
+        raw = await db.customSelect('SELECT * FROM $table ORDER BY id').get();
+      } catch (_) {
+        skipped++;
+        return <T>[];
+      }
+      final out = <T>[];
+      for (final r in raw) {
+        try {
+          out.add(map(r.data));
+        } catch (_) {
+          skipped++;
+        }
+      }
+      return out;
+    }
+
+    final jobs = await rows<Job>('jobs', (d) => db.jobs.map(d));
+    final shifts = await rows<Shift>('shifts', (d) => db.shifts.map(d));
+    return (jobs: jobs, shifts: shifts, skipped: skipped);
+  }
+
   Future<List<Job>> jobs({bool includeArchived = true}) {
     final q = db.select(db.jobs)..orderBy([(j) => OrderingTerm(expression: j.id)]);
     if (!includeArchived) q.where((j) => j.archived.equals(false));
@@ -158,6 +186,8 @@ class TipsRepository {
     required TipOutRule rule,
     required bool tracksSales,
     required int colorIndex,
+    PayPeriodKind? payKind,
+    DateTime? payAnchor,
   }) async {
     final n = name.trim();
     if (n.isEmpty) return const SaveResult.error('Give the job a name.');
@@ -179,6 +209,8 @@ class TipsRepository {
       tipOutValue: Value(rule.kind == TipOutKind.none ? 0 : rule.value),
       tracksSales: Value(tracksSales || rule.needsSales),
       colorIndex: Value(colorIndex),
+      payKind: Value(payKind?.name),
+      payAnchor: Value(payAnchor == null ? null : dayKey(payAnchor)),
     );
     if (id != null) {
       await (db.update(db.jobs)..where((j) => j.id.equals(id))).write(c);
@@ -348,3 +380,13 @@ final moneyFmtProvider = Provider<String Function(int)>((ref) {
   final cur = ref.watch(coreSettingsProvider.select((s) => s.currency));
   return (c) => Money.format(c, currency: cur);
 });
+
+/// The pay period [job] is paid on, or the Settings default when no job is
+/// picked or the job never set one. Each job can be paid on its own cycle.
+Period payPeriodFor(Job? job, TipSettings s, DateTime now) {
+  final kind = job?.payKind == null ? s.payKind : payPeriodKindFromName(job!.payKind!);
+  final anchor = job?.payAnchor == null ? s.payAnchor : parseDay(job!.payAnchor!);
+  return payPeriodContaining(now, kind, anchor);
+}
+
+PayPeriodKind payKindFor(Job? job, TipSettings s) => job?.payKind == null ? s.payKind : payPeriodKindFromName(job!.payKind!);

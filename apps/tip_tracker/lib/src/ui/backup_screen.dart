@@ -59,7 +59,7 @@ Future<void> saveBackupOffDevice(BuildContext context, WidgetRef ref) async {
     await ref.read(lastOffDeviceProvider.notifier).mark(ref.read(clockProvider)());
     if (context.mounted) snack(context, 'Backup saved. Keep it somewhere off this phone, like Drive or email.');
   } catch (e) {
-    if (context.mounted) snack(context, 'Couldn’t save the backup: $e');
+    if (context.mounted) snack(context, e is BackupException ? e.message : 'Couldn’t save the backup: $e', duration: const Duration(seconds: 8));
   }
 }
 
@@ -129,7 +129,9 @@ Future<bool> restoreFlow(BuildContext context, WidgetRef ref, Uint8List bytes) a
   try {
     await svc.restore(preview);
   } catch (e) {
-    if (context.mounted) snack(context, 'Nothing was changed. The restore failed: $e');
+    if (context.mounted) {
+      snack(context, 'Nothing was changed. ${e is BackupException ? e.message : 'The restore failed: $e'}', duration: const Duration(seconds: 8));
+    }
     return false;
   }
   ref.invalidate(backupListProvider);

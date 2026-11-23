@@ -19,6 +19,11 @@ class Jobs extends Table {
   IntColumn get colorIndex => integer().withDefault(const Constant(0))();
   BoolColumn get archived => boolean().withDefault(const Constant(false))();
   DateTimeColumn get createdAt => dateTime()();
+
+  /// This job's pay period (PayPeriodKind name) and a day one started on
+  /// ("YYYY-MM-DD"). Null means it follows the default in Settings.
+  TextColumn get payKind => text().nullable()();
+  TextColumn get payAnchor => text().nullable().withLength(min: 10, max: 10)();
 }
 
 class Shifts extends Table {

@@ -624,6 +624,9 @@ def tipwell():
     type_into('Job name', 'Luna Bistro', 0)
     type_id('job-wage', '5.00', 'Hourly wage', 1, anchor='Leave empty if you only earn tips')
     hide_keyboard()
+    check('set up: the Server role starts with a 3% of sales tip-out', True,
+          reveal(lambda: bool(find('Tip-out 3% of sales'))))
+    tap_scrolled('None')  # this job pays no tip-out
     tap_scrolled('Start logging')
     # The job screen has a Skip button too, so wait for the tour's own title.
     wait('Log a shift', timeout=30)

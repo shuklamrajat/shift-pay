@@ -38,7 +38,18 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     final last = _page == pages.length - 1;
     final theme = Theme.of(context);
     final brand = BrandColors.of(context);
-    return Scaffold(
+    // Back turns to the previous page; on the first page it leaves the app.
+    return PopScope(
+      canPop: _page == 0,
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop || _page == 0) return;
+        if (Motion.reduced(context)) {
+          _controller.jumpToPage(_page - 1);
+        } else {
+          _controller.previousPage(duration: const Duration(milliseconds: 380), curve: Curves.easeOutCubic);
+        }
+      },
+      child: Scaffold(
       key: const Key('onboarding'),
       body: Stack(
         children: [
@@ -143,6 +154,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
           ),
         ],
       ),
+    ),
     );
   }
 }

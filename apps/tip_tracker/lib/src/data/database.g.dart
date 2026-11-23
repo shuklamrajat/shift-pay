@@ -133,6 +133,32 @@ class $JobsTable extends Jobs with TableInfo<$JobsTable, Job> {
     type: DriftSqlType.dateTime,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _payKindMeta = const VerificationMeta(
+    'payKind',
+  );
+  @override
+  late final GeneratedColumn<String> payKind = GeneratedColumn<String>(
+    'pay_kind',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _payAnchorMeta = const VerificationMeta(
+    'payAnchor',
+  );
+  @override
+  late final GeneratedColumn<String> payAnchor = GeneratedColumn<String>(
+    'pay_anchor',
+    aliasedName,
+    true,
+    additionalChecks: GeneratedColumn.checkTextLength(
+      minTextLength: 10,
+      maxTextLength: 10,
+    ),
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -145,6 +171,8 @@ class $JobsTable extends Jobs with TableInfo<$JobsTable, Job> {
     colorIndex,
     archived,
     createdAt,
+    payKind,
+    payAnchor,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -228,6 +256,18 @@ class $JobsTable extends Jobs with TableInfo<$JobsTable, Job> {
     } else if (isInserting) {
       context.missing(_createdAtMeta);
     }
+    if (data.containsKey('pay_kind')) {
+      context.handle(
+        _payKindMeta,
+        payKind.isAcceptableOrUnknown(data['pay_kind']!, _payKindMeta),
+      );
+    }
+    if (data.containsKey('pay_anchor')) {
+      context.handle(
+        _payAnchorMeta,
+        payAnchor.isAcceptableOrUnknown(data['pay_anchor']!, _payAnchorMeta),
+      );
+    }
     return context;
   }
 
@@ -277,6 +317,14 @@ class $JobsTable extends Jobs with TableInfo<$JobsTable, Job> {
         DriftSqlType.dateTime,
         data['${effectivePrefix}created_at'],
       )!,
+      payKind: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}pay_kind'],
+      ),
+      payAnchor: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}pay_anchor'],
+      ),
     );
   }
 
@@ -303,6 +351,11 @@ class Job extends DataClass implements Insertable<Job> {
   final int colorIndex;
   final bool archived;
   final DateTime createdAt;
+
+  /// This job's pay period (PayPeriodKind name) and a day one started on
+  /// ("YYYY-MM-DD"). Null means it follows the default in Settings.
+  final String? payKind;
+  final String? payAnchor;
   const Job({
     required this.id,
     required this.name,
@@ -314,6 +367,8 @@ class Job extends DataClass implements Insertable<Job> {
     required this.colorIndex,
     required this.archived,
     required this.createdAt,
+    this.payKind,
+    this.payAnchor,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -328,6 +383,12 @@ class Job extends DataClass implements Insertable<Job> {
     map['color_index'] = Variable<int>(colorIndex);
     map['archived'] = Variable<bool>(archived);
     map['created_at'] = Variable<DateTime>(createdAt);
+    if (!nullToAbsent || payKind != null) {
+      map['pay_kind'] = Variable<String>(payKind);
+    }
+    if (!nullToAbsent || payAnchor != null) {
+      map['pay_anchor'] = Variable<String>(payAnchor);
+    }
     return map;
   }
 
@@ -343,6 +404,12 @@ class Job extends DataClass implements Insertable<Job> {
       colorIndex: Value(colorIndex),
       archived: Value(archived),
       createdAt: Value(createdAt),
+      payKind: payKind == null && nullToAbsent
+          ? const Value.absent()
+          : Value(payKind),
+      payAnchor: payAnchor == null && nullToAbsent
+          ? const Value.absent()
+          : Value(payAnchor),
     );
   }
 
@@ -362,6 +429,8 @@ class Job extends DataClass implements Insertable<Job> {
       colorIndex: serializer.fromJson<int>(json['colorIndex']),
       archived: serializer.fromJson<bool>(json['archived']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      payKind: serializer.fromJson<String?>(json['payKind']),
+      payAnchor: serializer.fromJson<String?>(json['payAnchor']),
     );
   }
   @override
@@ -378,6 +447,8 @@ class Job extends DataClass implements Insertable<Job> {
       'colorIndex': serializer.toJson<int>(colorIndex),
       'archived': serializer.toJson<bool>(archived),
       'createdAt': serializer.toJson<DateTime>(createdAt),
+      'payKind': serializer.toJson<String?>(payKind),
+      'payAnchor': serializer.toJson<String?>(payAnchor),
     };
   }
 
@@ -392,6 +463,8 @@ class Job extends DataClass implements Insertable<Job> {
     int? colorIndex,
     bool? archived,
     DateTime? createdAt,
+    Value<String?> payKind = const Value.absent(),
+    Value<String?> payAnchor = const Value.absent(),
   }) => Job(
     id: id ?? this.id,
     name: name ?? this.name,
@@ -403,6 +476,8 @@ class Job extends DataClass implements Insertable<Job> {
     colorIndex: colorIndex ?? this.colorIndex,
     archived: archived ?? this.archived,
     createdAt: createdAt ?? this.createdAt,
+    payKind: payKind.present ? payKind.value : this.payKind,
+    payAnchor: payAnchor.present ? payAnchor.value : this.payAnchor,
   );
   Job copyWithCompanion(JobsCompanion data) {
     return Job(
@@ -424,6 +499,8 @@ class Job extends DataClass implements Insertable<Job> {
           : this.colorIndex,
       archived: data.archived.present ? data.archived.value : this.archived,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      payKind: data.payKind.present ? data.payKind.value : this.payKind,
+      payAnchor: data.payAnchor.present ? data.payAnchor.value : this.payAnchor,
     );
   }
 
@@ -439,7 +516,9 @@ class Job extends DataClass implements Insertable<Job> {
           ..write('tracksSales: $tracksSales, ')
           ..write('colorIndex: $colorIndex, ')
           ..write('archived: $archived, ')
-          ..write('createdAt: $createdAt')
+          ..write('createdAt: $createdAt, ')
+          ..write('payKind: $payKind, ')
+          ..write('payAnchor: $payAnchor')
           ..write(')'))
         .toString();
   }
@@ -456,6 +535,8 @@ class Job extends DataClass implements Insertable<Job> {
     colorIndex,
     archived,
     createdAt,
+    payKind,
+    payAnchor,
   );
   @override
   bool operator ==(Object other) =>
@@ -470,7 +551,9 @@ class Job extends DataClass implements Insertable<Job> {
           other.tracksSales == this.tracksSales &&
           other.colorIndex == this.colorIndex &&
           other.archived == this.archived &&
-          other.createdAt == this.createdAt);
+          other.createdAt == this.createdAt &&
+          other.payKind == this.payKind &&
+          other.payAnchor == this.payAnchor);
 }
 
 class JobsCompanion extends UpdateCompanion<Job> {
@@ -484,6 +567,8 @@ class JobsCompanion extends UpdateCompanion<Job> {
   final Value<int> colorIndex;
   final Value<bool> archived;
   final Value<DateTime> createdAt;
+  final Value<String?> payKind;
+  final Value<String?> payAnchor;
   const JobsCompanion({
     this.id = const Value.absent(),
     this.name = const Value.absent(),
@@ -495,6 +580,8 @@ class JobsCompanion extends UpdateCompanion<Job> {
     this.colorIndex = const Value.absent(),
     this.archived = const Value.absent(),
     this.createdAt = const Value.absent(),
+    this.payKind = const Value.absent(),
+    this.payAnchor = const Value.absent(),
   });
   JobsCompanion.insert({
     this.id = const Value.absent(),
@@ -507,6 +594,8 @@ class JobsCompanion extends UpdateCompanion<Job> {
     this.colorIndex = const Value.absent(),
     this.archived = const Value.absent(),
     required DateTime createdAt,
+    this.payKind = const Value.absent(),
+    this.payAnchor = const Value.absent(),
   }) : name = Value(name),
        createdAt = Value(createdAt);
   static Insertable<Job> custom({
@@ -520,6 +609,8 @@ class JobsCompanion extends UpdateCompanion<Job> {
     Expression<int>? colorIndex,
     Expression<bool>? archived,
     Expression<DateTime>? createdAt,
+    Expression<String>? payKind,
+    Expression<String>? payAnchor,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -532,6 +623,8 @@ class JobsCompanion extends UpdateCompanion<Job> {
       if (colorIndex != null) 'color_index': colorIndex,
       if (archived != null) 'archived': archived,
       if (createdAt != null) 'created_at': createdAt,
+      if (payKind != null) 'pay_kind': payKind,
+      if (payAnchor != null) 'pay_anchor': payAnchor,
     });
   }
 
@@ -546,6 +639,8 @@ class JobsCompanion extends UpdateCompanion<Job> {
     Value<int>? colorIndex,
     Value<bool>? archived,
     Value<DateTime>? createdAt,
+    Value<String?>? payKind,
+    Value<String?>? payAnchor,
   }) {
     return JobsCompanion(
       id: id ?? this.id,
@@ -558,6 +653,8 @@ class JobsCompanion extends UpdateCompanion<Job> {
       colorIndex: colorIndex ?? this.colorIndex,
       archived: archived ?? this.archived,
       createdAt: createdAt ?? this.createdAt,
+      payKind: payKind ?? this.payKind,
+      payAnchor: payAnchor ?? this.payAnchor,
     );
   }
 
@@ -594,6 +691,12 @@ class JobsCompanion extends UpdateCompanion<Job> {
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
+    if (payKind.present) {
+      map['pay_kind'] = Variable<String>(payKind.value);
+    }
+    if (payAnchor.present) {
+      map['pay_anchor'] = Variable<String>(payAnchor.value);
+    }
     return map;
   }
 
@@ -609,7 +712,9 @@ class JobsCompanion extends UpdateCompanion<Job> {
           ..write('tracksSales: $tracksSales, ')
           ..write('colorIndex: $colorIndex, ')
           ..write('archived: $archived, ')
-          ..write('createdAt: $createdAt')
+          ..write('createdAt: $createdAt, ')
+          ..write('payKind: $payKind, ')
+          ..write('payAnchor: $payAnchor')
           ..write(')'))
         .toString();
   }
@@ -1694,6 +1799,8 @@ typedef $$JobsTableCreateCompanionBuilder = JobsCompanion Function({
   Value<int> colorIndex,
   Value<bool> archived,
   required DateTime createdAt,
+  Value<String?> payKind,
+  Value<String?> payAnchor,
 });
 typedef $$JobsTableUpdateCompanionBuilder = JobsCompanion Function({
   Value<int> id,
@@ -1706,6 +1813,8 @@ typedef $$JobsTableUpdateCompanionBuilder = JobsCompanion Function({
   Value<int> colorIndex,
   Value<bool> archived,
   Value<DateTime> createdAt,
+  Value<String?> payKind,
+  Value<String?> payAnchor,
 });
 
 final class $$JobsTableReferences
@@ -1787,6 +1896,16 @@ class $$JobsTableFilterComposer extends Composer<_$TipsDb, $JobsTable> {
 
   ColumnFilters<DateTime> get createdAt => $composableBuilder(
     column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get payKind => $composableBuilder(
+    column: $table.payKind,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get payAnchor => $composableBuilder(
+    column: $table.payAnchor,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -1873,6 +1992,16 @@ class $$JobsTableOrderingComposer extends Composer<_$TipsDb, $JobsTable> {
     column: $table.createdAt,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get payKind => $composableBuilder(
+    column: $table.payKind,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get payAnchor => $composableBuilder(
+    column: $table.payAnchor,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$JobsTableAnnotationComposer extends Composer<_$TipsDb, $JobsTable> {
@@ -1920,6 +2049,12 @@ class $$JobsTableAnnotationComposer extends Composer<_$TipsDb, $JobsTable> {
 
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<String> get payKind =>
+      $composableBuilder(column: $table.payKind, builder: (column) => column);
+
+  GeneratedColumn<String> get payAnchor =>
+      $composableBuilder(column: $table.payAnchor, builder: (column) => column);
 
   Expression<T> shiftsRefs<T extends Object>(
     Expression<T> Function($$ShiftsTableAnnotationComposer a) f,
@@ -1985,6 +2120,8 @@ class $$JobsTableTableManager
                 Value<int> colorIndex = const Value.absent(),
                 Value<bool> archived = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
+                Value<String?> payKind = const Value.absent(),
+                Value<String?> payAnchor = const Value.absent(),
               }) => JobsCompanion(
                 id: id,
                 name: name,
@@ -1996,6 +2133,8 @@ class $$JobsTableTableManager
                 colorIndex: colorIndex,
                 archived: archived,
                 createdAt: createdAt,
+                payKind: payKind,
+                payAnchor: payAnchor,
               ),
           createCompanionCallback:
               ({
@@ -2009,6 +2148,8 @@ class $$JobsTableTableManager
                 Value<int> colorIndex = const Value.absent(),
                 Value<bool> archived = const Value.absent(),
                 required DateTime createdAt,
+                Value<String?> payKind = const Value.absent(),
+                Value<String?> payAnchor = const Value.absent(),
               }) => JobsCompanion.insert(
                 id: id,
                 name: name,
@@ -2020,6 +2161,8 @@ class $$JobsTableTableManager
                 colorIndex: colorIndex,
                 archived: archived,
                 createdAt: createdAt,
+                payKind: payKind,
+                payAnchor: payAnchor,
               ),
           withReferenceMapper: (p0) => p0
               .map(

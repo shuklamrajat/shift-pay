@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../backup/backup_service.dart';
 import '../data/repository.dart';
 import '../domain/periods.dart';
 import '../domain/time_format.dart';
@@ -14,8 +15,9 @@ import 'job_edit_screen.dart';
 
 /// What the list does after a save: highlight, celebrate.
 class ShiftSaved {
-  const ShiftSaved(this.id, {this.firstEver = false, this.bestRate = false});
+  const ShiftSaved(this.id, {required this.jobId, this.firstEver = false, this.bestRate = false});
   final int id;
+  final int jobId;
   final bool firstEver;
   final bool bestRate;
 }
@@ -101,6 +103,16 @@ class _ShiftEditScreenState extends ConsumerState<ShiftEditScreen> {
   }
 
   static String _hhmm(int m) => '${(m ~/ 60).toString().padLeft(2, '0')}:${(m % 60).toString().padLeft(2, '0')}';
+  /// The − and + buttons: a quarter hour at a time, landing on the
+  /// nearest quarter, never below zero or past a full day.
+  void _stepHours(int delta) {
+    final now = parseHours(_hours.text) ?? 0;
+    final snapped = ((now + delta) / 15).round() * 15;
+    final m = snapped.clamp(0, 24 * 60);
+    final h = m / 60;
+    _hours.text = m == 0 ? '' : (m % 60 == 0 ? '${m ~/ 60}' : h.toStringAsFixed(2).replaceFirst(RegExp(r'0$'), ''));
+  }
+
   static String _hoursText(int m) => m % 60 == 0 ? '${m ~/ 60}' : '${m ~/ 60}:${(m % 60).toString().padLeft(2, '0')}';
 
   @override
@@ -260,8 +272,19 @@ class _ShiftEditScreenState extends ConsumerState<ShiftEditScreen> {
     final rate = saved == null ? 0 : mathOf(saved).perHourCents;
     final others = before.where((s) => s.id != r.id);
     final best = others.length >= 3 && others.every((s) => mathOf(s).perHourCents < rate);
+    // The day's automatic backup, if today doesn't have one yet, so a night
+    // logged on a day the app was already open is safe by tomorrow too.
+    if (ref.read(tipSettingsProvider).autoBackup) {
+      try {
+        await ref.read(backupServiceProvider).maybeAutoBackup();
+        ref.invalidate(backupListProvider);
+      } catch (_) {
+        // A failed automatic backup never blocks a save; the Backup screen
+        // shows the last good one.
+      }
+    }
     if (!mounted) return;
-    Navigator.of(context).pop(ShiftSaved(r.id!, firstEver: before.isEmpty, bestRate: best));
+    Navigator.of(context).pop(ShiftSaved(r.id!, jobId: d.jobId, firstEver: before.isEmpty, bestRate: best));
   }
 
   Future<void> _delete() async {
@@ -460,14 +483,34 @@ class _ShiftEditScreenState extends ConsumerState<ShiftEditScreen> {
                 ],
               )
             else
-              FieldId(
-                fieldKey: const Key('shift-hours'),
-                child: TextField(
-                  key: const Key('shift-hours'),
-                  controller: _hours,
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                  decoration: const InputDecoration(labelText: 'Hours worked', hintText: '6.5 or 6:30', prefixIcon: Icon(Icons.timelapse)),
-                ),
+              Row(
+                children: [
+                  IconButton.outlined(
+                    key: const Key('hours-minus'),
+                    tooltip: 'A quarter hour less',
+                    onPressed: () => _stepHours(-15),
+                    icon: const Icon(Icons.remove),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: FieldId(
+                      fieldKey: const Key('shift-hours'),
+                      child: TextField(
+                        key: const Key('shift-hours'),
+                        controller: _hours,
+                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        decoration: const InputDecoration(labelText: 'Hours worked', hintText: '6.5 or 6:30', prefixIcon: Icon(Icons.timelapse)),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  IconButton.outlined(
+                    key: const Key('hours-plus'),
+                    tooltip: 'A quarter hour more',
+                    onPressed: () => _stepHours(15),
+                    icon: const Icon(Icons.add),
+                  ),
+                ],
               ),
             if (_useTimes && d.startMinute != null && d.endMinute != null && d.endMinute! >= 0 && d.startMinute! >= 0 && d.endMinute! <= d.startMinute!)
               Padding(
@@ -703,7 +746,10 @@ class _SummaryCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 10),
                     _line('Tips', money(m.tipsTotal)),
-                    if (m.tipOut != 0) _line('Tip-out', '− ${money(m.tipOut)}', key: 'summary-tipout'),
+                    if (m.tipOut != 0) ...[
+                      _line('Tip-out', '− ${money(m.tipOut)}', key: 'summary-tipout'),
+                      _line('Tips kept', money(m.tipsKept), key: 'summary-kept'),
+                    ],
                     _line('Wages', money(m.wages)),
                     Divider(color: brand.onBrand.withValues(alpha: 0.3)),
                     _line('Cash in pocket tonight', money(m.cashInPocket), key: 'summary-cash'),

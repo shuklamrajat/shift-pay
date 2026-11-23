@@ -11,8 +11,12 @@ import 'ui/scenes.dart';
 const featureExport = 'export';
 const featureMultipleJobs = 'multiple_jobs';
 
+/// Kept in step with pubspec.yaml's version name.
+const tipsAppVersion = '0.1.0';
+
 const tipsConfig = AppConfig(
   appName: 'Tipwell',
+  version: tipsAppVersion,
   tagline: 'Every tip, every shift, never lost',
   privacyPolicyUrl: 'https://shuklamrajat.github.io/widdle-privacy/',
   seedColor: Color(0xFF2E7D32),

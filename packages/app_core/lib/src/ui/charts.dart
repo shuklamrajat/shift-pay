@@ -63,12 +63,25 @@ class AnimatedBarChart extends StatefulWidget {
     required this.valueLabel,
     required this.semanticsLabel,
     this.height = 170,
+    this.onBarTap,
+    this.selected,
+    this.barKey,
   });
 
   final List<BarDatum> bars;
   final String Function(double) valueLabel;
   final String semanticsLabel;
   final double height;
+
+  /// When set, each bar's column can be tapped (the whole slot, not just
+  /// the bar, so a short bar is still easy to hit).
+  final ValueChanged<int>? onBarTap;
+
+  /// The tapped bar, drawn with a soft band behind it.
+  final int? selected;
+
+  /// Keys for the tap targets, for tests and screen readers.
+  final Key Function(int index)? barKey;
 
   @override
   State<AnimatedBarChart> createState() => _AnimatedBarChartState();
@@ -93,28 +106,52 @@ class _AnimatedBarChartState extends State<AnimatedBarChart> with SingleTickerPr
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final chart = AnimatedBuilder(
+      animation: drawIn,
+      builder: (_, _) => CustomPaint(
+        size: Size.infinite,
+        painter: _BarPainter(
+          bars: widget.bars,
+          from: _from,
+          t: drawIn.value,
+          valueLabel: widget.valueLabel,
+          textStyle: theme.textTheme.labelSmall!,
+          labelColor: theme.colorScheme.onSurfaceVariant,
+          strongColor: theme.colorScheme.onSurface,
+          gridColor: theme.colorScheme.outlineVariant.withValues(alpha: 0.6),
+          selected: widget.selected,
+          selectedColor: theme.colorScheme.primary.withValues(alpha: 0.12),
+        ),
+      ),
+    );
+    final tap = widget.onBarTap;
     return Semantics(
       container: true,
       label: widget.semanticsLabel,
       child: ExcludeSemantics(
         child: SizedBox(
           height: widget.height,
-          child: AnimatedBuilder(
-            animation: drawIn,
-            builder: (_, _) => CustomPaint(
-              size: Size.infinite,
-              painter: _BarPainter(
-                bars: widget.bars,
-                from: _from,
-                t: drawIn.value,
-                valueLabel: widget.valueLabel,
-                textStyle: theme.textTheme.labelSmall!,
-                labelColor: theme.colorScheme.onSurfaceVariant,
-                strongColor: theme.colorScheme.onSurface,
-                gridColor: theme.colorScheme.outlineVariant.withValues(alpha: 0.6),
-              ),
-            ),
-          ),
+          child: tap == null
+              ? chart
+              : Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    chart,
+                    // Bars sit in equal slots, so equal tap columns line up exactly.
+                    Row(
+                      children: [
+                        for (var i = 0; i < widget.bars.length; i++)
+                          Expanded(
+                            child: GestureDetector(
+                              key: widget.barKey?.call(i),
+                              behavior: HitTestBehavior.opaque,
+                              onTap: () => tap(i),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ],
+                ),
         ),
       ),
     );
@@ -143,8 +180,12 @@ class _BarPainter extends CustomPainter {
     required this.labelColor,
     required this.strongColor,
     required this.gridColor,
+    this.selected,
+    this.selectedColor = const Color(0x00000000),
   });
 
+  final int? selected;
+  final Color selectedColor;
   final List<BarDatum> bars;
   final List<double> from;
   final double t;
@@ -190,6 +231,14 @@ class _BarPainter extends CustomPainter {
         ..color = gridColor
         ..strokeWidth = 1.5,
     );
+
+    final sel = selected;
+    if (sel != null && sel >= 0 && sel < bars.length) {
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(Rect.fromLTWH(slot * sel + 2, 0, slot - 4, size.height), const Radius.circular(10)),
+        Paint()..color = selectedColor,
+      );
+    }
 
     final totals = [for (final b in bars) b.total];
     for (var i = 0; i < bars.length; i++) {

@@ -1,8 +1,10 @@
 import 'package:app_core/app_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 
 import '../data/repository.dart';
+import '../domain/periods.dart';
 import '../domain/tip_math.dart';
 import 'backup_screen.dart';
 import 'fields.dart';
@@ -36,6 +38,11 @@ class _JobEditScreenState extends ConsumerState<JobEditScreen> {
   late TipOutKind _kind = tipOutKindFromName(widget.job?.tipOutKind ?? 'none');
   late bool _tracksSales = widget.job?.tracksSales ?? false;
   late int _color = widget.job?.colorIndex ?? 0;
+  // Pay period: the job's own, or the Settings default to start from.
+  late PayPeriodKind _payKind = payKindFor(widget.job, ref.read(tipSettingsProvider));
+  late DateTime _payAnchor = widget.job?.payAnchor == null ? ref.read(tipSettingsProvider).payAnchor : parseDay(widget.job!.payAnchor!);
+  // Once the tip-out is touched by hand, picking a role stops changing it.
+  bool _ruleTouched = false;
   String? _error;
   bool _saving = false;
   late final String _start = _snapshot();
@@ -47,7 +54,8 @@ class _JobEditScreenState extends ConsumerState<JobEditScreen> {
     return formatPct(j.tipOutValue).replaceAll('%', '');
   }
 
-  String _snapshot() => [_name.text, _wage.text, _ruleValue.text, _role, _kind, _tracksSales, _color].join('|');
+  String _snapshot() =>
+      [_name.text, _wage.text, _ruleValue.text, _role, _kind, _tracksSales, _color, _payKind, dayKey(_payAnchor)].join('|');
   bool get _dirty => _snapshot() != _start;
 
   @override
@@ -56,6 +64,7 @@ class _JobEditScreenState extends ConsumerState<JobEditScreen> {
     if (widget.job == null) {
       final n = ref.read(allJobsProvider).value?.length ?? 0;
       _color = n % jobColors.length;
+      _pickRole(_role);
     }
   }
 
@@ -91,6 +100,8 @@ class _JobEditScreenState extends ConsumerState<JobEditScreen> {
           rule: TipOutRule(_kind, v),
           tracksSales: _tracksSales,
           colorIndex: _color,
+          payKind: _payKind,
+          payAnchor: _payKind == PayPeriodKind.semimonthly ? null : _payAnchor,
         );
     if (!mounted) return;
     setState(() => _saving = false);
@@ -98,6 +109,23 @@ class _JobEditScreenState extends ConsumerState<JobEditScreen> {
     await ref.read(tipSettingsProvider.notifier).setLastJob(r.id!);
     // First run is the home screen itself: the job list updating swaps it out.
     if (mounted && !widget.firstRun) Navigator.of(context).pop(r.id);
+  }
+
+  /// A role fills in what's usual for it on a new job, until the person
+  /// sets the tip-out themselves: servers often tip out about 3% of sales,
+  /// bartenders about 10% of tips to barbacks, drivers keep it all.
+  void _pickRole(String id) {
+    _role = id;
+    if (widget.job != null) return;
+    _tracksSales = id == 'server' || id == 'bartender';
+    if (_ruleTouched) return;
+    final (kind, value) = switch (id) {
+      'server' => (TipOutKind.pctSales, '3'),
+      'bartender' => (TipOutKind.pctTips, '10'),
+      _ => (TipOutKind.none, ''),
+    };
+    _kind = kind;
+    _ruleValue.text = value;
   }
 
   Future<void> _skip() async {
@@ -234,10 +262,7 @@ class _JobEditScreenState extends ConsumerState<JobEditScreen> {
                     avatar: Icon(icon, size: 18),
                     label: Text(label),
                     selected: _role == id,
-                    onSelected: (_) => setState(() {
-                      _role = id;
-                      if (widget.job == null) _tracksSales = id == 'server' || id == 'bartender';
-                    }),
+                    onSelected: (_) => setState(() => _pickRole(id)),
                   ),
               ],
             ),
@@ -266,6 +291,7 @@ class _JobEditScreenState extends ConsumerState<JobEditScreen> {
               ],
               selected: {_kind},
               onSelectionChanged: (s) => setState(() {
+                _ruleTouched = true;
                 _kind = s.first;
                 _ruleValue.clear();
                 if (_kind == TipOutKind.pctSales) _tracksSales = true;
@@ -284,13 +310,13 @@ class _JobEditScreenState extends ConsumerState<JobEditScreen> {
                               fieldKey: const Key('tipout-value'),
                               label: 'Amount each shift',
                               symbol: symbol,
-                              onChanged: (_) => setState(() {}),
+                              onChanged: (_) => setState(() => _ruleTouched = true),
                             )
                           : TextField(
                               key: const Key('tipout-value'),
                               controller: _ruleValue,
                               keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                              onChanged: (_) => setState(() {}),
+                              onChanged: (_) => setState(() => _ruleTouched = true),
                               decoration: InputDecoration(
                                 labelText: _kind == TipOutKind.pctSales ? 'Percent of sales' : 'Percent of tips',
                                 suffixText: '%',
@@ -312,6 +338,46 @@ class _JobEditScreenState extends ConsumerState<JobEditScreen> {
               value: _tracksSales || _kind == TipOutKind.pctSales,
               onChanged: _kind == TipOutKind.pctSales ? null : (v) => setState(() => _tracksSales = v),
             ),
+            const SizedBox(height: 8),
+            Text('Pay period', style: theme.textTheme.titleMedium),
+            Text('How often this job pays you. The Shifts tab shows what this paycheck should cover.', style: theme.textTheme.bodySmall),
+            const SizedBox(height: 8),
+            SegmentedButton<PayPeriodKind>(
+              key: const Key('job-pay-kind'),
+              showSelectedIcon: false,
+              segments: const [
+                ButtonSegment(value: PayPeriodKind.weekly, label: Text('Weekly')),
+                ButtonSegment(value: PayPeriodKind.biweekly, label: Text('Every 2 wks')),
+                ButtonSegment(value: PayPeriodKind.semimonthly, label: Text('Twice a month')),
+              ],
+              selected: {_payKind},
+              onSelectionChanged: (s) => setState(() => _payKind = s.first),
+            ),
+            if (_payKind == PayPeriodKind.semimonthly)
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: const Icon(Icons.event_repeat),
+                title: const Text('1st to 15th, then 16th to month end', key: Key('job-pay-semimonthly')),
+              )
+            else
+              ListTile(
+                key: const Key('job-pay-anchor'),
+                contentPadding: EdgeInsets.zero,
+                leading: const Icon(Icons.event),
+                title: const Text('A day a pay period started'),
+                subtitle: Text(DateFormat('EEE d MMM yyyy').format(_payAnchor), key: const Key('job-pay-anchor-label')),
+                trailing: const Icon(Icons.edit_calendar_outlined),
+                onTap: () async {
+                  final d = await showDatePicker(
+                    context: context,
+                    initialDate: _payAnchor,
+                    firstDate: DateTime(2020),
+                    lastDate: DateTime(2100),
+                    helpText: 'Any day a pay period started',
+                  );
+                  if (d != null) setState(() => _payAnchor = d);
+                },
+              ),
             const SizedBox(height: 8),
             Text('Colour', style: theme.textTheme.labelLarge),
             const SizedBox(height: 6),
@@ -337,20 +403,28 @@ class _JobEditScreenState extends ConsumerState<JobEditScreen> {
                   ),
               ],
             ),
-            if (_error != null) ...[
-              const SizedBox(height: 16),
-              Text(_error!, key: const Key('job-error'), style: TextStyle(color: theme.colorScheme.error)),
-            ],
           ],
         ),
         bottomNavigationBar: SafeArea(
           child: Padding(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-            child: FilledButton.icon(
-              key: const Key('job-save'),
-              onPressed: _saving ? null : _save,
-              icon: const Icon(Icons.check),
-              label: Text(widget.firstRun ? 'Start logging' : 'Save job'),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Right above Save, so the keyboard can never hide why it didn't save.
+                if (_error != null)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Text(_error!, key: const Key('job-error'), style: TextStyle(color: theme.colorScheme.error)),
+                  ),
+                FilledButton.icon(
+                  key: const Key('job-save'),
+                  onPressed: _saving ? null : _save,
+                  icon: const Icon(Icons.check),
+                  label: Text(widget.firstRun ? 'Start logging' : 'Save job'),
+                ),
+              ],
             ),
           ),
         ),

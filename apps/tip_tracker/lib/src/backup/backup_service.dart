@@ -29,8 +29,19 @@ final backupDirProvider = Provider<Future<Directory> Function()>((ref) {
   };
 });
 
+/// The app version written into backups (pubspec's version name).
+const tipsBackupAppVersion = '0.1.0';
+
+/// How backup bytes reach the disk. Tests swap it to act out a full phone.
+final backupFileWriterProvider = Provider<BackupFileWriter>((ref) => _writeFlushed);
+
 final backupServiceProvider = Provider<BackupService>(
-  (ref) => BackupService(ref.watch(tipsDbProvider), ref.watch(backupDirProvider), ref.watch(clockProvider)),
+  (ref) => BackupService(
+    ref.watch(tipsDbProvider),
+    ref.watch(backupDirProvider),
+    ref.watch(clockProvider),
+    writeFile: ref.watch(backupFileWriterProvider),
+  ),
 );
 
 class BackupException implements Exception {
@@ -67,11 +78,29 @@ class BackupFileInfo {
   final DateTime createdAt;
 }
 
+/// "No space left on device" (ENOSPC is 28 on Android and Linux, 112 on
+/// Windows as ERROR_DISK_FULL).
+bool isStorageFull(Object e) {
+  if (e is FileSystemException) {
+    final code = e.osError?.errorCode;
+    if (code == 28 || code == 112) return true;
+    final msg = '${e.osError?.message} ${e.message}'.toLowerCase();
+    return msg.contains('no space') || msg.contains('disk full') || msg.contains('not enough space');
+  }
+  return false;
+}
+
+/// Writes a backup's bytes. Tests replace it to act out a full phone.
+typedef BackupFileWriter = Future<void> Function(File file, List<int> bytes);
+
+Future<void> _writeFlushed(File f, List<int> bytes) => f.writeAsBytes(bytes, flush: true);
+
 class BackupService {
-  BackupService(this.db, this.dir, this.clock);
+  BackupService(this.db, this.dir, this.clock, {this.writeFile = _writeFlushed});
   final TipsDb db;
   final Future<Directory> Function() dir;
   final DateTime Function() clock;
+  final BackupFileWriter writeFile;
 
   // ---- writing ----
 
@@ -96,6 +125,8 @@ class BackupService {
     'colorIndex': r['color_index'] ?? 0,
     'archived': _bool(r['archived']),
     'createdAt': r['created_at'],
+    'payKind': r['pay_kind'],
+    'payAnchor': r['pay_anchor'],
   };
 
   Map<String, dynamic> _shiftJson(Map<String, dynamic> r) => {
@@ -123,7 +154,7 @@ class BackupService {
   static bool _bool(Object? v) => v == true || v == 1;
 
   /// The backup as bytes. The checksum covers the exact JSON of `data`.
-  Future<Uint8List> buildBackup({String appVersion = '0.1.0'}) async {
+  Future<Uint8List> buildBackup({String appVersion = tipsBackupAppVersion}) async {
     final data = await _dataSection();
     final dataJson = jsonEncode(data);
     final days = [for (final s in data['shifts'] as List) s['day'] as String]..sort();
@@ -161,11 +192,15 @@ class BackupService {
     }
     final tmp = File('${target.path}.tmp');
     try {
-      await tmp.writeAsBytes(bytes, flush: true);
+      await writeFile(tmp, bytes);
       await tmp.rename(target.path);
     } catch (e) {
-      if (await tmp.exists()) await tmp.delete();
-      throw BackupException('Couldn’t write the backup: $e');
+      try {
+        if (await tmp.exists()) await tmp.delete();
+      } catch (_) {}
+      throw BackupException(isStorageFull(e)
+          ? 'Your phone’s storage is full, so the backup couldn’t be saved. Free up some space and try again. Your shifts are safe and unchanged.'
+          : 'Couldn’t write the backup: $e');
     }
     await _prune();
     return target;
@@ -265,6 +300,13 @@ class BackupService {
       if (_money(j['rateCents']) == null || j['tipOutValue'] is! int || (j['tipOutValue'] as int) < 0) {
         throw BackupException('Job “$name” in the backup has a bad amount.');
       }
+      // Older backups have no pay period on jobs; that means "follow Settings".
+      final pk = j['payKind'];
+      final pa = j['payAnchor'];
+      if ((pk != null && !PayPeriodKind.values.any((k) => k.name == pk)) ||
+          (pa != null && (pa is! String || !RegExp(r'^\d{4}-\d{2}-\d{2}$').hasMatch(pa)))) {
+        throw BackupException('Job “$name” in the backup has a bad pay period.');
+      }
       jobRows.add(j);
     }
     final shiftIds = <int>{};
@@ -332,6 +374,8 @@ class BackupService {
                 colorIndex: Value((j['colorIndex'] as int?) ?? 0),
                 archived: Value(j['archived'] == true),
                 createdAt: ts(j['createdAt']),
+                payKind: Value(j['payKind'] as String?),
+                payAnchor: Value(j['payAnchor'] as String?),
               ),
             );
       }

@@ -3,7 +3,37 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../backup/backup_service.dart';
+import '../data/repository.dart';
+import '../domain/periods.dart';
+import '../export/tip_export.dart';
 import 'backup_screen.dart';
+import 'fields.dart';
+
+/// Saves every shift that can still be read as a spreadsheet and hands it to
+/// the share sheet. Reads only; nothing on the phone changes. Never behind
+/// Pro: getting your own data out is not a feature.
+Future<void> exportReadable(BuildContext context, WidgetRef ref) async {
+  try {
+    final r = await ref.read(repositoryProvider).readable();
+    if (r.shifts.isEmpty) {
+      if (context.mounted) snack(context, 'No shifts could be read. Try restoring a backup instead.');
+      return;
+    }
+    final exp = ref.read(exportServiceProvider);
+    final now = ref.read(clockProvider)();
+    final f = await exp.writeCsv('tips-readable-${dayKey(now)}.csv', shiftsCsv(r.shifts, {for (final j in r.jobs) j.id: j}));
+    await exp.share(f, subject: 'Tipwell shifts');
+    if (context.mounted) {
+      snack(
+        context,
+        'Exported ${r.shifts.length} shift${r.shifts.length == 1 ? '' : 's'}'
+        '${r.skipped == 0 ? '' : ' (${r.skipped} couldn’t be read)'}. Nothing on the phone was changed.',
+      );
+    }
+  } catch (e) {
+    if (context.mounted) snack(context, 'Couldn’t export: $e');
+  }
+}
 
 /// Shown instead of the app when the launch check finds the database
 /// damaged. Offers the newest backup first; nothing is changed without a tap.
@@ -55,6 +85,13 @@ class RepairScreen extends ConsumerWidget {
               if (bytes == null || !context.mounted) return;
               if (await restoreFlow(context, ref, bytes)) onRepaired();
             },
+          ),
+          const SizedBox(height: 8),
+          OutlinedButton.icon(
+            key: const Key('repair-export'),
+            icon: const Icon(Icons.table_view_outlined),
+            label: const Text('Export what’s readable'),
+            onPressed: () => exportReadable(context, ref),
           ),
           const SizedBox(height: 8),
           TextButton(

@@ -36,6 +36,8 @@ class AppConfig {
     this.paywallScene,
     this.logo,
     this.tour = const [],
+    this.version,
+    this.maker = 'Devs at Widdle Studios',
     this.privacyNote =
         'Everything you enter stays on this device, and there is no account. '
         'Ads come from Google AdMob, which collects device data such as your '
@@ -63,6 +65,12 @@ class AppConfig {
   /// shows a plain brand dot.
   final ScenePaint? logo;
   final String privacyNote;
+
+  /// Shown under About, e.g. "0.1.0". Null hides it.
+  final String? version;
+
+  /// Who makes the app, shown under About.
+  final String maker;
 
   /// Stops of the guided tour over the home screen, in order. Empty means no
   /// tour.

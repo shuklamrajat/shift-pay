@@ -115,7 +115,11 @@ class CoreSettingsScreen extends ConsumerWidget {
             contentPadding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
             leading: const BrandLogo(size: 48),
             title: Text(config.appName, style: const TextStyle(fontWeight: FontWeight.w800)),
-            subtitle: Text(config.tagline),
+            isThreeLine: true,
+            subtitle: Text(
+              '${config.tagline}\n${config.version == null ? '' : 'Version ${config.version} · '}Made by ${config.maker}',
+              key: const Key('settings-about-text'),
+            ),
           ),
         ],
       ),

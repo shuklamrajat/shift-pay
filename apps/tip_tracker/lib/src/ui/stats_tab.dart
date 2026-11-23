@@ -19,6 +19,20 @@ class StatsPeriod extends Notifier<(PeriodKind, int)> {
 
 final statsPeriodProvider = NotifierProvider<StatsPeriod, (PeriodKind, int)>(StatsPeriod.new);
 
+const _monthNames = [
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December',
+];
+
+/// The bar tapped on the Stats chart, for the period it was tapped in.
+class SelectedBar extends Notifier<(String, int)?> {
+  @override
+  (String, int)? build() => null;
+  void toggle(String period, int i) => state = state == (period, i) ? null : (period, i);
+}
+
+final selectedBarProvider = NotifierProvider<SelectedBar, (String, int)?>(SelectedBar.new);
+
 const _months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
 class StatsTab extends ConsumerWidget {
@@ -35,6 +49,10 @@ class StatsTab extends ConsumerWidget {
     final period = Period.containing(kind, now, weekStartsOn: settings.weekStartsOn).shift(offset, weekStartsOn: settings.weekStartsOn);
     final shifts = all.where((s) => period.containsKey(s.day)).toList();
     final t = Totals(shifts.map(mathOf));
+    final periodKey = '${period.kind.name}-${dayKey(period.from)}';
+    final buckets = _buckets(period, shifts, settings.weekStartsOn, now);
+    final sel = ref.watch(selectedBarProvider);
+    final picked = sel != null && sel.$1 == periodKey && sel.$2 < buckets.length ? sel.$2 : null;
     final scheme = Theme.of(context).colorScheme;
     final brand = BrandColors.of(context);
 
@@ -123,12 +141,16 @@ class StatsTab extends ConsumerWidget {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: AnimatedBarChart(
-              key: ValueKey('chart-${period.from}-${period.kind}'),
-              bars: _bars(period, shifts, settings.weekStartsOn, scheme.primary, brand.accent, now),
+              key: ValueKey('chart-$periodKey'),
+              bars: [for (final b in buckets) _bar(b, scheme.primary, brand.accent)],
               valueLabel: (v) => money((v * 100).round()),
               semanticsLabel: 'Tips kept and wages in ${periodTitle(period)}',
+              selected: picked,
+              barKey: (i) => Key('stats-bar-$i'),
+              onBarTap: (i) => ref.read(selectedBarProvider.notifier).toggle(periodKey, i),
             ),
           ),
+          if (picked != null) _BarDetail(bucket: buckets[picked], money: money, onClose: () => ref.read(selectedBarProvider.notifier).toggle(periodKey, picked)),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
             child: Wrap(
@@ -235,12 +257,15 @@ class StatsTab extends ConsumerWidget {
     ];
   }
 
-  static List<BarDatum> _bars(Period p, List<Shift> shifts, int weekStartsOn, Color tips, Color wages, DateTime now) {
-    BarDatum bar(String label, Iterable<Shift> ss, {bool hi = false}) {
-      final t = Totals(ss.map(mathOf));
-      return BarDatum(label, [ChartPart(t.tipsKept / 100, tips), ChartPart(t.wages / 100, wages)], highlight: hi);
-    }
-
+  /// The shifts behind each bar of the chart, with the bar's short label and
+  /// the full name used when the bar is tapped.
+  static List<({String label, String title, List<Shift> shifts, bool hi})> _buckets(
+    Period p,
+    List<Shift> shifts,
+    int weekStartsOn,
+    DateTime now,
+  ) {
+    String dm(DateTime d) => '${d.day} ${_months[d.month - 1]}';
     switch (p.kind) {
       case PeriodKind.week:
         return [
@@ -248,28 +273,54 @@ class StatsTab extends ConsumerWidget {
             () {
               final d = addDays(p.from, i);
               final k = dayKey(d);
-              return bar(weekdayShort[d.weekday - 1], shifts.where((s) => s.day == k), hi: k == dayKey(now));
+              return (
+                label: weekdayShort[d.weekday - 1],
+                title: '${weekdayShort[d.weekday - 1]} ${dm(d)}',
+                shifts: shifts.where((s) => s.day == k).toList(),
+                hi: k == dayKey(now),
+              );
             }(),
         ];
       case PeriodKind.month:
-        final bars = <BarDatum>[];
+        final out = <({String label, String title, List<Shift> shifts, bool hi})>[];
         var s = weekStart(p.from, weekStartsOn);
         while (s.isBefore(p.to)) {
           final e = addDays(s, 7);
           final from = s.isBefore(p.from) ? p.from : s;
-          bars.add(bar('${from.day}', shifts.where((x) {
-            final d = parseDay(x.day);
-            return !d.isBefore(s) && d.isBefore(e);
-          })));
+          final last = addDays(e.isAfter(p.to) ? p.to : e, -1);
+          out.add((
+            label: '${from.day}',
+            title: '${dm(from)} to ${dm(last)}',
+            shifts: shifts.where((x) {
+              final d = parseDay(x.day);
+              return !d.isBefore(s) && d.isBefore(e);
+            }).toList(),
+            hi: false,
+          ));
           s = e;
         }
-        return bars;
+        return out;
       case PeriodKind.year:
-        return [for (var m = 1; m <= 12; m++) bar(_months[m - 1][0], shifts.where((s) => parseDay(s.day).month == m))];
+        return [
+          for (var m = 1; m <= 12; m++)
+            (
+              label: _months[m - 1][0],
+              title: '${_monthNames[m - 1]} ${p.from.year}',
+              shifts: shifts.where((s) => parseDay(s.day).month == m).toList(),
+              hi: false,
+            ),
+        ];
       case PeriodKind.all:
         final years = shifts.map((s) => parseDay(s.day).year).toSet().toList()..sort();
-        return [for (final y in years) bar('$y', shifts.where((s) => parseDay(s.day).year == y))];
+        return [
+          for (final y in years) (label: '$y', title: '$y', shifts: shifts.where((s) => parseDay(s.day).year == y).toList(), hi: false),
+        ];
     }
+  }
+
+  static BarDatum _bar(({String label, String title, List<Shift> shifts, bool hi}) b, Color tips, Color wages) {
+    final t = Totals(b.shifts.map(mathOf));
+    return BarDatum(b.label, [ChartPart(t.tipsKept / 100, tips), ChartPart(t.wages / 100, wages)], highlight: b.hi);
   }
 
   Future<void> _export(BuildContext context, WidgetRef ref, Period p, List<Shift> shifts, List<Job> jobs, String Function(int) money, int taxBp) async {
@@ -331,4 +382,36 @@ class _Legend extends StatelessWidget {
     mainAxisSize: MainAxisSize.min,
     children: [CircleAvatar(radius: 5, backgroundColor: color), const SizedBox(width: 6), Text(label)],
   );
+}
+
+
+/// What a tapped bar adds up to: the chart's tooltip.
+class _BarDetail extends StatelessWidget {
+  const _BarDetail({required this.bucket, required this.money, required this.onClose});
+  final ({String label, String title, List<Shift> shifts, bool hi}) bucket;
+  final String Function(int) money;
+  final VoidCallback onClose;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = Totals(bucket.shifts.map(mathOf));
+    final theme = Theme.of(context);
+    return Card(
+      key: const Key('stats-bar-detail'),
+      margin: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+      color: theme.colorScheme.primaryContainer,
+      child: ListTile(
+        leading: const Icon(Icons.touch_app_outlined),
+        title: Text(bucket.title, key: const Key('stats-bar-title')),
+        subtitle: Text(
+          t.count == 0
+              ? 'No shifts'
+              : '${money(t.takeHome)} take-home · ${hoursLabel(t.minutes)} · ${money(t.perHourCents)}/h · '
+                    '${t.count} shift${t.count == 1 ? '' : 's'}',
+          key: const Key('stats-bar-numbers'),
+        ),
+        trailing: IconButton(key: const Key('stats-bar-close'), tooltip: 'Close', icon: const Icon(Icons.close), onPressed: onClose),
+      ),
+    );
+  }
 }

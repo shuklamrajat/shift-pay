@@ -34,6 +34,10 @@
 //   Best night (weekdays with 2+ shifts): Fridays 796.00 over 18h = 44.22/h
 //   beat Mondays 392.93 over 12h 30m = 31.43/h.
 //   By job: Luna 927.47 over 31h 15m = 29.68/h; Dock 71.15/h.
+//   Luna is paid every 2 weeks from the default anchor Mon 5 Jan 2026, so
+//   its pay period on 14 Nov is 9 Nov to 22 Nov: s1+s2+s3 = 466.91. The
+//   Settings default stays weekly: 9 to 15 Nov, 929.41 on 14 Nov.
+//   Tapping Fri 13 Nov on the week chart: s3+s4 = 528.22 over 12h = 44.02/h.
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
@@ -86,6 +90,7 @@ void main() {
     final sharer = RecordingFileSharer();
     final shots = StoreShots(tester);
     Uint8List? nextPick; // what the file picker hands back
+    var diskFull = false; // acts out a phone with no free storage
     var phone = Phone(await Directory('${root.path}/phone1').create());
     var launch = 0;
 
@@ -105,6 +110,15 @@ void main() {
               exportDirProvider.overrideWithValue(() async => p.dir),
               backupDirProvider.overrideWithValue(() async => p.backups.create(recursive: true)),
               backupFilePickerProvider.overrideWithValue(() async => nextPick),
+              backupFileWriterProvider.overrideWithValue((f, bytes) async {
+                if (diskFull) {
+                  // What Android throws when the disk is full mid-write: a
+                  // half-written file is left behind.
+                  await f.writeAsBytes(bytes.sublist(0, bytes.length ~/ 3));
+                  throw FileSystemException('Write failed', f.path, const OSError('No space left on device', 28));
+                }
+                await f.writeAsBytes(bytes, flush: true);
+              }),
               reviewRequesterProvider.overrideWithValue(RecordingReviewRequester()),
               entitlementServiceProvider.overrideWithValue(const FreeForNowEntitlementService()),
               // No real banner: on a phone it would load and move the layout mid-test.
@@ -179,17 +193,28 @@ void main() {
       await start();
       expect(find.byKey(const Key('onboarding')), findsOneWidget);
       await shots.take('01_welcome');
+      await tapKey('onboarding-next');
+      await back();
+      log.check('Back on the welcome goes to the previous page', true,
+          d.exists('onboarding') && find.text('Log a shift in seconds').hitTestable().evaluate().isNotEmpty);
       for (var i = 0; i < 3; i++) {
         await tapKey('onboarding-next');
       }
       await d.waitFor(find.byKey(const Key('job-name')));
       log.check('first run opens job setup with a restore option', true, d.exists('first-run-restore'));
+      log.check('Server role starts with a usual tip-out', 'Tip-out 3% of sales', await text('rule-preview'));
+      await tapKey('role-delivery');
+      log.check('Delivery role drops the tip-out and sales', true,
+          !d.exists('rule-preview') && !tester.widget<SwitchListTile>(find.byKey(const Key('tracks-sales'))).value);
+      await tapKey('role-server');
       await type('job-name', 'Luna Bistro');
       await type('job-wage', '2.13');
       await tapIn('tipout-kind', '% sales');
       await type('tipout-value', '3');
       await tester.pumpAndSettle();
       log.check('rule preview while typing', 'Tip-out 3% of sales', await text('rule-preview'));
+      await tapIn('job-pay-kind', 'Every 2 wks');
+      log.check('pay period starts from the Settings anchor', 'Mon 5 Jan 2026', await text('job-pay-anchor-label'));
       await shots.take('02_job_setup');
       await tapKey('job-save');
       await d.waitFor(find.byKey(const Key('add-shift')));
@@ -197,7 +222,7 @@ void main() {
       log.check('empty shifts state', true, d.exists('shifts-empty'));
 
       // ---------------- s1: a normal Monday ----------------
-      await tapKey('add-shift');
+      await tapKey('empty-add-shift'); // the empty state's own button
       log.check('s1 date defaults to today', 'Mon 9 Nov', await text('shift-date-label'));
       await type('shift-start', '16:00');
       await type('shift-end', '23:00');
@@ -211,10 +236,18 @@ void main() {
       log.check('s1 live hourly', r'$30.79/h', await text('summary-rate'));
       log.check('s1 hours', '6h 30m', await text('summary-hours'));
       log.check('s1 cash in pocket (cash minus tip-out)', r'$44.80', await text('summary-cash'));
+      log.check('s1 tips kept (tips minus tip-out)', r'$186.30', await text('summary-kept'));
       await shots.take('03_log_shift');
       await save();
       log.check('first shift is celebrated', true, (await snackText()).contains('First shift logged'));
       log.check('s1 row take-home', r'$200.15', await text('shift-row-total-1'));
+      log.check('the saved shift is lit up in the list', true, d.exists('shift-row-saved-1'));
+      final firstBackup = phone.backups.listSync().whereType<File>().where((f) => f.path.contains('tips-auto-20261109')).toList();
+      log.check(
+        'the first save made the day’s backup, holding that shift',
+        1,
+        firstBackup.length == 1 ? (jsonDecode(firstBackup.single.readAsStringSync())['counts'] as Map)['shifts'] : -1,
+      );
 
       // ---------------- s2: overnight, logged after midnight, with mistakes ----------------
       clock.now = DateTime(2026, 11, 11, 1, 30);
@@ -238,6 +271,7 @@ void main() {
       await type('shift-sales', '980');
       await save();
       log.check('s2 saved with Tuesday date', r'$201.04', await text('shift-row-total-2'));
+      log.check('only the newest save is lit', true, d.exists('shift-row-saved-2') && !d.exists('shift-row-saved-1'));
 
       // ---------------- s3: hours only, cash only, tip-out changed ----------------
       clock.now = DateTime(2026, 11, 13, 22, 30);
@@ -248,7 +282,14 @@ void main() {
       await type('shift-sales', '610');
       await tester.pumpAndSettle();
       log.check('17 hours gets a warning', 'That’s a long shift. Is the time right?', await text('shift-warning'));
-      await type('shift-hours', '5.5');
+      await type('shift-hours', '5');
+      await tapKey('hours-plus');
+      await tapKey('hours-plus');
+      await tapKey('hours-plus');
+      final stepped = tester.widget<TextField>(find.byKey(const Key('shift-hours'))).controller!.text;
+      await tapKey('hours-minus');
+      log.check('+ and − move the hours a quarter at a time', '5.75 then 5.5',
+          '$stepped then ${tester.widget<TextField>(find.byKey(const Key('shift-hours'))).controller!.text}');
       await tester.pumpAndSettle();
       log.check('s3 rule tip-out', r'Tip-out $18.30', await text('tipout-auto'));
       await tapKey('tipout-edit');
@@ -261,9 +302,19 @@ void main() {
       // ---------------- second job, s4: best night ----------------
       await tapKey('tab-jobs');
       await tapKey('add-job');
-      await type('job-name', 'Dock Bar');
+      await type('job-name', 'luna bistro');
       await tapKey('role-bartender');
+      log.check('Bartender role starts with a usual tip-out', 'Tip-out 10% of tips', await text('rule-preview'));
+      await tapIn('tipout-kind', 'None'); // this bar keeps all its tips
       await type('job-wage', '5');
+      await tapKey('job-save');
+      await d.waitFor(find.byKey(const Key('job-error')));
+      log.check('a second job with the same name is refused', 'You already have a job with that name.', await text('job-error'));
+      final errBox = tester.getRect(find.byKey(const Key('job-error')));
+      final saveBox = tester.getRect(find.byKey(const Key('job-save')));
+      log.check('the reason sits right above Save, on screen', true,
+          errBox.bottom <= saveBox.top && saveBox.top - errBox.bottom < 40 && errBox.top >= 0);
+      await type('job-name', 'Dock Bar');
       await tapKey('job-save');
       await d.waitFor(find.byKey(const Key('job-2')));
       await tapKey('tab-shifts');
@@ -281,6 +332,10 @@ void main() {
       log.check('best hourly rate is celebrated', true, (await snackText()).contains('best hourly rate'));
       log.check('s4 row', r'$462.50', await text('shift-row-total-4'));
       log.check('this week on the Shifts tab', r'$929.41', await text('week-total'));
+      log.check('all jobs: the Settings pay period (weekly)', r'Weekly pay 9 Nov to 15 Nov: $929.41', await text('pay-period-total'));
+      await tapKey('filter-job-1');
+      log.check('Luna picked: its own every-2-weeks pay period', r'Every 2 weeks pay 9 Nov to 22 Nov: $466.91', await text('pay-period-total'));
+      await tapKey('filter-all');
 
       // ---------------- edit, discard, delete + undo ----------------
       await tapKey('shift-row-1');
@@ -324,8 +379,14 @@ void main() {
       await back();
       await tapKey('discard');
       log.check('discarded draft is gone', null, prefs.getString(TipPrefs.draftKey));
-      final autos = phone.backups.listSync().where((f) => f.path.contains('tips-auto-')).toList();
-      log.check('the reopen made one daily backup', 1, autos.length);
+      final autoDays = phone.backups
+          .listSync()
+          .map((f) => f.uri.pathSegments.last)
+          .where((n) => n.startsWith('tips-auto-'))
+          .map((n) => n.substring('tips-auto-'.length, 'tips-auto-'.length + 8))
+          .toList()
+        ..sort();
+      log.check('one backup on each day with a save or a launch, never two', '20261109 20261111 20261113 20261114 20261115', autoDays.join(' '));
 
       // ---------------- week two ----------------
       clock.now = DateTime(2026, 11, 16, 23, 0);
@@ -372,12 +433,21 @@ void main() {
       log.check('last week tip-in', r'$40.00', await text('stats-tipin'));
       log.check('last week wages', r'$73.51', await text('stats-wages'));
       log.check('last week tax set-aside 15%', r'$140.91', await text('stats-tax'));
+      await tapKey('stats-bar-4'); // Friday's bar
+      log.check('tapping a day’s bar names it', 'Fri 13 Nov', await text('stats-bar-title'));
+      log.check('and shows its numbers', r'$528.22 take-home · 12h · $44.02/h · 2 shifts', await text('stats-bar-numbers'));
+      await tapKey('stats-bar-4');
+      log.check('tapping it again closes it', false, d.exists('stats-bar-detail'));
       await tapIn('stats-kind', 'Month');
       log.check('month title', 'November 2026', await text('stats-period'));
       log.check('November take-home', r'$1,389.97', await text('stats-takehome'));
       log.check('November hourly', r'$36.82/h', await text('stats-rate'));
       log.check('November hours', '37h 45m', await text('stats-hours'));
       log.check('November tax set-aside', r'$208.50', await text('stats-tax'));
+      await tapKey('stats-bar-2');
+      log.check('a month’s week bar', r'9 Nov to 15 Nov: $939.41 take-home · 25h 45m · $36.48/h · 4 shifts',
+          '${await text('stats-bar-title')}: ${await text('stats-bar-numbers')}');
+      await tapKey('stats-bar-close');
       log.check('best night', 'Fridays pay best', await text('stats-best-day'));
       log.check('best night detail', true, (await d.textsIn('stats-best-night')).contains(r'$44.22/h over 3 shifts'));
       log.check('Luna hourly in November', r'$29.68/h', await text('stats-job-rate-1'));
@@ -403,6 +473,9 @@ void main() {
 
       // ---------------- archive a job: its shifts still count ----------------
       await tapKey('tab-jobs');
+      log.check('Luna tile: this month’s take-home', r'$927.47', await text('job-month-1'));
+      log.check('Dock tile: this month’s take-home', r'$462.50', await text('job-month-2'));
+      log.check('Luna tile says how it pays', true, (await text('job-sub-1')).contains('every 2 weeks pay'));
       await tapKey('job-2');
       await tapKey('job-menu');
       await tapKey('job-archive');
@@ -412,9 +485,21 @@ void main() {
 
       // ---------------- backup: save off the phone ----------------
       await tapKey('tab-settings');
+      log.check('About names the version and the maker', true,
+          (await text('settings-about-text')).endsWith('Version 0.1.0 · Made by Devs at Widdle Studios'));
       await tapKey('settings-backup');
       log.check('last backup is the daily one from today', true, (await text('backup-last')).startsWith('Today'));
       log.check('never saved off the phone yet', 'Never saved off this phone', await text('backup-offdevice'));
+      // A full phone: the backup fails, says why, and leaves nothing behind.
+      List<String> files() => phone.backups.listSync().map((f) => f.uri.pathSegments.last).toList()..sort();
+      final before = files();
+      diskFull = true;
+      await tapKey('backup-now');
+      await d.waitFor(find.textContaining('storage is full'));
+      log.check('storage full: the backup says so', true, (await snackText()).contains('Your shifts are safe and unchanged'));
+      log.check('storage full: no half-written file left', before, files());
+      log.check('storage full: nothing was shared', 2, sharer.shared.length);
+      diskFull = false;
       await tapKey('backup-now');
       await d.waitUntil(() => sharer.shared.length == 3, 'backup shared');
       final backupFile = log.keep(sharer.shared.last, 'tips-backup.json');
@@ -457,6 +542,15 @@ void main() {
 
       // ---------------- restore an older daily backup, then undo it ----------------
       final daily = phone.backups.listSync().firstWhere((f) => f.path.contains('tips-auto-20261115')) as File;
+      // First with the phone full: the safety copy can't be written, so the
+      // restore must not start.
+      diskFull = true;
+      await tapKey('backup-row-${daily.uri.pathSegments.last}');
+      await d.waitFor(find.byKey(const Key('restore-preview')));
+      await tapKey('restore-confirm');
+      await d.waitFor(find.textContaining('Nothing was changed'));
+      log.check('storage full: a restore changes nothing', 6, (await phone.db.select(phone.db.shifts).get()).length);
+      diskFull = false;
       await tapKey('backup-row-${daily.uri.pathSegments.last}');
       await d.waitFor(find.byKey(const Key('restore-preview')));
       log.check('preview of the 15 Nov backup', '4 shifts and 2 jobs, 9 Nov 2026 to 13 Nov 2026', await text('restore-preview-counts'));
@@ -511,6 +605,15 @@ void main() {
       await d.waitFor(find.byKey(const Key('repair-screen')));
       log.check('damaged data opens the repair screen', true, d.exists('repair-restore-file'));
       log.check('no daily backup is made of damaged data', 0, phone.backups.existsSync() ? phone.backups.listSync().where((f) => f.path.contains('auto')).length : 0);
+      final sharedBefore = sharer.shared.length;
+      await tapKey('repair-export');
+      await d.waitUntil(() => sharer.shared.length == sharedBefore + 1, 'readable shifts shared');
+      final rescued = const LineSplitter()
+          .convert(log.keep(sharer.shared.last, 'rescued-from-damaged-data.csv').readAsStringSync())
+          .where((l) => l.isNotEmpty)
+          .toList();
+      log.check('Export what’s readable: header, 7 shifts (6 + the orphan), total', 9, rescued.length);
+      log.check('Export what’s readable changed nothing', 7, (await phone.db.select(phone.db.shifts).get()).length);
       nextPick = backupBytes;
       await tapKey('repair-restore-file');
       await d.waitFor(find.byKey(const Key('restore-preview')));
