@@ -271,8 +271,9 @@ class _JobEditScreenState extends ConsumerState<JobEditScreen> {
                 if (_kind == TipOutKind.pctSales) _tracksSales = true;
               }),
             ),
-            AnimatedSize(
-              duration: Motion.of(context, 220),
+            // AnimatedSize animates inside layout; with system animations off its
+            // zero-length animation re-dirties it mid-layout, so skip it then.
+            _GrowIn(
               child: _kind == TipOutKind.none
                   ? const SizedBox(width: double.infinity)
                   : Padding(
@@ -356,4 +357,16 @@ class _JobEditScreenState extends ConsumerState<JobEditScreen> {
       ),
     );
   }
+}
+
+
+/// Grows and shrinks with its child, or just swaps it when the phone asks
+/// for no animations.
+class _GrowIn extends StatelessWidget {
+  const _GrowIn({required this.child});
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) =>
+      Motion.reduced(context) ? child : AnimatedSize(duration: const Duration(milliseconds: 220), child: child);
 }

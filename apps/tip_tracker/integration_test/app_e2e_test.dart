@@ -70,6 +70,10 @@ void main() {
     WidgetController.hitTestWarningShouldBeFatal = true;
     Motion.ambient = false;
     addTearDown(() => Motion.ambient = true);
+    // Phones in the emulator gate run with system animations off, so this run
+    // does too (that once broke a zero-length AnimatedSize mid-layout).
+    tester.platformDispatcher.accessibilityFeaturesTestValue = const FakeAccessibilityFeatures(disableAnimations: true);
+    addTearDown(tester.platformDispatcher.clearAccessibilityFeaturesTestValue);
     tester.view.physicalSize = const Size(1080, 1920);
     tester.view.devicePixelRatio = 2.625;
     addTearDown(tester.view.reset);

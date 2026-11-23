@@ -324,6 +324,14 @@ def type_into(label, text, idx):
     time.sleep(0.6)
 
 
+def type_scrolled(label, text, idx):
+    """type_into for a field that may sit below the keyboard or the screen:
+    closes the keyboard and scrolls to the field first."""
+    hide_keyboard()
+    reveal(lambda: bool(find(label, edit=True)), tries=4)
+    type_into(label, text, idx)
+
+
 def hide_keyboard():
     if 'mInputShown=true' in adb('shell', 'dumpsys', 'input_method', check=False):
         adb('shell', 'input', 'keyevent', 'KEYCODE_BACK')
@@ -572,7 +580,7 @@ def tipwell():
     tap('Skip')
     wait('Set up your job')
     type_into('Job name', 'Luna Bistro', 0)
-    type_into('Hourly wage', '5.00', 1)
+    type_scrolled('Hourly wage', '5.00', 1)
     hide_keyboard()
     tap_scrolled('Start logging')
     # The job screen has a Skip button too, so wait for the tour's own title.
@@ -583,8 +591,8 @@ def tipwell():
     wait('Save shift')
     tap('Total')
     type_into('Hours worked', '6', 0)
-    type_into('Cash', '100', 1)
-    type_into('Card', '50', 2)
+    type_scrolled('Cash', '100', 1)
+    type_scrolled('Card', '50', 2)
     hide_keyboard()
     tap_scrolled('Save shift')
     wait('Log shift')
@@ -593,7 +601,7 @@ def tipwell():
     first = made('180.00')
     check('add: 6 h, 100 cash and 50 card at 5.00/h shows 180.00 take-home', True, settled(first, timeout=15))
     open_row(first, lambda: tap_last_match(r'180\.00'), 'Edit shift')
-    type_into('Cash', '120', 1)
+    type_scrolled('Cash', '120', 1)
     hide_keyboard()
     tap_scrolled('Save changes')
     wait('Log shift')
