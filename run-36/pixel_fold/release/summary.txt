@@ -1,0 +1,5 @@
+Device: pixel_fold API 35, part: release
+Release APK session: 4/6 checks passed
+  FAIL add: 6 h, 100 cash and 50 card at 5.00/h shows 180.00 take-home: want True, got 'False'
+  FAIL the session finished without an error: want None, got 'the row for "Edit shift" never appeared, even after scrolling. On screen: [\'$\', \'100\', \'50\', \'500 characters remaining\', \'Add tip-in from coworkers\', \'Back\', \'Enter hours like 6, 6.5 or 6:30.\', \'Enter your hours to see what you made tonight.\', \'Fill in only what you got. Cash only or card only is fi'
+RESULT: release on pixel_fold API 35 FAILED

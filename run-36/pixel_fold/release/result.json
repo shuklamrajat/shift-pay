@@ -1,0 +1,46 @@
+{
+  "package": "com.studioswiddle.tipwell",
+  "device": "pixel_fold API 35",
+  "apk": "universal.apk",
+  "passed": false,
+  "emulator_stopped": false,
+  "android_stalls_not_the_app": [],
+  "checks": [
+    {
+      "check": "still running 8 s after launch",
+      "want": true,
+      "got": true,
+      "ok": true
+    },
+    {
+      "check": "first screen: onboarding shows",
+      "want": true,
+      "got": true,
+      "ok": true
+    },
+    {
+      "check": "set up: the job is saved and the home screen shows",
+      "want": true,
+      "got": true,
+      "ok": true
+    },
+    {
+      "check": "add: 6 h, 100 cash and 50 card at 5.00/h shows 180.00 take-home",
+      "want": true,
+      "got": false,
+      "ok": false
+    },
+    {
+      "check": "the session finished without an error",
+      "want": null,
+      "got": "the row for \"Edit shift\" never appeared, even after scrolling. On screen: ['$', '100', '50', '500 characters remaining', 'Add tip-in from coworkers', 'Back', 'Enter hours like 6, 6.5 or 6:30.', 'Enter your hours to see what you made tonight.', 'Fill in only what you got. Cash only or card only is fine.', 'I tipped out tonight', 'Log shift', 'Save shift', 'Tips']",
+      "ok": false
+    },
+    {
+      "check": "logcat has no crash for this app",
+      "want": [],
+      "got": [],
+      "ok": true
+    }
+  ]
+}
