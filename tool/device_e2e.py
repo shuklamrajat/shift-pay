@@ -129,7 +129,8 @@ def nodes(any_app=False):
         words = [n.get('text', ''), n.get('content-desc', ''), n.get('hint', '')]
         out.append({'lines': [l.strip() for w in words for l in w.split('\n') if l.strip()],
                     'cls': n.get('class', ''), 'center': ((x1 + x2) // 2, (y1 + y2) // 2),
-                    'clickable': n.get('clickable') == 'true', 'package': n.get('package', '')})
+                    'clickable': n.get('clickable') == 'true', 'package': n.get('package', ''),
+                    'id': n.get('resource-id', '')})
     return out
 
 
@@ -350,6 +351,28 @@ def type_scrolled(label, text, idx, anchor=None):
         time.sleep(0.6)
         return
     type_into(label, text, idx)
+
+def type_id(rid, text, label, idx, anchor=None):
+    """Types into the field whose accessibility id is [rid] (an app gives
+    its fields stable ids so they can be found whatever Android does with
+    the label). Scrolls down, then from the top, to find it; if the app
+    exposes no such id, falls back to finding the field by its label."""
+    hide_keyboard()
+    by_id = lambda: [n for n in nodes() if n['id'] == rid]
+    if not reveal(lambda: bool(by_id()), tries=4):
+        to_top()
+        reveal(lambda: bool(by_id()), tries=6)
+    hit = by_id()
+    if not hit:
+        print(f'note: no field with id {rid}; finding "{label}" by its label', flush=True)
+        return type_scrolled(label, text, idx, anchor)
+    adb('shell', 'input', 'tap', *map(str, hit[0]['center']))
+    time.sleep(0.6)
+    adb('shell', 'input', 'keyevent', 'KEYCODE_MOVE_END')
+    adb('shell', 'input', 'keyevent', *(['KEYCODE_DEL'] * 30))
+    adb('shell', 'input', 'text', text.replace(' ', '%s'))
+    time.sleep(0.6)
+
 
 def hide_keyboard():
     if 'mInputShown=true' in adb('shell', 'dumpsys', 'input_method', check=False):
@@ -599,7 +622,7 @@ def tipwell():
     tap('Skip')
     wait('Set up your job')
     type_into('Job name', 'Luna Bistro', 0)
-    type_scrolled('Hourly wage', '5.00', 1, anchor='Leave empty if you only earn tips')
+    type_id('job-wage', '5.00', 'Hourly wage', 1, anchor='Leave empty if you only earn tips')
     hide_keyboard()
     tap_scrolled('Start logging')
     # The job screen has a Skip button too, so wait for the tour's own title.
@@ -613,9 +636,9 @@ def tipwell():
             break
     wait('Save shift')
     tap('Total')
-    type_scrolled('Hours worked', '6', 0, anchor='Total')
-    type_scrolled('Cash', '100', 1)
-    type_scrolled('Card', '50', 2)
+    type_id('shift-hours', '6', 'Hours worked', 0, anchor='Total')
+    type_id('shift-cash', '100', 'Cash', 1)
+    type_id('shift-card', '50', 'Card', 2)
     hide_keyboard()
     tap_scrolled('Save shift')
     wait('Log shift')
@@ -624,7 +647,7 @@ def tipwell():
     first = made('180.00')
     check('add: 6 h, 100 cash and 50 card at 5.00/h shows 180.00 take-home', True, settled(first, timeout=15))
     open_row(first, lambda: tap_last_match(r'180\.00'), 'Edit shift')
-    type_scrolled('Cash', '120', 1)
+    type_id('shift-cash', '120', 'Cash', 1)
     hide_keyboard()
     tap_scrolled('Save changes')
     wait('Log shift')

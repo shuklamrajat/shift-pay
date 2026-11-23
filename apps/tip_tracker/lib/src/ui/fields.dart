@@ -15,6 +15,21 @@ class MoneyInputFormatter extends TextInputFormatter {
   }
 }
 
+/// Gives a field a stable id in Android's accessibility tree (its
+/// resource-id), taken from its key. Accessibility tools and the on-device
+/// check find the field by it even when Android leaves the label out.
+class FieldId extends StatelessWidget {
+  const FieldId({super.key, required this.fieldKey, required this.child});
+  final Key fieldKey;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final k = fieldKey;
+    return Semantics(container: true, identifier: k is ValueKey<String> ? k.value : null, child: child);
+  }
+}
+
 class MoneyField extends StatelessWidget {
   const MoneyField({
     super.key,
@@ -36,7 +51,7 @@ class MoneyField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return TextField(
+    return FieldId(fieldKey: fieldKey, child: TextField(
       key: fieldKey,
       controller: controller,
       onChanged: onChanged,
@@ -50,7 +65,7 @@ class MoneyField extends StatelessWidget {
         helperText: helper,
         hintText: '0',
       ),
-    );
+    ));
   }
 }
 
@@ -64,7 +79,7 @@ class TimeField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return TextField(
+    return FieldId(fieldKey: fieldKey, child: TextField(
       key: fieldKey,
       controller: controller,
       keyboardType: TextInputType.datetime,
@@ -85,7 +100,7 @@ class TimeField extends StatelessWidget {
           },
         ),
       ),
-    );
+    ));
   }
 }
 

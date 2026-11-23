@@ -460,11 +460,14 @@ class _ShiftEditScreenState extends ConsumerState<ShiftEditScreen> {
                 ],
               )
             else
-              TextField(
-                key: const Key('shift-hours'),
-                controller: _hours,
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                decoration: const InputDecoration(labelText: 'Hours worked', hintText: '6.5 or 6:30', prefixIcon: Icon(Icons.timelapse)),
+              FieldId(
+                fieldKey: const Key('shift-hours'),
+                child: TextField(
+                  key: const Key('shift-hours'),
+                  controller: _hours,
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  decoration: const InputDecoration(labelText: 'Hours worked', hintText: '6.5 or 6:30', prefixIcon: Icon(Icons.timelapse)),
+                ),
               ),
             if (_useTimes && d.startMinute != null && d.endMinute != null && d.endMinute! >= 0 && d.startMinute! >= 0 && d.endMinute! <= d.startMinute!)
               Padding(
