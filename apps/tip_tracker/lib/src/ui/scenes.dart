@@ -62,7 +62,7 @@ void tipJar(Canvas c, Offset o, double size, SceneFrame f, {double fill = 0.5, d
   // Label: TIPS.
   Ink2.rrect(c, const Rect.fromLTWH(-24, 0, 48, 20), 5, Ink2.fill(Colors.white.withValues(alpha: 0.92)));
   final tp = TextPainter(
-    text: const TextSpan(text: 'TIPS', style: TextStyle(color: billDeep, fontSize: 12, fontWeight: FontWeight.w900, letterSpacing: 1.5)),
+    text: const TextSpan(text: 'TIPS', style: TextStyle(fontFamily: 'Roboto', color: billDeep, fontSize: 12, fontWeight: FontWeight.w900, letterSpacing: 1.5)),
     textDirection: TextDirection.ltr,
   )..layout();
   tp.paint(c, Offset(-tp.width / 2, 10 - tp.height / 2));
@@ -111,7 +111,7 @@ void tipOutScene(Canvas c, Size s, SceneFrame f) {
     Ink2.rrect(c, r, u * 0.03, Ink2.fill(f.dark ? f.scheme.surfaceContainerHighest : Colors.white));
     Ink2.rrect(c, r, u * 0.03, Ink2.stroke(f.scheme.primary, 2.5));
     final tp = TextPainter(
-      text: TextSpan(text: label, style: TextStyle(color: f.scheme.primary, fontSize: u * 0.045, fontWeight: FontWeight.w800)),
+      text: TextSpan(text: label, style: TextStyle(fontFamily: 'Roboto', color: f.scheme.primary, fontSize: u * 0.045, fontWeight: FontWeight.w800)),
       textDirection: TextDirection.ltr,
     )..layout();
     tp.paint(c, o - Offset(tp.width / 2, tp.height / 2));
@@ -122,7 +122,7 @@ void tipOutScene(Canvas c, Size s, SceneFrame f) {
   final b = Offset(s.width * 0.55, s.height * 0.2);
   c.drawCircle(b, u * 0.09 * _ease(f.intro), Ink2.fill(gold));
   final tp = TextPainter(
-    text: TextSpan(text: '%', style: TextStyle(color: billDeep, fontSize: u * 0.1 * _ease(f.intro), fontWeight: FontWeight.w900)),
+    text: TextSpan(text: '%', style: TextStyle(fontFamily: 'Roboto', color: billDeep, fontSize: u * 0.1 * _ease(f.intro), fontWeight: FontWeight.w900)),
     textDirection: TextDirection.ltr,
   )..layout();
   tp.paint(c, b - Offset(tp.width / 2, tp.height / 2));
@@ -216,14 +216,14 @@ void proScene(Canvas c, Size s, SceneFrame f) {
   }
 }
 
-/// App logo on a 512 grid: a gold coin with a green jar silhouette and a
-/// coin dropping into its slot.
+/// App logo on a 512 grid, drawn to match brand/logo.svg (the launcher
+/// icon): a glass jar half full of gold, the tips swaying, and a gold coin
+/// dropping into the lid's slot.
 void tipLogo(Canvas c, Size size, SceneFrame f) {
   c.save();
   c.scale(size.width / 512, size.height / 512);
-  final bg = RRect.fromRectAndRadius(const Rect.fromLTWH(0, 0, 512, 512), const Radius.circular(112));
-  c.drawRRect(
-    bg,
+  c.drawRect(
+    const Rect.fromLTWH(0, 0, 512, 512),
     Paint()
       ..shader = const LinearGradient(
         begin: Alignment.topLeft,
@@ -231,6 +231,9 @@ void tipLogo(Canvas c, Size size, SceneFrame f) {
         colors: [Color(0xFF2E7D32), Color(0xFF00695C)],
       ).createShader(const Rect.fromLTWH(0, 0, 512, 512)),
   );
+  c.translate(256, 270);
+  c.scale(0.92);
+  c.translate(-256, -270);
   final jar = RRect.fromRectAndCorners(
     const Rect.fromLTWH(146, 196, 220, 236),
     topLeft: const Radius.circular(36),
@@ -241,20 +244,49 @@ void tipLogo(Canvas c, Size size, SceneFrame f) {
   c.drawRRect(jar, Ink2.fill(Colors.white.withValues(alpha: 0.18)));
   c.save();
   c.clipRRect(jar);
-  final level = 330 - 30 * f.wave() * (f.intro >= 1 ? 1 : 0);
-  c.drawRect(Rect.fromLTRB(146, level, 366, 440), Ink2.fill(gold));
+  // The gold surface sways side to side; at rest it is the logo's wave.
+  final sway = 12 * f.wave();
+  final top = Path()
+    ..moveTo(140, 318)
+    ..cubicTo(190, 298 + sway, 230, 336 - sway, 270, 318)
+    ..cubicTo(310, 300 + sway, 340, 330 - sway, 372, 316);
+  final liquid = Path.from(top)
+    ..lineTo(372, 440)
+    ..lineTo(140, 440)
+    ..close();
+  c.drawPath(liquid, Ink2.fill(gold));
+  c.drawPath(top, Ink2.stroke(const Color(0xFFFFE082), 8));
+  final rise = 10 * f.wave(0.5);
+  c.drawCircle(Offset(206, 380 - rise), 18, Ink2.fill(const Color(0xCCFFE082)));
+  c.drawCircle(Offset(290, 398 + rise), 14, Ink2.fill(const Color(0x99FFE082)));
   c.restore();
   c.drawRRect(jar, Ink2.stroke(Colors.white, 18));
   Ink2.rrect(c, const Rect.fromLTWH(130, 150, 252, 46), 18, Ink2.fill(Colors.white));
   Ink2.rrect(c, const Rect.fromLTWH(206, 164, 100, 16), 8, Ink2.fill(const Color(0xFF1B5E20)));
-  // Dropping coin.
+  // The coin drops in on first show, then bobs over the slot.
   final drop = f.intro < 1 ? _ease(f.intro) : 1.0;
-  final cy = 40 + 100 * drop + 8 * f.wave(0.5);
-  Ink2.coin(c, Offset(256, cy), 44, gold, goldDeep, turn: f.loop * 0.5);
-  final tp = TextPainter(
-    text: const TextSpan(text: r'$', style: TextStyle(color: Color(0xFF1B5E20), fontSize: 52, fontWeight: FontWeight.w900)),
-    textDirection: TextDirection.ltr,
-  )..layout();
-  tp.paint(c, Offset(256 - tp.width / 2, cy - tp.height / 2));
+  final cy = 90 - 120 * (1 - drop) + 6 * f.wave(0.5);
+  c.drawCircle(Offset(256, cy + 6), 48, Ink2.fill(goldDeep));
+  c.drawCircle(
+    Offset(256, cy),
+    44,
+    Paint()
+      ..shader = const RadialGradient(
+        center: Alignment(-0.3, -0.4),
+        radius: 0.8,
+        colors: [Color(0xFFFFE082), Color(0xFFFFB300)],
+      ).createShader(Rect.fromCircle(center: Offset(256, cy), radius: 44)),
+  );
+  c.drawCircle(Offset(256, cy), 32, Ink2.stroke(const Color(0xFFFFF3C4), 6));
+  // A drawn dollar sign, so it looks the same with or without fonts.
+  final ink = Ink2.stroke(const Color(0xFF1B5E20), 7)..strokeCap = StrokeCap.round;
+  final dollar = Path()
+    ..moveTo(268, cy - 12)
+    ..cubicTo(264, cy - 20, 246, cy - 21, 244, cy - 11)
+    ..cubicTo(242, cy - 2, 252, cy - 1, 257, cy + 1)
+    ..cubicTo(264, cy + 3, 271, cy + 7, 268, cy + 14)
+    ..cubicTo(265, cy + 22, 246, cy + 21, 243, cy + 13);
+  c.drawPath(dollar, ink);
+  c.drawLine(Offset(256, cy - 26), Offset(256, cy + 27), ink);
   c.restore();
 }

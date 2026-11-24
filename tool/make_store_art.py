@@ -114,6 +114,31 @@ APPS = {
              'No account. Nothing uploaded. Your list stays on your phone.', True, True),
         ],
     ),
+    'tip_tracker': dict(
+        name='Tipwell', tagline='Tips, tip-out and real hourly pay, shift by shift.',
+        brand='#2E7D32', accent='#FFC107',
+        light=('#E8F5E9', '#E0F2F1', '#FFF3C4'), ink='#10301A',
+        dark=('#0F2414', '#0B1F1C', '#FFC107'),
+        confetti=['#2E7D32', '#FFC107', '#00897B', '#66BB6A'],
+        slides=[
+            ('04_shifts', '05_stats_month', 'Know what you really made.',
+             'Cash, card and tip-out in. Take-home and hourly out.', False, True),
+            ('03_log_shift', '04_shifts', 'Log a shift in seconds.',
+             'Hours and tips are all it needs. Cash-only nights are fine.', False, False),
+            ('02_job_setup', '03_log_shift', 'Tip-out, worked out.',
+             'Set your rule once: % of sales, % of tips or flat.', False, True),
+            ('08_stats_week_bar', '05_stats_month', 'See which nights pay best.',
+             'Tap any day or week for its take-home and hourly.', False, False),
+            ('06_backup', '07_restore_preview', 'Your tips, backed up.',
+             'Daily copies on your phone, one tap to Drive or email.', False, True),
+            ('09_jobs', '04_shifts', 'Every job, one app.',
+             'Server, bartender or delivery. Each with its own pay period.', False, False),
+            ('10_dark_shifts', '11_dark_stats', 'Built for after close.',
+             'A dark mode that is easy on tired eyes.', True, True),
+            ('11_dark_stats', '10_dark_shifts', 'Private by default.',
+             'No account. Nothing uploaded. Your tips stay on your phone.', True, False),
+        ],
+    ),
 }
 
 
@@ -130,7 +155,8 @@ def render_art(app):
            for n in ('icon', 'mascot', 'mascot_dark', 'hero', 'pro')}
     # The brand logo (the launcher icon) is the icon on the store art. The
     # Flutter-drawn logo in the app must still look like it.
-    for cand in (os.path.join(ROOT, 'brand'), os.path.join(ROOT, 'apps', app, 'brand')):
+    # An app's own brand folder wins over the repo's (a repo can hold several apps).
+    for cand in (os.path.join(ROOT, 'apps', app, 'brand'), os.path.join(ROOT, 'brand')):
         if os.path.exists(os.path.join(cand, 'logo-1024.png')):
             brand = Image.open(os.path.join(cand, 'logo-1024.png')).convert('RGBA')
             break

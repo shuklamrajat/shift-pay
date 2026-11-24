@@ -40,6 +40,7 @@
 //   Tapping Fri 13 Nov on the week chart: s3+s4 = 528.22 over 12h = 44.02/h.
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math' as math;
 import 'dart:typed_data';
 
 import 'package:app_core/app_core.dart';
@@ -47,6 +48,7 @@ import 'package:app_core/testing.dart';
 import 'package:drift/native.dart';
 import 'package:e2e_driver/e2e_driver.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart' show RenderParagraph;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
@@ -435,7 +437,20 @@ void main() {
       log.check('last week tax set-aside 15%', r'$140.91', await text('stats-tax'));
       await tapKey('stats-bar-4'); // Friday's bar
       log.check('tapping a day’s bar names it', 'Fri 13 Nov', await text('stats-bar-title'));
-      log.check('and shows its numbers', r'$528.22 take-home · 12h · $44.02/h · 2 shifts', await text('stats-bar-numbers'));
+      log.check('and shows its numbers', r'$528.22 take-home · 12h · $44.02/h · 2 shifts', (await text('stats-bar-numbers')).replaceAll('\u2060', ''));
+      {
+        // Readable: WCAG asks 4.5:1 for body text.
+        double lum(Color c) {
+          double ch(double v) => v <= 0.03928 ? v / 12.92 : math.pow((v + 0.055) / 1.055, 2.4).toDouble();
+          return 0.2126 * ch(c.r) + 0.7152 * ch(c.g) + 0.0722 * ch(c.b);
+        }
+        final bg = tester.widget<Card>(find.byKey(const Key('stats-bar-detail'))).color!;
+        final fg = tester.renderObject<RenderParagraph>(find.byKey(const Key('stats-bar-numbers'))).text.style!.color!;
+        final l1 = lum(bg), l2 = lum(fg);
+        final ratio = (l1 > l2 ? l1 + 0.05 : l2 + 0.05) / (l1 > l2 ? l2 + 0.05 : l1 + 0.05);
+        log.check('bar detail text is readable on its card (contrast at least 4.5)', true, ratio >= 4.5, why: 'contrast ${ratio.toStringAsFixed(1)}:1');
+      }
+      await shots.take('08_stats_week_bar');
       await tapKey('stats-bar-4');
       log.check('tapping it again closes it', false, d.exists('stats-bar-detail'));
       await tapIn('stats-kind', 'Month');
@@ -446,7 +461,7 @@ void main() {
       log.check('November tax set-aside', r'$208.50', await text('stats-tax'));
       await tapKey('stats-bar-2');
       log.check('a month’s week bar', r'9 Nov to 15 Nov: $939.41 take-home · 25h 45m · $36.48/h · 4 shifts',
-          '${await text('stats-bar-title')}: ${await text('stats-bar-numbers')}');
+          '${await text('stats-bar-title')}: ${(await text('stats-bar-numbers')).replaceAll('\u2060', '')}');
       await tapKey('stats-bar-close');
       log.check('best night', 'Fridays pay best', await text('stats-best-day'));
       log.check('best night detail', true, (await d.textsIn('stats-best-night')).contains(r'$44.22/h over 3 shifts'));
@@ -591,9 +606,32 @@ void main() {
       log.check('new phone November take-home', r'$1,389.97', await text('stats-takehome'));
       await tapKey('tab-jobs');
       log.check('archived job is still archived', true, d.exists('archived-jobs'));
+      await shots.take('09_jobs');
+
+      // ---------------- dark theme from Settings ----------------
+      await tapKey('tab-settings');
+      await tapKey('settings-theme');
+      await tester.tap(find.text('Dark').last);
+      await tester.pumpAndSettle();
+      log.check('Settings switches the app to dark', Brightness.dark,
+          Theme.of(tester.element(find.byKey(const Key('settings-theme')))).brightness);
       await tapKey('tab-shifts');
+      log.check('dark: shifts still all there', r'$267.78', await text('shift-row-total-6'));
+      await shots.take('10_dark_shifts');
+      await tapKey('tab-stats');
+      await shots.take('11_dark_stats');
+      await start();
+      await d.waitFor(find.byKey(const Key('add-shift')));
+      log.check('reopened: still dark', Brightness.dark,
+          Theme.of(tester.element(find.byKey(const Key('add-shift')))).brightness);
 
       // ---------------- damaged data: an orphan shift ----------------
+      int autoBackups() => phone.backups.existsSync() ? phone.backups.listSync().where((f) => f.path.contains('auto')).length : 0;
+      // Reopening in dark above made today's daily backup; clear it so this
+      // check sees whether damaged data would make one.
+      for (final f in phone.backups.listSync().where((f) => f.path.contains('auto'))) {
+        f.deleteSync();
+      }
       await phone.db.customStatement('PRAGMA foreign_keys = OFF');
       await phone.db.customStatement(
         "INSERT INTO shifts (id, job_id, day, break_minutes, minutes, cash_cents, card_cents, tip_in_cents, tip_out_cents, "
@@ -604,7 +642,7 @@ void main() {
       await start();
       await d.waitFor(find.byKey(const Key('repair-screen')));
       log.check('damaged data opens the repair screen', true, d.exists('repair-restore-file'));
-      log.check('no daily backup is made of damaged data', 0, phone.backups.existsSync() ? phone.backups.listSync().where((f) => f.path.contains('auto')).length : 0);
+      log.check('no daily backup is made of damaged data', 0, autoBackups());
       final sharedBefore = sharer.shared.length;
       await tapKey('repair-export');
       await d.waitUntil(() => sharer.shared.length == sharedBefore + 1, 'readable shifts shared');

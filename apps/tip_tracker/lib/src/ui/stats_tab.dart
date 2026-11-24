@@ -399,18 +399,28 @@ class _BarDetail extends StatelessWidget {
     return Card(
       key: const Key('stats-bar-detail'),
       margin: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-      color: theme.colorScheme.primaryContainer,
+      color: theme.colorScheme.primary,
       child: ListTile(
+        // Brand green with its own "on" colour, so the numbers read clearly
+        // in light and dark.
+        textColor: theme.colorScheme.onPrimary,
+        iconColor: theme.colorScheme.onPrimary,
         leading: const Icon(Icons.touch_app_outlined),
         title: Text(bucket.title, key: const Key('stats-bar-title')),
         subtitle: Text(
           t.count == 0
               ? 'No shifts'
-              : '${money(t.takeHome)} take-home · ${hoursLabel(t.minutes)} · ${money(t.perHourCents)}/h · '
+              : '${money(t.takeHome)} take-home · ${hoursLabel(t.minutes)} · ${money(t.perHourCents)}/\u2060h · '
                     '${t.count} shift${t.count == 1 ? '' : 's'}',
           key: const Key('stats-bar-numbers'),
         ),
-        trailing: IconButton(key: const Key('stats-bar-close'), tooltip: 'Close', icon: const Icon(Icons.close), onPressed: onClose),
+        trailing: IconButton(
+          key: const Key('stats-bar-close'),
+          tooltip: 'Close',
+          color: theme.colorScheme.onPrimary,
+          icon: const Icon(Icons.close),
+          onPressed: onClose,
+        ),
       ),
     );
   }

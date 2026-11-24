@@ -10,7 +10,7 @@ from PIL import Image
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ok = True
-for app in [a for a in ('hours_tracker', 'fuel_log', 'home_inventory') if os.path.isdir(os.path.join(ROOT, 'apps', a))]:
+for app in [a for a in ('hours_tracker', 'fuel_log', 'home_inventory', 'tip_tracker') if os.path.isdir(os.path.join(ROOT, 'apps', a))]:
     d = os.path.join(ROOT, 'store', app)
     md = open(os.path.join(d, 'listing.md')).read()
     name = re.search(r'\| App name \(30\) \| (.+?) \|', md).group(1)
