@@ -1,0 +1,25 @@
+11-24 22:58:51.740   556   588 W ZygoteProcess: Got error connecting to zygote, retrying. msg= Connection refused
+11-24 22:58:51.871   556  1866 W ActivityManager: Slow operation: 153ms so far, now at startProcess: done updating battery stats
+11-24 22:58:51.871   556  1866 W ActivityManager: Slow operation: 153ms so far, now at startProcess: building log message
+11-24 22:58:51.871   556  1866 W ActivityManager: Slow operation: 153ms so far, now at startProcess: starting to update pids map
+11-24 22:58:51.871   556  1866 W ActivityManager: Slow operation: 154ms so far, now at startProcess: done updating pids map
+11-24 22:58:51.879   556   588 W ActivityManager: Slow operation: 161ms so far, now at startProcess: returned from zygote!
+11-24 22:58:51.879   556   588 W ActivityManager: Slow operation: 146ms so far, now at startProcess: asking zygote to start proc
+11-24 22:58:51.885   556   588 W ActivityManager: Slow operation: 153ms so far, now at startProcess: returned from zygote!
+11-24 22:58:51.886   556   588 W ActivityManager: Slow operation: 153ms so far, now at startProcess: done updating battery stats
+11-24 22:58:51.886   556   588 W ActivityManager: Slow operation: 153ms so far, now at startProcess: building log message
+11-24 22:58:51.886   556   588 W ActivityManager: Slow operation: 153ms so far, now at startProcess: starting to update pids map
+11-24 22:58:51.886   556   588 W ActivityManager: Slow operation: 154ms so far, now at startProcess: done updating pids map
+11-24 22:58:51.886   556   588 W ActivityManager: Slow operation: 81ms so far, now at startProcess: asking zygote to start proc
+11-24 22:58:51.892   556   588 W ActivityManager: Slow operation: 87ms so far, now at startProcess: returned from zygote!
+11-24 22:58:51.892   556   588 W ActivityManager: Slow operation: 87ms so far, now at startProcess: done updating battery stats
+11-24 22:58:51.892   556   588 W ActivityManager: Slow operation: 87ms so far, now at startProcess: building log message
+11-24 22:58:51.892   556   588 W ActivityManager: Slow operation: 87ms so far, now at startProcess: starting to update pids map
+11-24 22:58:51.892   556   588 W ActivityManager: Slow operation: 87ms so far, now at startProcess: done updating pids map
+11-24 22:58:51.892   556   588 W ActivityManager: Slow operation: 77ms so far, now at startProcess: asking zygote to start proc
+11-24 22:58:51.898   556   588 W ActivityManager: Slow operation: 82ms so far, now at startProcess: returned from zygote!
+11-24 22:58:51.898   556   588 W ActivityManager: Slow operation: 82ms so far, now at startProcess: done updating battery stats
+11-24 22:58:51.898   556   588 W ActivityManager: Slow operation: 82ms so far, now at startProcess: building log message
+11-24 22:58:51.898   556   588 W ActivityManager: Slow operation: 82ms so far, now at startProcess: starting to update pids map
+11-24 22:58:51.898   556   588 W ActivityManager: Slow operation: 82ms so far, now at startProcess: done updating pids map
+11-24 22:59:56.980   556   588 W ActivityManager: Slow operation: 60ms so far, now at startProcess: done updating pids map
