@@ -43,8 +43,9 @@ jobs:
       # AdMob ids (studioswiddle@gmail.com's AdMob) are public: they ship inside
       # every copy of the app. Repo variables of the same names override them.
       # Empty ids make a release build fall back to Google's test ads.
-      # Tipwell has no AdMob app of its own yet, so this gate build uses
-      # Google's test ads (empty ids). Never upload a build made this way.
+      # Tipwell has no AdMob app of its own yet (the AdMob account isn't
+      # approved), so these builds use Google's test ads (empty ids). Fine for
+      # closed testing; real ids before production.
       ADMOB_APP_ID: ''
       ADMOB_BANNER_ID: ''
       PLAY_PACKAGE: com.studioswiddle.tipwell
@@ -410,9 +411,11 @@ jobs:
   play:
     name: Upload to Play closed testing (draft)
     needs: [android, device-e2e]
-    # Off for Tipwell: this branch only proves the build on emulators. Tipwell's
-    # own repo, AdMob ids and upload key come first, on Rajat's yes.
-    if: false
+    # On for Tipwell from Nov 25, on Rajat's "list and publish": a draft on the
+    # closed testing track, only after both emulators pass. It ships Google's
+    # test ads: the studioswiddle AdMob account isn't approved yet, so real
+    # ids come in a later build before production.
+    if: github.ref == 'refs/heads/gate/tipwell' && needs.device-e2e.result == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:

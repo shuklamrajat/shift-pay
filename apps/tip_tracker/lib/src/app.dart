@@ -18,7 +18,7 @@ const tipsConfig = AppConfig(
   appName: 'Tipwell',
   version: tipsAppVersion,
   tagline: 'Every tip, every shift, never lost',
-  privacyPolicyUrl: 'https://shuklamrajat.github.io/widdle-privacy/',
+  privacyPolicyUrl: 'https://shuklamrajat.github.io/widdle-privacy/tipwell/',
   seedColor: Color(0xFF2E7D32),
   accentColor: gold,
   gradientEndColor: Color(0xFF00695C),
