@@ -1,0 +1,178 @@
+{
+  "package": "com.studioswiddle.tipwell",
+  "device": "pixel_fold API 35",
+  "apk": "universal.apk",
+  "passed": true,
+  "emulator_stopped": false,
+  "android_stalls_not_the_app": [],
+  "checks": [
+    {
+      "check": "still running 8 s after launch",
+      "want": true,
+      "got": true,
+      "ok": true
+    },
+    {
+      "check": "first screen: onboarding shows",
+      "want": true,
+      "got": true,
+      "ok": true
+    },
+    {
+      "check": "set up: the Server role starts with a 3% of sales tip-out",
+      "want": true,
+      "got": true,
+      "ok": true
+    },
+    {
+      "check": "set up: the job is saved and the home screen shows",
+      "want": true,
+      "got": true,
+      "ok": true
+    },
+    {
+      "check": "add: 6 h, 100 cash and 50 card at 5.00/h shows 180.00 take-home",
+      "want": true,
+      "got": true,
+      "ok": true
+    },
+    {
+      "check": "edit: cash changed to 120 makes it 200.00",
+      "want": true,
+      "got": true,
+      "ok": true
+    },
+    {
+      "check": "edit: the old 180.00 is gone",
+      "want": true,
+      "got": true,
+      "ok": true
+    },
+    {
+      "check": "sideways: still running",
+      "want": true,
+      "got": true,
+      "ok": true
+    },
+    {
+      "check": "sideways: the entries are still on screen",
+      "want": true,
+      "got": true,
+      "ok": true
+    },
+    {
+      "check": "upright again: the entries are still on screen",
+      "want": true,
+      "got": true,
+      "ok": true
+    },
+    {
+      "check": "Fold: the emulator folds",
+      "want": true,
+      "got": true,
+      "ok": true
+    },
+    {
+      "check": "folded (outer screen): still running",
+      "want": true,
+      "got": true,
+      "ok": true
+    },
+    {
+      "check": "folded (outer screen): the entries are still on screen",
+      "want": true,
+      "got": true,
+      "ok": true
+    },
+    {
+      "check": "unfolded (inner screen): still running",
+      "want": true,
+      "got": true,
+      "ok": true
+    },
+    {
+      "check": "unfolded (inner screen): the entries are still on screen",
+      "want": true,
+      "got": true,
+      "ok": true
+    },
+    {
+      "check": "Settings opens",
+      "want": true,
+      "got": true,
+      "ok": true
+    },
+    {
+      "check": "Settings: the privacy policy row is there",
+      "want": true,
+      "got": true,
+      "ok": true
+    },
+    {
+      "check": "Settings sideways: still running",
+      "want": true,
+      "got": true,
+      "ok": true
+    },
+    {
+      "check": "week CSV export: the share sheet opens",
+      "want": true,
+      "got": true,
+      "ok": true
+    },
+    {
+      "check": "week CSV export: still running after closing the share sheet",
+      "want": true,
+      "got": true,
+      "ok": true
+    },
+    {
+      "check": "ads: still running after the banner had time to load",
+      "want": true,
+      "got": true,
+      "ok": true
+    },
+    {
+      "check": "after reopening: the edited 200.00 shift is still there",
+      "want": true,
+      "got": true,
+      "ok": true
+    },
+    {
+      "check": "after reopening: no onboarding again",
+      "want": false,
+      "got": false,
+      "ok": true
+    },
+    {
+      "check": "delete: the shift is gone from the list",
+      "want": true,
+      "got": true,
+      "ok": true
+    },
+    {
+      "check": "delete: the shift stays gone after reopening",
+      "want": true,
+      "got": true,
+      "ok": true
+    },
+    {
+      "check": "still running after the delete and reopen",
+      "want": true,
+      "got": true,
+      "ok": true
+    },
+    {
+      "check": "still running at the end",
+      "want": true,
+      "got": true,
+      "ok": true
+    },
+    {
+      "check": "logcat has no crash for this app",
+      "want": [],
+      "got": [],
+      "ok": true
+    }
+  ]
+}

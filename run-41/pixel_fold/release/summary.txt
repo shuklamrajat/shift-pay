@@ -1,0 +1,3 @@
+Device: pixel_fold API 35, part: release
+Release APK session: 28/28 checks passed
+RESULT: release on pixel_fold API 35 passed
